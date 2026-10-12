@@ -64,6 +64,8 @@ export async function onRequest({ request, env }) {
     console.log('Groq', res.status, detail);
     // tetto di spesa mensile di Groq raggiunto
     if (detail.includes('blocked_api_access')) return json(503, { error: 'Fondi del mese esauriti.', code: 'fondi-esauriti' });
+    // chiave Groq sbagliata, incompleta o cancellata
+    if (res.status === 401 || detail.includes('invalid_api_key')) return json(502, { error: 'Chiave Groq non valida.', code: 'chiave-groq' });
     return json(502, { error: `Errore del servizio di trascrizione (${res.status}).` });
   }
   const data = await res.json().catch(() => ({}));

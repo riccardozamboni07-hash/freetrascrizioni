@@ -816,6 +816,8 @@ async function sendPiece(pcm, lang){
       setStatus(`Il servizio online è molto usato: riprendo tra ${wait} secondi…`, 'warn');
       await sleep(wait * 1000); continue;
     }
+    if (data.code === 'chiave-groq') throw new Error('La chiave Groq non è valida. Su Cloudflare apri freetrascrizioni → Settings → Variables and Secrets, modifica GROQ_API_KEY e incolla di nuovo la chiave (inizia con gsk_).');
+    if (res.status === 401) throw new Error('Password errata: esci e rientra nell’app con la password giusta.');
     if (res.status === 503 && data.code === 'no-key') throw new Error('La modalità online non è ancora attiva. Per ora scegli «Sul dispositivo».');
     if (res.status >= 500) { await sleep(2000 * (k + 1)); continue; }
     throw new Error(data.error || ('Errore del servizio online (' + res.status + ').'));
