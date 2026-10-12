@@ -1,0 +1,43 @@
+# Aggiorna la tua copia di Freetrascrizioni all'ultima versione.
+# Su GitHub: scheda "Actions" → "Aggiorna Freetrascrizioni" → "Run workflow".
+# I tuoi dati (lezioni) e i segreti su Cloudflare non vengono toccati: cambia solo il codice.
+name: Aggiorna Freetrascrizioni
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  aggiorna:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Scarica la tua copia
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Copia la versione più recente
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/riccardozamboni07-hash/freetrascrizioni.git /tmp/originale
+          # conserva il nome del tuo Worker scelto durante l'installazione
+          NOME=$(node -e "const s=require('fs').readFileSync('wrangler.jsonc','utf8');const m=s.match(/\"name\"\s*:\s*\"([^\"]+)\"/);process.stdout.write(m?m[1]:'')")
+          rsync -a --delete --exclude '.git' --exclude '.github' --exclude 'wrangler.jsonc' /tmp/originale/ ./
+          cp /tmp/originale/wrangler.jsonc wrangler.jsonc.nuovo
+          if [ -n "$NOME" ]; then
+            node -e "const fs=require('fs');let s=fs.readFileSync('wrangler.jsonc.nuovo','utf8');s=s.replace(/(\"name\"\s*:\s*\")[^\"]+(\")/,'\$1'+process.argv[1]+'\$2');fs.writeFileSync('wrangler.jsonc',s)" "$NOME"
+          else
+            mv wrangler.jsonc.nuovo wrangler.jsonc
+          fi
+          rm -f wrangler.jsonc.nuovo
+
+      - name: Salva l'aggiornamento (Cloudflare lo pubblica da solo)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then echo "Sei già all'ultima versione."; exit 0; fi
+          git commit -m "Aggiornamento Freetrascrizioni"
+          git push

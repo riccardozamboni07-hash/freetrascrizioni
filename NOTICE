@@ -1,0 +1,10 @@
+Freetrascrizioni usa i seguenti componenti di terze parti, caricati dal browser tramite CDN
+(non inclusi in questo repository) e soggetti alle rispettive licenze:
+
+- Transformers.js (@huggingface/transformers) — Apache License 2.0
+- Modelli Whisper (OpenAI), versioni ONNX di onnx-community — MIT License
+- ffmpeg.wasm (@ffmpeg/core) — licenza GPL/LGPL di FFmpeg e componenti inclusi
+- lamejs — GNU LGPL 3.0
+
+La trascrizione online usa l'API di Groq (whisper-large-v3-turbo), soggetta ai termini di Groq.
+I caratteri tipografici sono serviti da Google Fonts (SIL Open Font License).

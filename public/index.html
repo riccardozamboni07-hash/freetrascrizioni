@@ -1,0 +1,1476 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Freetrascrizioni">
+<meta name="theme-color" content="#2f6b5a">
+<title>Freetrascrizioni</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: una colonna stretta, quattro blocchi in sequenza: audio → trascrizione → testo → riassunto */
+:root{
+  --bg:#f3f4f2; --surface:#ffffff; --fg:#1b2420; --muted:#5d6a64; --line:#d9dfdb;
+  --accent:#2f6b5a; --accent-fg:#ffffff; --accent-soft:#e1eee9;
+  --rec:#c2412d; --warn:#9a6b00; --err:#b3261e;
+  --sans:"Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#121715; --surface:#1a211e; --fg:#e7ece9; --muted:#9aa8a1; --line:#2c3632;
+  --accent:#6fbfa5; --accent-fg:#0d1512; --accent-soft:#1f3029;
+  --rec:#ef7b66; --warn:#e2b34a; --err:#ff8a80; color-scheme:dark; } }
+:root[data-theme="dark"]{
+  --bg:#121715; --surface:#1a211e; --fg:#e7ece9; --muted:#9aa8a1; --line:#2c3632;
+  --accent:#6fbfa5; --accent-fg:#0d1512; --accent-soft:#1f3029;
+  --rec:#ef7b66; --warn:#e2b34a; --err:#ff8a80; color-scheme:dark; }
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--fg);font:16px/1.55 var(--sans);
+  padding-inline:max(16px, env(safe-area-inset-left, 0px));
+  padding-block:calc(24px + env(safe-area-inset-top, 0px)) calc(48px + env(safe-area-inset-bottom, 0px))}
+main{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header h1{font-size:1.7rem;line-height:1.2;margin:0;letter-spacing:-.01em;text-wrap:balance}
+header p{margin:.35rem 0 0;color:var(--muted);max-width:62ch}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.label{font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.between{justify-content:space-between}
+.sources{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:560px){.sources{grid-template-columns:1fr}}
+.source{border:1px dashed var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;align-items:flex-start;min-width:0}
+.source.drag{border-color:var(--accent);background:var(--accent-soft)}
+.source h2{font-size:1rem;margin:0}
+.source small{color:var(--muted)}
+button,.btn{font:inherit;font-weight:600;font-size:.95rem;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);
+  padding:.6rem 1rem;min-height:44px;cursor:pointer;display:inline-flex;align-items:center;gap:.5rem;text-decoration:none;-webkit-tap-highlight-color:transparent}
+button:hover:not(:disabled),.btn:hover{border-color:var(--muted)}
+button:focus-visible,a.btn:focus-visible,label.btn:focus-within,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:disabled{opacity:.5;cursor:not-allowed}
+.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.primary:hover:not(:disabled){filter:brightness(1.07);border-color:var(--accent)}
+.rec{color:var(--rec);border-color:var(--rec)}
+.danger{color:var(--err)}
+.danger.armed{background:var(--err);color:var(--surface);border-color:var(--err)}
+.rec .dot{width:.7rem;height:.7rem;border-radius:50%;background:var(--rec)}
+.rec.on .dot{animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.rec.on .dot{animation:none}}
+.timer{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:1.05rem}
+input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
+.selected{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:10px;background:var(--accent-soft);min-width:0}
+.selected strong{word-break:break-all}
+audio{width:100%}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field span{font-size:.85rem;color:var(--muted)}
+select{font:inherit;padding:.55rem;min-height:44px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.check{display:flex;gap:.6rem;align-items:center;font-size:.95rem}
+.check input{width:20px;height:20px}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar > i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.status{font-size:.92rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.status.err{color:var(--err)} .status.warn{color:var(--warn)}
+textarea{width:100%;min-height:280px;resize:vertical;font:16px/1.65 var(--sans);padding:14px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+#sumOut{min-height:200px}
+.note{color:var(--muted);font-size:.88rem;margin:0}
+.tips{color:var(--muted);font-size:.88rem;margin:0;padding-left:1.1rem;display:flex;flex-direction:column;gap:4px}
+.chip{font-size:.78rem;font-weight:600;padding:.15rem .55rem;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.chip.ok{color:var(--accent);border-color:var(--accent)}
+.sumgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:560px){.sumgrid{grid-template-columns:1fr}}
+.sumcard{border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;align-items:flex-start;min-width:0}
+.sumcard h3{margin:0;font-size:1rem}
+.sumcard p{margin:0;color:var(--muted);font-size:.9rem}
+.banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:12px;border-radius:10px;border:1px solid var(--warn)}
+.banner p{margin:0;flex:1 1 240px}
+.live{font-size:.78rem;font-weight:600;color:var(--rec)}
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;counter-reset:st}
+@media (max-width:560px){.steps{gap:6px}.steps li{flex-direction:column;align-items:center;text-align:center;gap:6px;padding:10px 6px;font-size:.88rem}.steps span{display:none}}
+.steps li{counter-increment:st;display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:10px;background:var(--surface);border:1px solid var(--line);min-width:0}
+.steps li::before{content:counter(st);flex:none;width:1.6rem;height:1.6rem;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.85rem;background:var(--accent);color:var(--accent-fg)}
+.steps strong{display:block}
+.steps span{color:var(--muted);font-size:.88rem}
+.demo{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:12px;border-radius:10px;background:var(--accent-soft)}
+.demo p{margin:0;flex:1 1 220px;font-size:.92rem}
+.support{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px 16px;border-radius:12px;border:1px solid var(--line);background:var(--surface)}
+.support p{margin:0;flex:1 1 240px;font-size:.92rem;color:var(--muted)}
+.support strong{color:var(--fg)}
+.thanks{font-size:.9rem}
+.priv{display:none}
+body.privato .priv{display:flex}
+body.privato .pub{display:none}
+body.locked main > :not(header):not(#lock):not(#setup){display:none}
+body.privato:not(.locked) #lock{display:none}
+#lock{max-width:420px}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+input[type=text],input[type=password],input[type=date],input[type=search]{font:inherit;padding:.55rem;min-height:44px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);width:100%}
+#appunti{min-height:180px}
+.lesson-list{display:flex;flex-direction:column;gap:14px}
+.subject h3{margin:0 0 6px;font-size:.95rem}
+.subject ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.subject li button{width:100%;justify-content:space-between;text-align:left;font-weight:500}
+.subject li button.current{border-color:var(--accent);background:var(--accent-soft)}
+.meta{color:var(--muted);font-size:.82rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.usage{font-size:.85rem;color:var(--muted)}
+.thanks a{color:var(--accent);font-weight:600}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Freetrascrizioni</h1>
+    <p>Registra o carica una lezione, anche di 2 ore, e ottieni il testo e il riassunto in pochi minuti. Gratis e senza account.</p>
+  </header>
+
+  <section class="panel" id="setup" aria-labelledby="setupT" style="flex-direction:column" hidden>
+    <span class="label" id="setupT">Ultimo passo dell'installazione</span>
+    <p>L’app è installata, ma mancano le impostazioni qui sotto. Su Cloudflare apri <strong>Workers e Pages → il tuo Worker → Impostazioni → Variabili e segreti → Aggiungi</strong>, scegli il tipo <strong>Segreto</strong> e poi tocca <strong>Distribuisci</strong>.</p>
+    <ul class="tips" id="setupList"></ul>
+    <button type="button" class="primary" id="setupRetry">Ho fatto, ricontrolla</button>
+  </section>
+
+  <section class="panel priv" id="lock" aria-labelledby="lockT" style="flex-direction:column">
+    <span class="label" id="lockT">Area personale</span>
+    <p class="note">Inserisci la password che hai scelto durante l’installazione. Su questo dispositivo te la chiede una volta sola.</p>
+    <form class="row" id="lockForm">
+      <input type="password" id="pw" autocomplete="current-password" placeholder="Password" aria-label="Password" style="flex:1 1 200px">
+      <button class="primary" type="submit">Entra</button>
+    </form>
+    <div class="status" id="lockStatus" role="status"></div>
+  </section>
+
+  <ol class="steps pub" aria-label="Come funziona">
+    <li><div><strong>Registra o carica</strong><span>Registra la lezione dal telefono o scegli un file audio.</span></div></li>
+    <li><div><strong>Trascrivi</strong><span>Premi «Trascrivi»: il testo compare man mano.</span></div></li>
+    <li><div><strong>Riassumi</strong><span>Correggi il testo o fanne appunti con Claude, oppure scaricalo.</span></div></li>
+  </ol>
+
+  <section class="panel" aria-labelledby="l1">
+    <div class="row between">
+      <span class="label" id="l1">1 · Audio</span>
+      <span class="chip" id="gpuChip">Controllo dispositivo…</span>
+    </div>
+    <div class="banner" id="resume" hidden>
+      <p id="resumeText"></p>
+      <div class="row">
+        <button type="button" id="resumeYes" class="primary">Riprendi</button>
+        <button type="button" id="resumeNo">Annulla</button>
+      </div>
+    </div>
+    <div class="banner" id="recover" hidden>
+      <p id="recoverText"></p>
+      <div class="row">
+        <button type="button" id="recoverYes" class="primary">Recupera</button>
+        <button type="button" id="recoverNo">Elimina</button>
+      </div>
+    </div>
+    <div class="sources">
+      <div class="source">
+        <h2>Registra</h2>
+        <small id="recHint">Tieni questa pagina aperta e lo schermo acceso. La registrazione viene salvata a pezzi da 5 minuti: se la pagina si chiude, la recuperi.</small>
+        <div class="row">
+          <button class="rec" id="recBtn" type="button"><span class="dot"></span><span id="recLabel">Avvia registrazione</span></button>
+          <span class="timer" id="recTime">00:00:00</span>
+        </div>
+      </div>
+      <label class="source" id="drop" for="fileIn">
+        <h2>Carica un file</h2>
+        <small>MP3, M4A, WAV, memo vocali, video… anche di 2 ore. Trascina qui o scegli.</small>
+        <span class="btn">Scegli file</span>
+        <input type="file" id="fileIn" accept="audio/*,video/*,.m4a,.mp3,.wav,.ogg,.webm,.aac,.opus,.flac">
+      </label>
+    </div>
+    <div class="demo">
+      <p><strong>Vuoi vedere come funziona?</strong> Prova con un audio di esempio di 25 secondi, una lezione sul bilancio d'esercizio.</p>
+      <button type="button" id="demoBtn">Prova con l'esempio</button>
+    </div>
+    <div class="selected" id="selected" hidden>
+      <strong id="selName"></strong>
+      <audio id="player" controls playsinline hidden></audio>
+      <div class="row"><button type="button" id="saveRec" hidden>Salva la registrazione</button><button type="button" id="removeBtn" class="danger">Rimuovi</button></div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="l2">
+    <span class="label" id="l2">2 · Trascrizione</span>
+    <div class="opts">
+      <label class="field"><span>Modalità</span>
+        <select id="mode">
+          <option value="online">Online veloce (consigliata)</option>
+          <option value="device">Sul dispositivo (privata, più lenta)</option>
+        </select>
+      </label>
+      <label class="field" id="modelField"><span>Qualità</span>
+        <select id="model">
+          <option value="onnx-community/whisper-tiny">Rapidissima (tiny, ~80 MB)</option>
+          <option value="onnx-community/whisper-base">Veloce (base, ~150 MB)</option>
+          <option value="onnx-community/whisper-small">Precisa (small, ~500 MB)</option>
+        </select>
+      </label>
+      <label class="field"><span>Lingua</span>
+        <select id="lang">
+          <option value="italian" selected>Italiano</option>
+          <option value="english">Inglese</option>
+        </select>
+      </label>
+    </div>
+    <p class="note" id="modeNote"></p>
+    <label class="check"><input type="checkbox" id="live"> Trascrivi mentre registri: a fine lezione il testo è quasi pronto</label>
+    <label class="check"><input type="checkbox" id="stamps" checked> Mostra i minutaggi</label>
+    <div class="row">
+      <button class="primary" id="goBtn" type="button" disabled>Trascrivi</button>
+      <button id="stopBtn" type="button" hidden>Interrompi</button>
+    </div>
+    <div class="bar" aria-hidden="true"><i id="bar"></i></div>
+    <div class="status" id="status" role="status">Scegli un audio per iniziare.</div>
+  </section>
+
+  <section class="panel" aria-labelledby="l3">
+    <div class="row between">
+      <span class="label" id="l3">3 · Testo</span>
+      <div class="row">
+        <button type="button" id="copyBtn">Copia</button>
+        <button type="button" id="shareBtn" hidden>Condividi</button>
+        <button type="button" id="dlBtn" class="primary">Scarica .txt</button>
+      </div>
+    </div>
+    <textarea id="out" spellcheck="false" placeholder="Il testo comparirà qui man mano, blocco per blocco, e viene salvato automaticamente. Puoi correggerlo prima di scaricarlo o riassumerlo."></textarea>
+  </section>
+
+  <section class="panel priv" aria-labelledby="lSave" style="flex-direction:column">
+    <div class="row between">
+      <span class="label" id="lSave">Salva nell'archivio</span>
+      <span class="chip" id="currentChip">Nuova lezione</span>
+    </div>
+    <div class="form">
+      <label class="field"><span>Materia</span><input type="text" id="materia" list="materieList" placeholder="es. Diritto pubblico"></label>
+      <label class="field"><span>Titolo</span><input type="text" id="titolo" placeholder="es. Le fonti del diritto"></label>
+      <label class="field"><span>Data</span><input type="date" id="dataLez"></label>
+    </div>
+    <datalist id="materieList"></datalist>
+    <label class="field"><span>I tuoi appunti (incolla qui quelli fatti con Claude)</span>
+      <textarea id="appunti" spellcheck="true" placeholder="Appunti, riassunto, domande d'esame…"></textarea>
+    </label>
+    <div class="row">
+      <button type="button" class="primary" id="saveLesson">Salva lezione</button>
+      <button type="button" id="newLesson">Nuova lezione</button>
+      <button type="button" id="delLesson" class="danger" hidden>Elimina</button>
+    </div>
+    <div class="status" id="saveStatus" role="status"></div>
+  </section>
+
+  <section class="panel priv" aria-labelledby="lArch" style="flex-direction:column">
+    <div class="row between">
+      <span class="label" id="lArch">Le tue lezioni</span>
+      <span class="usage" id="usage"></span>
+    </div>
+    <input type="search" id="cerca" placeholder="Cerca per titolo, materia o parola della lezione" aria-label="Cerca nelle lezioni">
+    <div class="lesson-list" id="lista"><p class="note">Le lezioni che salvi compaiono qui, divise per materia.</p></div>
+  </section>
+
+  <section class="panel" aria-labelledby="l4">
+    <span class="label" id="l4">4 · Riassunto</span>
+    <div class="sumgrid">
+      <div class="sumcard">
+        <h3>Con Claude</h3>
+        <p>Apre Claude con la trascrizione e le istruzioni già pronte. Con i testi brevi parte da solo; con le lezioni lunghe il testo viene copiato: incollalo e invia.</p>
+        <a class="btn primary" id="claudeBtn" href="https://claude.ai/new" target="_blank" rel="noopener">Fai riassunti e appunti</a>
+        <a class="btn" id="claudeFixBtn" href="https://claude.ai/new" target="_blank" rel="noopener">Aggiusta la trascrizione</a>
+      </div>
+      <div class="sumcard">
+        <h3>Punti chiave istantanei</h3>
+        <p>Estrae sul dispositivo le frasi più importanti della lezione. Immediato e funziona anche offline, ma non riscrive il testo.</p>
+        <button type="button" id="keyBtn">Estrai punti chiave</button>
+      </div>
+    </div>
+    <div class="status" id="sumStatus" role="status"></div>
+    <textarea id="sumOut" hidden spellcheck="false"></textarea>
+    <div class="row" id="sumActions" hidden>
+      <button type="button" id="sumCopy">Copia punti chiave</button>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="l5">
+    <span class="label" id="l5">Consigli</span>
+    <ul class="tips">
+      <li><strong>Online veloce</strong>: l'audio viene compresso e inviato a pezzi al servizio di trascrizione (Groq), poi non viene conservato dall'app. Un'ora di lezione richiede pochi minuti e circa 15 MB di dati.</li>
+      <li><strong>Sul dispositivo</strong>: l'audio non lascia mai il telefono o il computer, ma è più lento. La prima volta scarica il modello, poi resta salvato.</li>
+      <li>Per i file lunghi si scarica una volta sola un lettore audio (~32 MB).</li>
+      <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
+    </ul>
+  </section>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.0</p>
+</main>
+
+<script type="module">
+const $ = id => document.getElementById(id);
+const SR = 16000;          // Whisper lavora a 16 kHz mono
+const CHUNK_S = 30;        // finestra di Whisper
+const REC_SEG_S = 300;     // la registrazione si salva a pezzi da 5 minuti
+const NATIVE_MAX_S = 15 * 60;
+const TJS = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js';
+const FFCORE = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm/ffmpeg-core.js';
+const ua = navigator.userAgent;
+const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isMobile = isIOS || /Android|Mobile/.test(ua);
+const PRIVATE = true;   // Freetrascrizioni: l'app è sempre personale e protetta da password
+const FILE_SEG_S = isMobile ? 300 : 600;   // i file si elaborano a pezzi: 5 min su telefono (meno memoria), 10 su computer
+
+let device = 'wasm';
+let source = null;        // {kind:'file', file, name} | {kind:'rec', segs:[{blob, offset}], name, ongoing, full}
+let running = false, cancelled = false, live = false;
+let chunks = new Map();   // start (s) -> testo
+let totalSec = 0, doneSec = 0, t0 = 0, wakeLock = null;
+
+/* ---------- Avvio ---------- */
+// Se la pagina si chiude da sola durante il caricamento o la trascrizione (tipico crash per memoria
+// su telefono), alla riapertura passiamo alla modalità compatibile (WASM), più lenta ma stabile.
+const CRASH_KEY = 'trascrittore:in-corso', SAFE_KEY = 'trascrittore:modalita-compatibile';
+function lsGet(k){ try { return localStorage.getItem(k); } catch (_) { return null; } }
+function lsSet(k, v){ try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (_) {} }
+$('model').value = isMobile ? 'onnx-community/whisper-base' : 'onnx-community/whisper-small';
+let mode = lsGet('trascrittore:modalita') === 'device' ? 'device' : 'online';
+function updateMode(){
+  $('mode').value = mode;
+  $('modelField').hidden = mode === 'online';
+  $('modeNote').textContent = mode === 'online'
+    ? 'Online: molto più veloce e precisa. L’audio viene inviato al servizio di trascrizione e non viene conservato dall’app.'
+    : 'Sul dispositivo: l’audio non lascia mai il tuo telefono o computer, ma la trascrizione è più lenta.';
+}
+$('mode').addEventListener('change', () => { mode = $('mode').value; lsSet('trascrittore:modalita', mode); updateMode(); track('modalita-' + mode); });
+updateMode();
+// Se la modalità online non è disponibile (chiave mancante o funzione non raggiungibile), si usa il dispositivo.
+fetch('/api/trascrivi', { cache: 'no-store' }).then(r => r.ok ? r.json() : { online: false }).catch(() => ({ online: false })).then(d => {
+  if (d && d.online) return;
+  const opt = $('mode').querySelector('option[value="online"]');
+  opt.disabled = true; opt.textContent = 'Online veloce (non disponibile ora)';
+  if (mode === 'online') { mode = 'device'; updateMode(); }
+});
+if (isIOS) $('recHint').textContent = 'Tieni lo schermo acceso: se l’iPhone si blocca, la registrazione si ferma. Viene salvata a pezzi da 5 minuti, quindi la recuperi.';
+if (navigator.share) $('shareBtn').hidden = false;
+(async () => {
+  const crashed = lsGet(CRASH_KEY);
+  lsSet(CRASH_KEY, null);
+  if (crashed && crashed.startsWith('webgpu')) lsSet(SAFE_KEY, '1');
+  const safe = lsGet(SAFE_KEY) === '1' || isIOS;
+  if (!safe) { try { if (navigator.gpu && await navigator.gpu.requestAdapter()) device = 'webgpu'; } catch (_) {} }
+  const chip = $('gpuChip');
+  if (device === 'webgpu') { chip.textContent = 'Accelerazione GPU attiva'; chip.classList.add('ok'); }
+  else chip.textContent = safe ? 'Modalità compatibile' : 'Solo CPU (più lento)';
+  if (crashed) {
+    track('crash-rilevato-' + (isMobile ? 'telefono' : 'computer'), crashed);
+    setTimeout(() => setStatus(isIOS ? 'La pagina si è chiusa durante la trascrizione: succede su iPhone se esci da Safari o blocchi lo schermo. Puoi riprendere da dove eri rimasto.' : 'La pagina si era chiusa durante la trascrizione. Ho attivato la modalità compatibile: è più lenta ma più stabile. Puoi riprendere da dove eri rimasto.', 'warn'), 0);
+  }
+  $('live').checked = mode === 'online' || (device === 'webgpu' && !isMobile);
+})();
+if (!window.isSecureContext && location.protocol !== 'file:') setStatus('Apri la pagina da un indirizzo https, altrimenti il microfono non funziona.', 'warn');
+
+/* ---------- Salvataggio automatico ---------- */
+const LS = 'trascrittore:ultimo';
+function saveText(){
+  try { localStorage.setItem(LS, JSON.stringify({ name: source?.name || 'lezione', chunks: [...chunks] })); } catch (_) {}
+}
+function restoreText(){
+  try {
+    const d = JSON.parse(localStorage.getItem(LS) || 'null');
+    if (d && d.chunks?.length) {
+      chunks = new Map(d.chunks); render();
+      setStatus(`Ho ripristinato l’ultima trascrizione (${d.name}). Scegli un nuovo audio per iniziarne un’altra.`);
+    }
+  } catch (_) {}
+}
+
+const idb = {
+  db: null,
+  async open(){
+    if (this.db) return this.db;
+    this.db = await new Promise((res, rej) => {
+      const r = indexedDB.open('trascrittore', 2);
+      r.onupgradeneeded = () => {
+        const db = r.result;
+        if (!db.objectStoreNames.contains('seg')) db.createObjectStore('seg', { keyPath: 'idx' });
+        if (!db.objectStoreNames.contains('job')) db.createObjectStore('job', { keyPath: 'id' });
+      };
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    });
+    return this.db;
+  },
+  async tx(mode, fn, store = 'seg'){
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const t = db.transaction(store, mode); const st = t.objectStore(store);
+      const out = fn(st); t.oncomplete = () => res(out?.result ?? out); t.onerror = () => rej(t.error);
+    });
+  },
+  put(v){ return this.tx('readwrite', s => s.put(v)); },
+  clear(){ return this.tx('readwrite', s => s.clear()); },
+  all(){ return this.tx('readonly', s => s.getAll()); },
+  // trascrizione di un file in corso: il file resta salvato finché non finisce, così si può riprendere
+  jobPut(v){ return this.tx('readwrite', s => s.put({ id: 'file', ...v }), 'job'); },
+  jobGet(){ return this.tx('readonly', s => s.get('file'), 'job'); },
+  jobClear(){ return this.tx('readwrite', s => s.clear(), 'job'); }
+};
+const JOB_DONE_KEY = 'trascrittore:file-fatto';
+async function checkResume(){
+  try {
+    const job = await idb.jobGet();
+    if (!job || !job.file) return;
+    const done = Number(lsGet(JOB_DONE_KEY) || 0);
+    $('resumeText').textContent = done > 0
+      ? `La trascrizione di «${job.name}» si è interrotta a ${hms(done)}. Il testo fatto finora è salvato.`
+      : `La trascrizione di «${job.name}» si è interrotta prima di iniziare.`;
+    $('resume').hidden = false;
+    $('resumeYes').onclick = () => {
+      $('resume').hidden = true;
+      if (running || segRec) return;
+      const file = job.file instanceof File ? job.file : new File([job.file], job.name, { type: job.file.type });
+      setSource({ kind: 'file', file, name: job.name });
+      track('trascrizione-ripresa-' + devTag(), hms(done));
+      runFile(file, done);
+    };
+    $('resumeNo').onclick = async () => { $('resume').hidden = true; lsSet(JOB_DONE_KEY, null); try { await idb.jobClear(); } catch (_) {} };
+  } catch (_) {}
+}
+async function checkRecovery(){
+  try {
+    const segs = (await idb.all()).sort((a, b) => a.idx - b.idx);
+    if (!segs.length) return;
+    const last = segs[segs.length - 1];
+    const mins = Math.round((last.offset + (last.dur || REC_SEG_S)) / 60);
+    $('recoverText').textContent = `C’è una registrazione salvata (${segs[0].name}, circa ${mins} min).`;
+    $('recover').hidden = false;
+    $('recoverYes').onclick = () => {
+      $('recover').hidden = true;
+      setSource({ kind: 'rec', name: segs[0].name, segs: segs.map(s => ({ pcm: s.pcm, blob: s.blob, offset: s.offset })), ongoing: false, full: null, dur: last.offset + (last.dur || REC_SEG_S) });
+      setStatus(`Registrazione recuperata: ${segs.length} parti. Premi «Trascrivi».`);
+    };
+    $('recoverNo').onclick = async () => { $('recover').hidden = true; try { await idb.clear(); } catch (_) {} };
+  } catch (_) {}
+}
+
+/* ---------- Scelta audio ---------- */
+function setSource(s){
+  source = s;
+  $('selected').hidden = false;
+  $('selName').textContent = s.name;
+  const playBlob = s.kind === 'file' ? s.file : s.full;
+  $('player').hidden = !playBlob;
+  if (playBlob) $('player').src = URL.createObjectURL(playBlob);
+  $('saveRec').hidden = !(s.kind === 'rec' && s.full);
+  $('goBtn').disabled = running || (s.kind === 'rec' && s.ongoing);
+  $('removeBtn').hidden = s.kind === 'rec' && s.ongoing;
+}
+/* Rimuovi il file o la registrazione scelti (doppio tocco per confermare, senza finestre di dialogo) */
+let removeArm = null;
+function disarmRemove(){ clearTimeout(removeArm); removeArm = null; $('removeBtn').textContent = 'Rimuovi'; $('removeBtn').classList.remove('armed'); }
+$('removeBtn').addEventListener('click', async () => {
+  if (running || segRec) { setStatus('Interrompi prima la trascrizione o la registrazione in corso, poi potrai rimuovere l’audio.', 'warn'); return; }
+  if (!removeArm) {
+    $('removeBtn').textContent = 'Tocca di nuovo per rimuovere'; $('removeBtn').classList.add('armed');
+    removeArm = setTimeout(disarmRemove, 3000); return;
+  }
+  disarmRemove();
+  const wasRec = source?.kind === 'rec';
+  const player = $('player');
+  try { player.pause(); if (player.src) URL.revokeObjectURL(player.src); } catch (_) {}
+  player.removeAttribute('src'); try { player.load(); } catch (_) {}
+  source = null;
+  $('selected').hidden = true; $('player').hidden = true; $('saveRec').hidden = true;
+  $('fileIn').value = ''; $('goBtn').disabled = true; $('recTime').textContent = '00:00:00';
+  if (wasRec) { try { await idb.clear(); } catch (_) {} }
+  else { lsSet(JOB_DONE_KEY, null); idb.jobClear().catch(() => {}); }
+  track('audio-rimosso', wasRec ? 'registrazione' : 'file');
+  setStatus(wasRec ? 'Registrazione eliminata. Puoi registrarne un’altra o caricare un file.' : 'File rimosso. Scegline un altro oppure registra.');
+});
+function pickFile(f){
+  if (!f || running) return;
+  lsSet(JOB_DONE_KEY, null); idb.jobClear().catch(() => {}); $('resume').hidden = true;
+  setSource({ kind: 'file', file: f, name: f.name });
+  setStatus('Audio pronto. Premi «Trascrivi».');
+}
+$('fileIn').addEventListener('change', e => pickFile(e.target.files[0]));
+const drop = $('drop');
+['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('drag'); }));
+['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('drag'); }));
+drop.addEventListener('drop', e => pickFile(e.dataTransfer.files[0]));
+
+/* ---------- Registrazione (audio grezzo a 16 kHz, a pezzi da 5 minuti) ---------- */
+// Il testo si ricava dall'audio grezzo del microfono: niente file compressi da decodificare
+// (su iPhone la decodifica dei pezzi registrati dava trascrizioni vuote). In parallelo un
+// MediaRecorder salva il file compresso, solo per poterlo scaricare.
+let stream = null, segRec = null, fullRec = null, fullParts = [], recStart = 0, segIdx = 0, recTick = null, recMime = '';
+let actx = null, proc = null, srcNode = null, pcmParts = [], pcmLen = 0, segOffset = 0, resample = null, recPeak = 0;
+$('recBtn').addEventListener('click', () => (segRec ? stopRecording() : startRecording()));
+
+function makeResampler(inRate){
+  const ratio = inRate / SR;
+  if (ratio <= 1) return x => x.slice();
+  let acc = 0, cnt = 0, t = 0;
+  return x => {
+    const out = new Float32Array(Math.ceil(x.length / ratio) + 2); let n = 0;
+    for (let i = 0; i < x.length; i++) {
+      acc += x[i]; cnt++; t += 1;
+      if (t >= ratio) { out[n++] = acc / cnt; acc = 0; cnt = 0; t -= ratio; }
+    }
+    return out.slice(0, n);
+  };
+}
+const toInt16 = f => { const o = new Int16Array(f.length); for (let i = 0; i < f.length; i++) o[i] = Math.max(-1, Math.min(1, f[i])) * 32767; return o; };
+const fromInt16 = buf => { const a = new Int16Array(buf), o = new Float32Array(a.length); for (let i = 0; i < a.length; i++) o[i] = a[i] / 32767; return o; };
+
+async function startRecording(){
+  if (running) { setStatus('Aspetta che finisca la trascrizione in corso, oppure interrompila.', 'warn'); return; }
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!navigator.mediaDevices?.getUserMedia || !AC) {
+    setStatus('Questo browser non può registrare. Usa il registratore del telefono e carica il file.', 'err'); return;
+  }
+  // L'AudioContext va creato subito, dentro il tocco dell'utente (requisito di iPhone).
+  try { actx = new AC(); actx.resume?.().catch(() => {}); } catch (_) { actx = null; }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true, channelCount: 1 } });
+  } catch (_) {
+    try { actx?.close?.(); } catch (_) {} actx = null;
+    setStatus('Microfono non disponibile: consenti l’accesso al microfono per questo sito nelle impostazioni del browser e riprova.', 'err'); return;
+  }
+  if (!actx) { stream.getTracks().forEach(t => t.stop()); setStatus('Non riesco ad avviare l’audio su questo browser. Usa il registratore del telefono e carica il file.', 'err'); return; }
+  const n = new Date(), z = v => String(v).padStart(2, '0');
+  const stamp = `${n.getFullYear()}-${z(n.getMonth() + 1)}-${z(n.getDate())}_${z(n.getHours())}-${z(n.getMinutes())}`;
+  try { await idb.clear(); } catch (_) {}
+  $('recover').hidden = true;
+  chunks = new Map(); render();
+  setSource({ kind: 'rec', name: `lezione_${stamp}`, segs: [], ongoing: true, full: null });
+
+  // audio grezzo per la trascrizione
+  pcmParts = []; pcmLen = 0; segIdx = 0; segOffset = 0; recPeak = 0;
+  resample = makeResampler(actx.sampleRate);
+  srcNode = actx.createMediaStreamSource(stream);
+  proc = actx.createScriptProcessor(4096, 1, 1);
+  proc.onaudioprocess = e => {
+    if (!segRec) return;
+    const d = resample(e.inputBuffer.getChannelData(0));
+    if (!d.length) return;
+    for (let i = 0; i < d.length; i += 16) { const v = Math.abs(d[i]); if (v > recPeak) recPeak = v; }
+    pcmParts.push(d); pcmLen += d.length;
+    if (pcmLen >= REC_SEG_S * SR) finishSegment();
+  };
+  const mute = actx.createGain(); mute.gain.value = 0;
+  srcNode.connect(proc); proc.connect(mute); mute.connect(actx.destination);
+
+  // file compresso, solo per poterlo salvare
+  fullParts = [];
+  recMime = window.MediaRecorder ? (['audio/mp4','audio/webm;codecs=opus','audio/webm'].find(m => MediaRecorder.isTypeSupported(m)) || '') : '';
+  try {
+    fullRec = new MediaRecorder(stream, recMime ? { mimeType: recMime } : undefined);
+    fullRec.ondataavailable = e => e.data.size && fullParts.push(e.data);
+    fullRec.start(10000);
+  } catch (_) { fullRec = null; }
+
+  recStart = Date.now(); segRec = { on: true };
+  recTick = setInterval(() => {
+    $('recTime').textContent = hms((Date.now() - recStart) / 1000);
+    if (actx && actx.state === 'suspended') actx.resume?.().catch(() => {});
+    if (live) liveStatus();
+    else if (Date.now() - recStart > 8000 && recPeak < 0.003) setStatus('Non sento la voce: controlla che il microfono non sia coperto o disattivato.', 'warn');
+    else if (!running) setStatus('Registrazione in corso… Al termine premi «Ferma registrazione».');
+  }, 1000);
+  $('recBtn').classList.add('on'); $('recLabel').textContent = 'Ferma registrazione';
+  requestWake();
+  live = $('live').checked;
+  track('registrazione-avviata', live ? 'con trascrizione in diretta' : 'senza diretta');
+  if (live) { beginRun(); recNext = 0; ensureModel().catch(err => failRun(err)); }
+  else setStatus('Registrazione in corso… Al termine premi «Ferma registrazione».');
+}
+
+function finishSegment(){
+  if (!pcmLen) return;
+  const audio = new Float32Array(pcmLen); let o = 0;
+  for (const p of pcmParts) { audio.set(p, o); o += p.length; }
+  pcmParts = []; pcmLen = 0;
+  const idx = segIdx++, offset = segOffset;
+  segOffset += audio.length / SR;
+  source.segs[idx] = { audio, offset };
+  idb.put({ idx, pcm: toInt16(audio).buffer, offset, dur: audio.length / SR, name: source.name }).catch(() => {});
+  if (live) pumpRec();
+}
+
+async function stopRecording(){
+  clearInterval(recTick);
+  segRec = null;
+  finishSegment();
+  try { proc.onaudioprocess = null; srcNode.disconnect(); proc.disconnect(); } catch (_) {}
+  try { await actx.close(); } catch (_) {}
+  actx = null;
+  if (fullRec) {
+    try {
+      await new Promise(res => { fullRec.onstop = res; fullRec.stop(); });
+      source.full = new Blob(fullParts, { type: fullRec.mimeType || recMime || 'audio/webm' });
+    } catch (_) {}
+    fullRec = null;
+  }
+  stream.getTracks().forEach(t => t.stop());
+  source.ongoing = false; source.dur = segOffset;
+  track('registrazione-finita-' + devTag(), bucket(segOffset) + (recPeak < 0.003 ? ' · silenzio' : ''));
+  $('recBtn').classList.remove('on'); $('recLabel').textContent = 'Avvia registrazione';
+  const name = source.full ? `${source.name}.${(source.full.type || '').includes('mp4') ? 'm4a' : 'webm'}` : source.name;
+  setSource(source); $('selName').textContent = name; source.fileName = name;
+  if (live && running) { liveStatus(); pumpRec(); }
+  else {
+    releaseWake();
+    if (!source.segs.length) setStatus('Non ho registrato audio. Controlla il permesso del microfono e riprova.', 'err');
+    else setStatus(`Registrazione di ${hms(recDuration())} pronta. Premi «Trascrivi».`);
+  }
+}
+$('saveRec').addEventListener('click', () => source?.full && saveFile(source.full, source.fileName || source.name));
+const recDuration = () => source?.dur ?? (Date.now() - recStart) / 1000;
+
+/* ---------- Motore Whisper (worker) ---------- */
+const whisperSrc = `
+import { pipeline, env } from '${TJS}';
+env.allowLocalModels = false;
+const _fetch = self.fetch.bind(self);
+self.fetch = async (url, opts) => {
+  for (let k = 0; ; k++) {
+    try { return await _fetch(url, opts); }
+    catch (err) { if (k >= 4) throw err; await new Promise(r => setTimeout(r, 1500 * (k + 1))); }
+  }
+};
+let pipe = null, key = '', cancel = false;
+const post = m => self.postMessage(m);
+self.onmessage = async (e) => {
+  const d = e.data;
+  if (d.type === 'cancel') { cancel = true; return; }
+  try {
+    if (d.type === 'load') {
+      const k = d.model + d.device;
+      if (!pipe || key !== k) {
+        if (pipe) { try { await pipe.dispose(); } catch (_) {} pipe = null; }
+        const files = {};
+        pipe = await pipeline('automatic-speech-recognition', d.model, {
+          device: d.device,
+          dtype: d.device === 'webgpu' ? { encoder_model: 'fp32', decoder_model_merged: 'q4' } : 'q8',
+          progress_callback: p => {
+            if (p.status === 'progress' && p.total) {
+              files[p.file] = [p.loaded, p.total];
+              let l = 0, t = 0; for (const v of Object.values(files)) { l += v[0]; t += v[1]; }
+              post({ type: 'progress', loaded: l, total: t });
+            }
+          }
+        });
+        key = k;
+      }
+      post({ type: 'loaded' });
+      return;
+    }
+    if (d.type === 'seg') {
+      cancel = false;
+      const a = d.audio, CH = ${CHUNK_S} * ${SR};
+      const n = Math.ceil(a.length / CH);
+      for (let i = 0; i < n; i++) {
+        if (cancel) break;
+        const c = a.subarray(i * CH, Math.min((i + 1) * CH, a.length));
+        let s = 0, m = 0; for (let j = 0; j < c.length; j += 8) { s += c[j] * c[j]; m++; }
+        let text = '';
+        if (Math.sqrt(s / Math.max(m, 1)) > 0.002 && c.length > ${SR}) {
+          const r = await pipe(c, { language: d.lang, task: 'transcribe' });
+          text = (r.text || '').trim();
+        }
+        post({ type: 'chunk', start: d.offset + i * ${CHUNK_S}, len: c.length / ${SR}, text });
+      }
+      post({ type: 'segdone', id: d.id });
+    }
+  } catch (err) {
+    post({ type: 'error', id: d.id, text: String(err && err.message || err) });
+  }
+};`;
+
+let wk = null, wkKey = '', wkLoading = null, segId = 0;
+let modelT0 = 0, sawDownload = false, firstChunkAt = 0;
+const pending = new Map();
+function whisper(){
+  if (!wk) {
+    wk = new Worker(URL.createObjectURL(new Blob([whisperSrc], { type: 'text/javascript' })), { type: 'module' });
+    wk.onmessage = onWhisper;
+    wk.onerror = () => {
+      track('crash-motore-' + devTag(), stage + ' · ' + modelName());
+      const err = new Error('Non riesco ad avviare il motore. Controlla la connessione (serve la prima volta) e aggiorna il browser.');
+      wkLoading?.reject(err); pending.forEach(p => p.reject(err)); pending.clear();
+      wk = null; wkKey = ''; wkLoading = null;
+    };
+  }
+  return wk;
+}
+function onWhisper(e){
+  const d = e.data;
+  if (d.type === 'progress') {
+    if (!sawDownload) { sawDownload = true; track('modello-download-iniziato-' + devTag(), modelName()); }
+    if (!doneSec) $('bar').style.width = (d.loaded / d.total * 100).toFixed(1) + '%';
+    setStatus(`Scarico il modello (solo la prima volta): ${mb(d.loaded)} / ${mb(d.total)} MB`);
+  } else if (d.type === 'loaded') {
+    track('modello-pronto-' + devTag(), modelName() + ' · ' + (sawDownload ? 'scaricato' : 'già salvato') + ' in ' + Math.round((performance.now() - modelT0) / 1000) + ' s');
+    lsSet(CRASH_KEY, running ? device + ' · trascrizione · ' + modelName() : null);
+    wkLoading?.resolve();
+  }
+  else if (d.type === 'chunk') {
+    if (d.text) chunks.set(d.start, d.text);
+    if (!firstChunkAt) { firstChunkAt = performance.now(); track('primo-blocco-trascritto-' + devTag(), modelName() + ' · primo testo dopo ' + Math.round((firstChunkAt - (t0 || firstChunkAt)) / 1000) + ' s'); }
+    doneSec = Math.max(doneSec, d.start + d.len);
+    render(); saveText(); progress();
+  } else if (d.type === 'segdone') { pending.get(d.id)?.resolve(); pending.delete(d.id); }
+  else if (d.type === 'error') {
+    const err = new Error(d.text);
+    if (wkLoading && !wkLoading.done) wkLoading.reject(err);
+    const p = pending.get(d.id); if (p) { p.reject(err); pending.delete(d.id); }
+  }
+}
+function ensureModel(){
+  if (mode === 'online') return Promise.resolve();
+  stage = 'download modello';
+  const k = $('model').value + device;
+  if (wkKey === k && wkLoading) return wkLoading.promise;
+  wkKey = k;
+  setStatus('Preparo il modello…');
+  modelT0 = performance.now(); sawDownload = false;
+  lsSet(CRASH_KEY, device + ' · caricamento modello · ' + modelName());
+  track('modello-richiesto-' + devTag(), modelName());
+  wkLoading = deferred();
+  whisper().postMessage({ type: 'load', model: $('model').value, device });
+  const L = wkLoading;
+  L.promise.then(() => L.done = true, () => { L.done = true; if (wkLoading === L) { wkLoading = null; wkKey = ''; } });
+  return L.promise;
+}
+function transcribeSeg(audio, offset){
+  if (mode === 'online') return transcribeOnline(audio, offset);
+  stage = 'trascrizione';
+  const id = ++segId; const p = deferred(); pending.set(id, p);
+  whisper().postMessage({ type: 'seg', id, audio, offset, lang: $('lang').value }, [audio.buffer]);
+  return p.promise;
+}
+
+/* ---------- Trascrizione online (Groq, tramite la funzione Netlify /api/trascrivi) ---------- */
+const PIECE_S = 90, PARALLEL = 3;
+const LAME = 'https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js';
+// Compressione in MP3 (32 kbps, mono, 16 kHz) in un worker: ~8 volte meno dati da inviare.
+const mp3Src = `
+importScripts('${LAME}');
+self.onmessage = (e) => {
+  const { id, pcm } = e.data;
+  try {
+    const n = pcm.length, i16 = new Int16Array(n);
+    for (let i = 0; i < n; i++) { const v = Math.max(-1, Math.min(1, pcm[i])); i16[i] = v * 32767; }
+    const enc = new lamejs.Mp3Encoder(1, ${SR}, 32), out = [];
+    for (let i = 0; i < n; i += 1152) { const b = enc.encodeBuffer(i16.subarray(i, i + 1152)); if (b.length) out.push(new Uint8Array(b)); }
+    const end = enc.flush(); if (end.length) out.push(new Uint8Array(end));
+    self.postMessage({ id, mp3: new Blob(out, { type: 'audio/mpeg' }) });
+  } catch (err) { self.postMessage({ id, error: String(err && err.message || err) }); }
+};`;
+let mp3w = null, mp3Id = 0, mp3Broken = false; const mp3Pending = new Map();
+function toMp3(pcm){
+  if (mp3Broken) return Promise.resolve(null);
+  if (!mp3w) {
+    try {
+      mp3w = new Worker(URL.createObjectURL(new Blob([mp3Src], { type: 'text/javascript' })));
+      mp3w.onmessage = e => { const p = mp3Pending.get(e.data.id); mp3Pending.delete(e.data.id); p?.resolve(e.data.mp3 || null); };
+      mp3w.onerror = () => { mp3Broken = true; mp3Pending.forEach(p => p.resolve(null)); mp3Pending.clear(); };
+    } catch (_) { mp3Broken = true; return Promise.resolve(null); }
+  }
+  const id = ++mp3Id, p = deferred(); mp3Pending.set(id, p);
+  mp3w.postMessage({ id, pcm });
+  return p.promise;
+}
+function wavBlob(pcm){
+  const n = pcm.length, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+  const w = (o, str) => { for (let i = 0; i < str.length; i++) v.setUint8(o + i, str.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt ');
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, SR, true); v.setUint32(28, SR * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  w(36, 'data'); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, pcm[i])) * 32767, true);
+  return new Blob([buf], { type: 'audio/wav' });
+}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function rmsOf(a){ let s = 0, m = 0; for (let j = 0; j < a.length; j += 8) { s += a[j] * a[j]; m++; } return Math.sqrt(s / Math.max(m, 1)); }
+
+async function sendPiece(pcm, lang){
+  const body = (await toMp3(pcm)) || wavBlob(pcm);
+  for (let k = 0; k < 6; k++) {
+    if (cancelled) return '';
+    let res;
+    try {
+      res = await fetch('/api/trascrivi?lang=' + lang, { method: 'POST', headers: PRIVATE && privPw ? { 'content-type': body.type, 'x-chiave': privPw } : { 'content-type': body.type }, body });
+    } catch (_) { await sleep(2000 * (k + 1)); continue; }
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) return (data.text || '').trim();
+    if (res.status === 429 && data.code === 'quota-pubblica') throw new Error('La modalità veloce ha raggiunto il limite di oggi. Puoi usare «Sul dispositivo» oppure riprovare domani.');
+    if (res.status === 503 && data.code === 'fondi-esauriti') throw new Error('Hai raggiunto il tetto di spesa che hai impostato su Groq. Per ora usa «Sul dispositivo», oppure alza il tetto su console.groq.com.');
+    if (res.status === 429) {
+      const wait = Math.min(Number(data.retryAfter) || 20, 600);
+      if (wait > 120) throw new Error('Il servizio online ha raggiunto il limite di oggi. Riprova più tardi oppure scegli la modalità «Sul dispositivo».');
+      setStatus(`Il servizio online è molto usato: riprendo tra ${wait} secondi…`, 'warn');
+      await sleep(wait * 1000); continue;
+    }
+    if (res.status === 503 && data.code === 'no-key') throw new Error('La modalità online non è ancora attiva. Per ora scegli «Sul dispositivo».');
+    if (res.status >= 500) { await sleep(2000 * (k + 1)); continue; }
+    throw new Error(data.error || ('Errore del servizio online (' + res.status + ').'));
+  }
+  throw new Error('Il servizio online non risponde. Controlla la connessione e riprova, oppure scegli «Sul dispositivo».');
+}
+
+async function transcribeOnline(audio, offset){
+  stage = 'trascrizione online';
+  if (!t0) t0 = performance.now();
+  const lang = $('lang').value === 'english' ? 'en' : 'it';
+  const step = PIECE_S * SR, n = Math.ceil(audio.length / step);
+  let next = 0, failure = null;
+  async function lane(){
+    while (!cancelled && !failure) {
+      const i = next++; if (i >= n) return;
+      const a = audio.slice(i * step, Math.min((i + 1) * step, audio.length));
+      const start = offset + i * PIECE_S, len = a.length / SR;
+      let text = '';
+      try { if (a.length > SR / 2 && rmsOf(a) > 0.002) text = await sendPiece(a, lang); }
+      catch (err) { failure = err; return; }
+      if (text) chunks.set(start, text);
+      doneSec = Math.max(doneSec, start + len);
+      if (!firstChunkAt && text) { firstChunkAt = performance.now(); track('online-primo-testo-' + devTag(), 'dopo ' + Math.round((firstChunkAt - t0) / 1000) + ' s'); }
+      render(); saveText(); progress();
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(PARALLEL, n) }, lane));
+  if (failure) throw failure;
+}
+
+/* ---------- Lettore audio a pezzi (ffmpeg, solo per file lunghi) ---------- */
+const ffSrc = `
+let ff = null;
+const _fetch = self.fetch.bind(self);
+self.fetch = async (url, opts) => {
+  for (let k = 0; ; k++) {
+    try { return await _fetch(url, opts); }
+    catch (err) { if (k >= 4) throw err; await new Promise(r => setTimeout(r, 1500 * (k + 1))); }
+  }
+};
+self.onmessage = async (e) => {
+  const d = e.data;
+  try {
+    if (d.type === 'open') {
+      if (!ff) {
+        const create = (await import('${FFCORE}')).default;
+        ff = await create({ mainScriptUrlOrBlob: '${FFCORE}#' + btoa(JSON.stringify({ wasmURL: '${FFCORE}'.replace(/\\.js$/, '.wasm'), workerURL: '' })) });
+      }
+      try { ff.FS.unmount('/in'); } catch (_) {}
+      try { ff.FS.mkdir('/in'); } catch (_) {}
+      let path;
+      if (ff.FS.filesystems && ff.FS.filesystems.WORKERFS) {
+        const f = new File([d.file], 'audio.' + (d.ext || 'bin'));
+        ff.FS.mount(ff.FS.filesystems.WORKERFS, { files: [f] }, '/in');
+        path = '/in/' + f.name;
+      } else {
+        path = '/audio.' + (d.ext || 'bin');
+        ff.FS.writeFile(path, new Uint8Array(await d.file.arrayBuffer()));
+      }
+      self.path = path;
+      let log = '';
+      ff.setLogger && ff.setLogger(l => { log += (l && l.message || '') + '\\n'; });
+      try { ff.exec('-hide_banner', '-i', path); } catch (_) {}
+      ff.reset && ff.reset();
+      ff.setLogger && ff.setLogger(() => {});
+      const m = log.match(/Duration: (\\d+):(\\d+):(\\d+(?:\\.\\d+)?)/);
+      const duration = m ? (+m[1]) * 3600 + (+m[2]) * 60 + (+m[3]) : 0;
+      self.postMessage({ id: d.id, ok: true, duration });
+    } else if (d.type === 'seg') {
+      ff.reset && ff.reset();
+      ff.exec('-nostdin', '-ss', String(d.start), '-i', self.path, '-t', String(d.len), '-vn', '-ac', '1', '-ar', '${SR}', '-f', 'f32le', '/out.raw');
+      let out = new Float32Array(0);
+      try {
+        const u8 = ff.FS.readFile('/out.raw');
+        out = new Float32Array(u8.buffer, u8.byteOffset, Math.floor(u8.byteLength / 4)).slice();
+        ff.FS.unlink('/out.raw');
+      } catch (_) {}
+      self.postMessage({ id: d.id, ok: true, audio: out }, [out.buffer]);
+    }
+  } catch (err) {
+    self.postMessage({ id: d.id, ok: false, text: String(err && err.message || err) });
+  }
+};`;
+let ffw = null, ffId = 0; const ffPending = new Map();
+function ffCall(msg){
+  if (!ffw) {
+    ffw = new Worker(URL.createObjectURL(new Blob([ffSrc], { type: 'text/javascript' })), { type: 'module' });
+    ffw.onmessage = e => { const p = ffPending.get(e.data.id); if (!p) return; ffPending.delete(e.data.id); e.data.ok ? p.resolve(e.data) : p.reject(new Error(e.data.text)); };
+    ffw.onerror = () => { const err = new Error('Non riesco a caricare il lettore audio per i file lunghi. Controlla la connessione e riprova.'); ffPending.forEach(p => p.reject(err)); ffPending.clear(); ffw = null; };
+  }
+  const id = ++ffId, p = deferred(); ffPending.set(id, p);
+  ffw.postMessage({ ...msg, id });
+  return p.promise;
+}
+async function* ffmpegSegments(file, startAt = 0){
+  stage = 'lettore audio';
+  setStatus('Preparo il lettore audio per il file lungo…');
+  const ext = (file.name || '').split('.').pop().toLowerCase().slice(0, 5) || 'bin';
+  const { duration } = await ffCall({ type: 'open', file, ext });
+  if (duration && !totalSec) totalSec = duration;
+  track('audio-letto-' + devTag(), (duration ? bucket(duration) : 'durata sconosciuta') + ' · lettore file lunghi');
+  let i = Math.floor(startAt / FILE_SEG_S);
+  let next = ffCall({ type: 'seg', start: i * FILE_SEG_S, len: FILE_SEG_S });
+  while (true) {
+    const { audio } = await next;
+    if (!audio || audio.length < SR / 2) break;
+    const offset = i * FILE_SEG_S;
+    i++;
+    const more = audio.length >= (FILE_SEG_S - 1) * SR;
+    const nextStart = i * FILE_SEG_S;
+    // su computer legge il pezzo successivo mentre trascrive; su telefono uno alla volta, per risparmiare memoria
+    next = !more ? Promise.resolve({}) : isMobile ? null : ffCall({ type: 'seg', start: nextStart, len: FILE_SEG_S });
+    yield { audio, offset };
+    if (!next) next = ffCall({ type: 'seg', start: nextStart, len: FILE_SEG_S });
+  }
+}
+
+/* ---------- Decodifica nativa (file brevi e pezzi di registrazione) ---------- */
+async function decodeNative(blob){
+  stage = 'lettura audio';
+  const buf = await blob.arrayBuffer();
+  const AC = window.AudioContext || window.webkitAudioContext;
+  let ab;
+  try {
+    const ctx = new AC({ sampleRate: SR });
+    ab = await ctx.decodeAudioData(buf.slice(0));
+    ctx.close?.();
+  } catch (_) {
+    const ctx = new AC();
+    const raw = await new Promise((res, rej) => ctx.decodeAudioData(buf.slice(0), res, rej));
+    ctx.close?.();
+    const off = new OfflineAudioContext(1, Math.ceil(raw.duration * SR), SR);
+    const src = off.createBufferSource(); src.buffer = raw; src.connect(off.destination); src.start();
+    ab = await off.startRendering();
+  }
+  if (ab.numberOfChannels === 1) return ab.getChannelData(0).slice();
+  const out = new Float32Array(ab.length);
+  for (let c = 0; c < ab.numberOfChannels; c++) { const d = ab.getChannelData(c); for (let i = 0; i < d.length; i++) out[i] += d[i] / ab.numberOfChannels; }
+  return out;
+}
+async function decodeAny(blob, name){
+  try { return await decodeNative(blob); }
+  catch (_) {
+    const parts = [];
+    for await (const s of ffmpegSegments(new File([blob], name || 'audio.webm'))) parts.push(s.audio);
+    const len = parts.reduce((a, p) => a + p.length, 0), out = new Float32Array(len);
+    let o = 0; for (const p of parts) { out.set(p, o); o += p.length; }
+    return out;
+  }
+}
+function mediaDuration(file){
+  return new Promise(res => {
+    const a = document.createElement('audio'); const url = URL.createObjectURL(file);
+    const done = v => { URL.revokeObjectURL(url); res(v); };
+    a.preload = 'metadata';
+    a.onloadedmetadata = () => done(isFinite(a.duration) ? a.duration : 0);
+    a.onerror = () => done(0);
+    setTimeout(() => done(0), 8000);
+    a.src = url;
+  });
+}
+
+/* ---------- Esecuzione ---------- */
+$('goBtn').addEventListener('click', () => {
+  if (!source || running) return;
+  track('trascrizione-avviata', source.kind === 'file' ? 'file caricato' : 'registrazione');
+  if (source.kind === 'file') runFile(source.file);
+  else { live = false; runRecording(); }
+});
+$('stopBtn').addEventListener('click', () => {
+  cancelled = true; wk && wk.postMessage({ type: 'cancel' });
+  setStatus('Interrompo dopo il blocco in corso…', 'warn');
+});
+
+function beginRun(keep){
+  if (PRIVATE && !keep) privNewRun();
+  running = true; cancelled = false; totalSec = 0; t0 = 0; firstChunkAt = 0; bgTracked = false;
+  if (!keep) { chunks = new Map(); doneSec = 0; }
+  render(); $('goBtn').disabled = true; $('stopBtn').hidden = false; $('bar').style.width = '0%';
+  requestWake();
+}
+function endRun(msg, kind){
+  if (PRIVATE && !cancelled && chunks.size) privAfterRun();
+  lsSet(CRASH_KEY, null);
+  running = false; live = false;
+  $('goBtn').disabled = !source || (source.kind === 'rec' && source.ongoing); $('stopBtn').hidden = true;
+  if (!segRec) releaseWake();
+  saveText();
+  if (msg) setStatus(msg, kind);
+}
+let stage = '';
+function failRun(err){
+  const msg = String(err?.message || err);
+  track('errore', (stage ? stage + ': ' : '') + msg.slice(0, 120) + ' · ' + (isMobile ? 'telefono' : 'computer'));
+  const net = /load failed|failed to fetch|network|networkerror|importing a module/i.test(msg);
+  endRun(net
+    ? 'Download interrotto: la connessione è troppo lenta o instabile. Riprova con il Wi-Fi: dopo il primo download completo l’app funziona anche con poca rete.'
+    : 'Errore: ' + msg + ' — Prova la qualità «Veloce» o ricarica la pagina. Il testo trascritto finora è salvato.', 'err');
+}
+function finishedMsg(){
+  if (!cancelled && doneSec > 0) track('trascrizione-completata-' + bucket(doneSec), 'Completata ' + bucket(doneSec) + ' · ' + modelName() + ' · ' + (isMobile ? 'telefono' : 'computer'));
+  if (cancelled) track('trascrizione-interrotta-' + devTag(), pctDone());
+  if (cancelled) return ['Interrotto. Il testo trascritto finora è qui sotto ed è salvato.', 'warn'];
+  const el = t0 ? (performance.now() - t0) / 1000 : 0;
+  if (!chunks.size) return [`Fatto, ma non ho trovato parole in ${hms(doneSec)} di audio. Controlla che il microfono funzioni o che il file contenga voce.`, 'warn'];
+  return [`Fatto: ${hms(doneSec)} di audio trascritti in ${hms(el)}. Ora puoi correggerlo, scaricarlo o riassumerlo.`];
+}
+
+async function runFile(file, resumeFrom = 0){
+  beginRun(resumeFrom > 0);
+  if (resumeFrom > 0) { doneSec = resumeFrom; render(); }
+  else lsSet(JOB_DONE_KEY, null);
+  idb.jobPut({ file, name: file.name || 'audio' }).catch(() => {});
+  try {
+    setStatus(resumeFrom > 0 ? `Riprendo da ${hms(resumeFrom)}…` : 'Leggo il file…');
+    totalSec = await mediaDuration(file);
+    await ensureModel();
+    t0 = performance.now();
+    let segs;
+    if (totalSec && totalSec <= NATIVE_MAX_S) {
+      try {
+        const a = await decodeNative(file);
+        totalSec = a.length / SR;
+        track('audio-letto-' + devTag(), bucket(totalSec) + ' · lettore integrato');
+        const from = Math.floor(resumeFrom / FILE_SEG_S) * FILE_SEG_S * SR;
+        segs = (function* () { for (let o = from; o < a.length; o += FILE_SEG_S * SR) yield { audio: a.slice(o, o + FILE_SEG_S * SR), offset: o / SR }; })();
+      } catch (_) { segs = null; }
+    }
+    if (!segs) segs = ffmpegSegments(file, resumeFrom);
+    for await (const { audio, offset } of segs) {
+      if (cancelled) break;
+      if (!totalSec || totalSec < offset + audio.length / SR) totalSec = 0;
+      await transcribeSeg(audio, offset);
+      lsSet(JOB_DONE_KEY, String(offset + audio.length / SR));
+    }
+    lsSet(JOB_DONE_KEY, null); idb.jobClear().catch(() => {});
+    endRun(...finishedMsg());
+  } catch (err) { failRun(err); }
+}
+
+let pumping = false, recNext = 0;
+async function runRecording(){
+  beginRun(); recNext = 0;
+  try { await ensureModel(); } catch (err) { failRun(err); return; }
+  pumpRec();
+}
+async function pumpRec(){
+  if (pumping || !running) return;
+  pumping = true;
+  try {
+    await ensureModel();
+    if (!t0) t0 = performance.now();
+    while (!cancelled && source.segs[recNext]) {
+      const seg = source.segs[recNext], offset = seg.offset;
+      const audio = seg.audio ? seg.audio.slice()
+        : seg.pcm ? fromInt16(seg.pcm)
+        : await decodeAny(seg.blob, `parte${recNext}.${(seg.blob.type || '').includes('mp4') ? 'm4a' : 'webm'}`);
+      recNext++;
+      if (audio.length) await transcribeSeg(audio, offset);
+    }
+    if (cancelled || !source.ongoing) {
+      pumping = false;
+      if (!cancelled) idb.clear().catch(() => {});
+      endRun(...finishedMsg()); return;
+    }
+    liveStatus();
+  } catch (err) { pumping = false; failRun(err); return; }
+  pumping = false;
+}
+function liveStatus(){
+  if (!running || !source || source.kind !== 'rec') return;
+  if (source.ongoing) {
+    const behind = Math.max(0, (Date.now() - recStart) / 1000 - doneSec);
+    setStatus(`Registrazione in corso · trascritti ${hms(doneSec)} · il testo arriva ogni 5 minuti (${hms(behind)} da trascrivere)`);
+  } else setStatus(`Registrazione finita · completo la trascrizione: ${hms(doneSec)} su ${hms(recDuration())}`);
+}
+
+function progress(){
+  if (source?.kind === 'rec') {
+    if (source.ongoing) { liveStatus(); $('bar').style.width = '0%'; return; }
+    totalSec = recDuration();
+  }
+  if (!totalSec) { setStatus(`Trascrivo… ${hms(doneSec)} di audio fatti`); return; }
+  const pct = Math.min(100, doneSec / totalSec * 100);
+  $('bar').style.width = pct.toFixed(1) + '%';
+  const el = t0 ? (performance.now() - t0) / 1000 : 0;
+  const eta = doneSec > 0 ? el / doneSec * Math.max(0, totalSec - doneSec) : 0;
+  setStatus(`Trascrivo… ${hms(doneSec)} di ${hms(totalSec)} · tempo restante ~${hms(eta)}` + (isMobile ? ' · tieni lo schermo acceso e non uscire dal browser' : ''));
+}
+
+/* ---------- Testo ---------- */
+function render(){
+  const parts = [...chunks].sort((a, b) => a[0] - b[0]);
+  $('out').value = $('stamps').checked
+    ? parts.map(([s, t]) => `[${hms(s)}] ${t}`).join('\n\n')
+    : parts.map(([, t]) => t).join(' ').replace(/\s+/g, ' ');
+  if (running) $('out').scrollTop = $('out').scrollHeight;
+}
+$('stamps').addEventListener('change', () => { if (chunks.size) render(); });
+const txt = () => $('out').value.trim();
+const plain = () => txt().replace(/\[\d\d:\d\d:\d\d\]\s*/g, '').replace(/\s+/g, ' ').trim();
+const outName = () => (source?.name || 'lezione').replace(/\.[^.]+$/, '');
+
+$('copyBtn').addEventListener('click', () => copy(txt(), $('copyBtn'), 'Copia'));
+$('dlBtn').addEventListener('click', () => {
+  if (!txt()) { setStatus('Non c’è ancora testo da scaricare.', 'warn'); return; }
+  track('download-txt');
+  saveFile(new Blob([$('out').value], { type: 'text/plain;charset=utf-8' }), `${outName()}_trascrizione.txt`);
+});
+$('shareBtn').addEventListener('click', async () => {
+  if (!txt()) { setStatus('Non c’è ancora testo da condividere.', 'warn'); return; }
+  try { await navigator.share({ title: `${outName()} – trascrizione`, text: $('out').value }); } catch (_) {}
+});
+
+/* ---------- Riassunto con Claude ---------- */
+function claudePrompt(t){
+  return `<contesto>
+Sono uno studente universitario${$('materia')?.value?.trim() ? ` e questa è una lezione di ${$('materia').value.trim()}` : ''}. Il testo qui sotto è la trascrizione automatica di una lezione: può contenere errori di riconoscimento vocale, ripetizioni e frasi spezzate.
+</contesto>
+
+<istruzioni>
+1. Riordina la lezione in appunti di studio, divisi in paragrafi con titoli per argomento.
+2. Scrivi in prosa chiara, con pochi elenchi puntati.
+3. Metti in **grassetto** i concetti chiave, le definizioni e le formule.
+4. Correggi gli errori evidenti di trascrizione basandoti sul contesto.
+</istruzioni>
+
+<vincoli>
+- Non inventare contenuti che non sono nella lezione.
+- Se un passaggio è incomprensibile, segnalalo con [?].
+</vincoli>
+
+<output>
+- Titolo della lezione
+- Appunti divisi per argomento
+- "Concetti chiave": 5-10 punti
+- "Possibili domande d'esame": 3-5 domande
+</output>
+
+<trascrizione>
+${t}
+</trascrizione>`;
+}
+function claudeFixPrompt(t){
+  return `<contesto>
+Il testo qui sotto è la trascrizione automatica di una lezione universitaria: contiene errori di riconoscimento vocale, punteggiatura approssimativa e frasi spezzate.
+</contesto>
+
+<istruzioni>
+1. Correggi gli errori di trascrizione (parole sbagliate, nomi, termini tecnici) basandoti sul contesto.
+2. Sistema punteggiatura e maiuscole e dividi il testo in paragrafi leggibili.
+3. Elimina solo ripetizioni e intercalari inutili ("allora", "diciamo", "ok").
+</istruzioni>
+
+<vincoli>
+- Mantieni TUTTO il contenuto: non riassumere e non aggiungere nulla.
+- Se un passaggio è incomprensibile, segnalalo con [?].
+- Se il testo è molto lungo, procedi a blocchi e fermati quando serve: io scriverò "continua".
+</vincoli>
+
+<output>
+Solo il testo corretto, senza commenti.
+</output>
+
+<trascrizione>
+${t}
+</trascrizione>`;
+}
+
+// Con i testi brevi il prompt va direttamente nell'indirizzo (claude.ai/new?q=…) e Claude parte da solo;
+// con le lezioni lunghe l'indirizzo sarebbe troppo lungo, quindi il testo viene copiato da incollare.
+const MAX_URL = 7000;
+function openClaude(e, btn, prompt, eventName){
+  const t = plain();
+  if (!t) { e.preventDefault(); sum('Prima trascrivi un audio: Claude lavora sul testo della trascrizione.', 'warn'); return; }
+  const p = prompt(t);
+  const url = 'https://claude.ai/new?q=' + encodeURIComponent(p);
+  if (url.length <= MAX_URL) {
+    btn.href = url;
+    track(eventName + '-automatico');
+    sum('Apro Claude con la trascrizione già inserita.');
+    return;
+  }
+  btn.href = 'https://claude.ai/new';
+  track(eventName + '-copiato');
+  let ok = true;
+  try { navigator.clipboard.writeText(p).catch(() => fallbackCopy(p)); } catch (_) { ok = fallbackCopy(p); }
+  sum(ok ? 'La lezione è lunga, quindi ho copiato testo e istruzioni. In Claude tieni premuto nel campo di scrittura, scegli Incolla e invia.' : 'Non sono riuscito a copiare: copia il testo a mano e incollalo in Claude.', ok ? '' : 'err');
+}
+$('claudeBtn').addEventListener('click', e => openClaude(e, $('claudeBtn'), claudePrompt, 'riassunto-claude'));
+$('claudeFixBtn').addEventListener('click', e => openClaude(e, $('claudeFixBtn'), claudeFixPrompt, 'correzione-claude'));
+
+/* ---------- Punti chiave (estrattivo, sul dispositivo) ---------- */
+const STOP = new Set(('a ad al allo ai agli alla alle anche ancora avere abbiamo avete hanno ho hai ha c che chi ci con come cosa cui da dal dallo dai dagli dalla dalle del dello dei degli della delle di dove e è ed era erano essere fa fare fra gli già i il in io la le lei li lo loro lui ma me mi mio molto ne nei negli nel nello nella nelle no noi non nostro o ogni per perché più poi può quale quando quanto quella quelle quelli quello questa queste questi questo qui se sarà sei si sia siamo siete sono sopra sotto su sua sue sui sul sullo sulla sulle suo stato stessa stesso tra tu tutti tutto un una uno vi voi allora cioè quindi però insomma diciamo ok okay ecco va bene sì infatti appunto praticamente comunque the of and to is in that it').split(' '));
+function keyPoints(text){
+  const sents = text.split(/(?<=[.!?…])\s+/).map(s => s.trim()).filter(s => s.split(/\s+/).length >= 7 && s.split(/\s+/).length <= 60);
+  if (sents.length < 3) return sents;
+  const tok = s => s.toLowerCase().normalize('NFC').match(/[a-zàèéìòóù0-9]{3,}/g) || [];
+  const freq = new Map();
+  sents.forEach(s => new Set(tok(s).filter(w => !STOP.has(w))).forEach(w => freq.set(w, (freq.get(w) || 0) + 1)));
+  const max = Math.max(1, ...freq.values());
+  const scored = sents.map((s, i) => {
+    const w = tok(s).filter(x => !STOP.has(x));
+    return { s, i, sc: w.reduce((a, x) => a + (freq.get(x) || 0) / max, 0) / Math.pow(Math.max(w.length, 1), 0.6) };
+  });
+  const k = Math.min(25, Math.max(5, Math.round(sents.length * 0.06)));
+  const picked = [], seen = [];
+  for (const o of scored.sort((a, b) => b.sc - a.sc)) {
+    const ws = new Set(tok(o.s));
+    if (seen.some(p => [...ws].filter(x => p.has(x)).length / ws.size > 0.6)) continue;
+    picked.push(o); seen.push(ws);
+    if (picked.length >= k) break;
+  }
+  return picked.sort((a, b) => a.i - b.i).map(o => o.s);
+}
+$('keyBtn').addEventListener('click', () => {
+  const t = plain();
+  if (!t) { sum('Prima trascrivi un audio: i punti chiave partono dal testo.', 'warn'); return; }
+  const pts = keyPoints(t);
+  track('punti-chiave');
+  if (!pts.length) { sum('Il testo è troppo corto per estrarre punti chiave.', 'warn'); return; }
+  $('sumOut').value = pts.map(p => '• ' + p).join('\n\n');
+  $('sumOut').hidden = false; $('sumActions').hidden = false;
+  sum(`${pts.length} frasi chiave estratte dalla lezione.`);
+});
+$('sumCopy').addEventListener('click', () => copy($('sumOut').value, $('sumCopy'), 'Copia punti chiave'));
+
+/* ---------- Utility ---------- */
+function devTag(){ return (isMobile ? 'telefono' : 'computer') + '-' + (device === 'webgpu' ? 'gpu' : 'cpu'); }
+function modelName(){ return mode === 'online' ? 'Online' : ($('model').selectedOptions[0]?.textContent || '').split(' (')[0]; }
+function pctDone(){ return totalSec ? Math.round(doneSec / totalSec * 100) + '% fatto' : hms(doneSec) + ' fatti'; }
+function track(path, title){
+  if (PRIVATE) return;
+  try { window.goatcounter?.count?.({ path, title: title || path, event: true }); } catch (_) {}
+}
+function bucket(sec){ const m = sec / 60; return m < 15 ? '0-15min' : m < 45 ? '15-45min' : m < 90 ? '45-90min' : '90min+'; }
+function deferred(){ let resolve, reject; const promise = new Promise((a, b) => { resolve = a; reject = b; }); return { promise, resolve, reject }; }
+function copy(t, btn, label){
+  if (!t) return;
+  try { navigator.clipboard.writeText(t).then(() => flash(btn, 'Copiato', label), () => { fallbackCopy(t); flash(btn, 'Copiato', label); }); }
+  catch (_) { fallbackCopy(t); flash(btn, 'Copiato', label); }
+}
+function fallbackCopy(t){
+  const ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('readonly', '');
+  ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta);
+  ta.select(); ta.setSelectionRange(0, t.length);
+  let ok = false; try { ok = document.execCommand('copy'); } catch (_) {}
+  ta.remove(); return ok;
+}
+function flash(btn, t, back){ btn.textContent = t; setTimeout(() => btn.textContent = back, 1800); }
+async function saveFile(blob, name){
+  if (isMobile && navigator.canShare) {
+    const file = new File([blob], name, { type: blob.type });
+    if (navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file] }); return; } catch (e) { if (e.name === 'AbortError') return; } }
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+}
+function hms(s){ s = Math.max(0, Math.round(s)); const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; return [h,m,x].map(v => String(v).padStart(2,'0')).join(':'); }
+function mb(b){ return (b / 1048576).toFixed(0); }
+function setStatus(t, kind){ const s = $('status'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
+function sum(t, kind){ const s = $('sumStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
+async function requestWake(){ try { wakeLock = await navigator.wakeLock?.request('screen'); } catch (_) {} }
+function releaseWake(){ try { wakeLock && wakeLock.release(); } catch (_) {} wakeLock = null; }
+let bgTracked = false;
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden' && running && !bgTracked) { bgTracked = true; track('scheda-in-background-' + devTag(), stage + ' · ' + pctDone()); }
+});
+window.addEventListener('pagehide', () => { lsSet(CRASH_KEY, null); if (running) track('pagina-chiusa-durante-trascrizione-' + devTag(), stage + ' · ' + pctDone()); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && (running || segRec)) requestWake(); });
+$('demoBtn').addEventListener('click', async () => {
+  if (running || segRec) { setStatus('Aspetta che finisca l’operazione in corso.', 'warn'); return; }
+  track('esempio-provato-' + devTag(), modelName());
+  $('demoBtn').disabled = true;
+  try {
+    const res = await fetch('esempio-lezione.mp3');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const blob = await res.blob();
+    setSource({ kind: 'file', file: new File([blob], 'esempio-lezione.mp3', { type: 'audio/mpeg' }), name: 'Esempio: lezione sul bilancio d’esercizio (25 s)' });
+    $('goBtn').click();
+    $('l2').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (_) {
+    setStatus('Non riesco a caricare l’audio di esempio. Controlla la connessione e riprova.', 'err');
+  } finally { $('demoBtn').disabled = false; }
+});
+/* ---------- Area personale (/privato): password, archivio delle lezioni ---------- */
+const PW_KEY = 'trascrittore:password';
+let privPw = null, currentId = null, delArm = null;
+const todayISO = () => { const d = new Date(), z = v => String(v).padStart(2, '0'); return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`; };
+function privStatus(t, kind){ const s = $('saveStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
+async function privApi(path, opts = {}){
+  const res = await fetch('/api/privato/' + path, { ...opts, headers: { ...(opts.headers || {}), 'x-chiave': privPw || '' } });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { const e = new Error(data.error || ('Errore ' + res.status)); e.status = res.status; e.code = data.code; throw e; }
+  return data;
+}
+function showUsage(v){
+  if (!v || !v.uso) return;
+  const h = sec => (sec / 3600).toFixed(1).replace('.', ',') + ' h';
+  const lim = v.limiteGroq || { orePerGiorno: 8, orePerOra: 2 };
+  const tot = (v.uso.privato || 0) + (v.uso.pubblico || 0);
+  const restaGiorno = Math.max(0, lim.orePerGiorno * 3600 - tot);
+  const restaOra = Math.min(restaGiorno, Math.max(0, lim.orePerOra * 3600 - (v.uso.oraCorrente || 0)));
+  $('usage').textContent = `Restano circa ${h(restaGiorno)} oggi (${h(restaOra)} in quest’ora) · usate oggi ${h(tot)}`;
+  $('usage').title = 'Stima: il limite gratuito di Groq è di circa 8 ore al giorno e 2 ore all’ora, per tutti insieme. Il conteggio giornaliero si azzera alle 2 di notte (ora italiana).';
+}
+async function unlock(pw, silent){
+  privPw = pw;
+  try {
+    const v = await privApi('verifica');
+    lsSet(PW_KEY, pw);
+    document.body.classList.remove('locked');
+    showUsage(v); loadList();
+    return true;
+  } catch (e) {
+    privPw = null;
+    if (e.status === 401) lsSet(PW_KEY, null);
+    if (!silent) {
+      const st = $('lockStatus');
+      st.textContent = e.status === 401 ? 'Password errata.' : e.code === 'no-password' ? 'Manca la password: impostala come segreto PASSWORD nelle impostazioni del Worker su Cloudflare.' : 'Non riesco a verificare la password: ' + e.message;
+      st.className = 'status err';
+    }
+    return false;
+  }
+}
+function fmtDurata(sec){ if (!sec) return ''; const m = Math.round(sec / 60); return m >= 60 ? `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}` : `${m} min`; }
+function fmtData(iso){ try { return new Date(iso + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' }); } catch (_) { return iso; } }
+function renderList(items){
+  const box = $('lista'); box.textContent = '';
+  if (!items.length) {
+    const p = document.createElement('p'); p.className = 'note';
+    p.textContent = $('cerca').value.trim() ? 'Nessuna lezione trovata.' : 'Le lezioni che salvi compaiono qui, divise per materia.';
+    box.append(p); return;
+  }
+  const groups = new Map();
+  for (const it of items) { if (!groups.has(it.materia)) groups.set(it.materia, []); groups.get(it.materia).push(it); }
+  for (const [materia, list] of [...groups].sort((a, b) => a[0].localeCompare(b[0], 'it'))) {
+    const g = document.createElement('div'); g.className = 'subject';
+    const h = document.createElement('h3'); h.textContent = `${materia} (${list.length})`;
+    const ul = document.createElement('ul');
+    for (const it of list) {
+      const li = document.createElement('li'); const b = document.createElement('button'); b.type = 'button';
+      if (it.id === currentId) b.classList.add('current');
+      const t = document.createElement('span'); t.textContent = it.titolo + (it.conAppunti ? ' · con appunti' : '');
+      const m = document.createElement('span'); m.className = 'meta'; m.textContent = [fmtData(it.data), fmtDurata(it.durata)].filter(Boolean).join(' · ');
+      b.append(t, m); b.addEventListener('click', () => openLesson(it.id));
+      li.append(b); ul.append(li);
+    }
+    g.append(h, ul); box.append(g);
+  }
+}
+async function loadList(){
+  const q = $('cerca').value.trim();
+  try {
+    const items = await privApi('lezioni' + (q ? '?q=' + encodeURIComponent(q) : ''));
+    renderList(items);
+    if (!q) {
+      const dl = $('materieList'); dl.textContent = '';
+      for (const m of [...new Set(items.map(i => i.materia))].sort((a, b) => a.localeCompare(b, 'it'))) { const o = document.createElement('option'); o.value = m; dl.append(o); }
+    }
+  } catch (e) { $('lista').textContent = 'Non riesco a caricare l’archivio: ' + e.message; }
+}
+let cercaTimer = null;
+$('cerca').addEventListener('input', () => { clearTimeout(cercaTimer); cercaTimer = setTimeout(loadList, 300); });
+function setCurrent(l){
+  currentId = l ? l.id : null;
+  $('currentChip').textContent = l ? 'Lezione salvata' : 'Nuova lezione';
+  $('currentChip').classList.toggle('ok', !!l);
+  $('delLesson').hidden = !l;
+  disarmDel();
+}
+async function openLesson(id){
+  if (running || segRec) { privStatus('Aspetta che finisca la trascrizione o la registrazione in corso.', 'warn'); return; }
+  try {
+    const l = await privApi('lezioni?id=' + encodeURIComponent(id));
+    chunks = new Map();
+    $('out').value = l.testo; $('appunti').value = l.appunti || '';
+    $('materia').value = l.materia; $('titolo').value = l.titolo; $('dataLez').value = l.data;
+    setCurrent(l); doneSec = l.durata || 0;
+    privStatus(`Aperta: ${l.titolo} (${l.materia}).`);
+    loadList();
+    $('l3').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) { privStatus('Non riesco ad aprire la lezione: ' + e.message, 'err'); }
+}
+$('saveLesson').addEventListener('click', async () => {
+  const testo = $('out').value.trim();
+  if (!testo) { privStatus('Non c’è testo da salvare: trascrivi un audio o apri una lezione.', 'warn'); return; }
+  if (!$('materia').value.trim()) { privStatus('Scegli la materia, così la ritrovi più facilmente.', 'warn'); $('materia').focus(); return; }
+  $('saveLesson').disabled = true;
+  try {
+    const l = await privApi('lezioni', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
+      id: currentId, materia: $('materia').value, titolo: $('titolo').value || 'Lezione del ' + fmtData($('dataLez').value || todayISO()),
+      data: $('dataLez').value || todayISO(), durata: Math.round(doneSec || totalSec || 0), testo: $('out').value, appunti: $('appunti').value,
+    }) });
+    setCurrent(l); $('titolo').value = l.titolo;
+    privStatus(`Salvata in «${l.materia}».`);
+    loadList();
+  } catch (e) { privStatus(e.status === 401 ? 'La password non è più valida: ricarica la pagina e reinseriscila.' : 'Non riesco a salvare: ' + e.message, 'err'); }
+  finally { $('saveLesson').disabled = false; }
+});
+function privNewRun(){
+  setCurrent(null);
+  $('appunti').value = ''; $('titolo').value = ''; $('dataLez').value = todayISO();
+  privStatus('');
+}
+$('newLesson').addEventListener('click', () => {
+  if (running || segRec) { privStatus('Aspetta che finisca la trascrizione o la registrazione in corso.', 'warn'); return; }
+  privNewRun(); chunks = new Map(); $('out').value = ''; doneSec = 0;
+  try { localStorage.removeItem(LS); } catch (_) {}
+  loadList();
+});
+function disarmDel(){ clearTimeout(delArm); delArm = null; $('delLesson').textContent = 'Elimina'; $('delLesson').classList.remove('armed'); }
+$('delLesson').addEventListener('click', async () => {
+  if (!currentId) return;
+  if (!delArm) { $('delLesson').textContent = 'Tocca di nuovo per eliminare'; $('delLesson').classList.add('armed'); delArm = setTimeout(disarmDel, 3000); return; }
+  disarmDel();
+  try {
+    await privApi('lezioni?id=' + encodeURIComponent(currentId), { method: 'DELETE' });
+    privNewRun(); chunks = new Map(); $('out').value = ''; doneSec = 0;
+    privStatus('Lezione eliminata.'); loadList();
+  } catch (e) { privStatus('Non riesco a eliminare: ' + e.message, 'err'); }
+});
+function privAfterRun(){
+  if (!$('titolo').value && source?.name) $('titolo').value = source.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ');
+  privStatus('Trascrizione pronta: controlla materia e titolo, poi tocca «Salva lezione».');
+  privApi('verifica').then(showUsage).catch(() => {});
+}
+if (PRIVATE) {
+  document.body.classList.add('privato', 'locked');
+  document.querySelector('header p').textContent = 'La tua app personale: trascrivi le lezioni in pochi minuti e tieni l’archivio diviso per materia, con i tuoi appunti.';
+  $('dataLez').value = todayISO();
+  $('lockForm').addEventListener('submit', e => { e.preventDefault(); const v = $('pw').value.trim(); if (v) unlock(v); });
+  // primo avvio: controlla che chiave Groq e password siano impostate
+  async function checkSetup(){
+    let st = null;
+    try { st = await (await fetch('/api/stato', { cache: 'no-store' })).json(); } catch (_) {}
+    const missing = [];
+    if (st && !st.password) missing.push(['PASSWORD', 'la password con cui entrerai nell’app (scegline una lunga)']);
+    if (st && !st.groq) missing.push(['GROQ_API_KEY', 'la tua chiave Groq: su console.groq.com → API Keys → Create API Key']);
+    $('setup').hidden = !missing.length;
+    $('lock').style.display = missing.some(m => m[0] === 'PASSWORD') ? 'none' : '';
+    const ul = $('setupList'); ul.textContent = '';
+    for (const [k, d] of missing) { const li = document.createElement('li'); const c = document.createElement('code'); c.textContent = k; li.append(c, ' — ' + d); ul.append(li); }
+    if (!missing.some(m => m[0] === 'PASSWORD')) { const saved = lsGet(PW_KEY); if (saved) unlock(saved, true); }
+  }
+  $('setupRetry').addEventListener('click', checkSetup);
+  checkSetup();
+}
+restoreText();
+checkRecovery();
+checkResume();
+window.addEventListener('beforeunload', e => { if (segRec || running) { e.preventDefault(); e.returnValue = ''; } });
+</script>
+</body>
+</html>

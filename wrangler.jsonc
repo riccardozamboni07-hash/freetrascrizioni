@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "freetrascrizioni",
+  "main": "src/worker.js",
+  "compatibility_date": "2025-10-01",
+  "assets": { "directory": "./public", "binding": "ASSETS" },
+  // archivio delle lezioni e ore usate (SQLite in un Durable Object, incluso nel piano gratuito)
+  "durable_objects": { "bindings": [{ "name": "STORE", "class_name": "Store" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Store"] }],
+  // i segreti GROQ_API_KEY e PASSWORD si impostano su Cloudflare e non vengono toccati dagli aggiornamenti
+  "keep_vars": true,
+  "observability": { "enabled": true }
+}

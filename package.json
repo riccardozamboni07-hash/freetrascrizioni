@@ -1,0 +1,25 @@
+{
+  "name": "freetrascrizioni",
+  "version": "1.0.0",
+  "private": true,
+  "description": "La tua app personale per trascrivere le lezioni, con archivio per materie.",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  },
+  "cloudflare": {
+    "label": "Freetrascrizioni",
+    "products": ["Workers", "Durable Objects"],
+    "bindings": {
+      "GROQ_API_KEY": {
+        "description": "La tua chiave Groq per la trascrizione veloce. Creala gratis su [console.groq.com](https://console.groq.com/keys) → **Create API Key**."
+      },
+      "PASSWORD": {
+        "description": "Scegli una password lunga: servirà per entrare nella tua app. Salvala nel portachiavi del telefono."
+      }
+    }
+  }
+}
