@@ -1,9 +1,12 @@
 # Aggiorna la tua copia di Freetrascrizioni all'ultima versione.
-# Su GitHub: scheda "Actions" → "Aggiorna Freetrascrizioni" → "Run workflow".
+# Parte da solo ogni lunedì mattina. Per aggiornare subito:
+# su GitHub: scheda "Actions" → "Aggiorna Freetrascrizioni" → "Run workflow".
 # I tuoi dati (lezioni) e i segreti su Cloudflare non vengono toccati: cambia solo il codice.
 name: Aggiorna Freetrascrizioni
 
 on:
+  schedule:
+    - cron: '17 3 * * 1'   # ogni lunedì verso le 5 (ora italiana)
   workflow_dispatch:
 
 permissions:
@@ -11,6 +14,8 @@ permissions:
 
 jobs:
   aggiorna:
+    # non serve nel repository originale, solo nelle copie dei clienti
+    if: github.repository != 'riccardozamboni07-hash/freetrascrizioni'
     runs-on: ubuntu-latest
     steps:
       - name: Scarica la tua copia

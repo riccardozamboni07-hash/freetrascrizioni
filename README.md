@@ -47,7 +47,8 @@ Usa i piani gratuiti di Cloudflare e Groq: con Groq gratis trascrivi circa **8 o
 
 ## Aggiornamenti
 
-Quando esce una nuova versione: nel tuo repository su GitHub apri **Actions → Aggiorna Freetrascrizioni → Run workflow**. Le tue lezioni e la password restano come sono.
+L'app si aggiorna **da sola ogni lunedì mattina**. Le tue lezioni e la password restano come sono.
+Per aggiornarla subito: nel tuo repository su GitHub apri **Actions → Aggiorna Freetrascrizioni → Run workflow**.
 
 ## Domande frequenti
 
