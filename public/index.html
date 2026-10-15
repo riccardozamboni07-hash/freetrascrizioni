@@ -113,12 +113,41 @@ body.privato:not(.locked) #lock{display:none}
 .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
 input[type=text],input[type=password],input[type=date],input[type=search]{font:inherit;padding:.55rem;min-height:44px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);width:100%}
 #appunti{min-height:180px}
-.lesson-list{display:flex;flex-direction:column;gap:14px}
-.subject h3{margin:0 0 6px;font-size:.95rem}
-.subject ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
-.subject li button{width:100%;justify-content:space-between;text-align:left;font-weight:500}
-.subject li button.current{border-color:var(--accent);background:var(--accent-soft)}
+/* Archivio: filtri per materia, sezioni apribili, una scheda per lezione */
+.subj{--c:hsl(var(--h,160) 42% 38%);--c-soft:hsl(var(--h,160) 45% 94%)}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .subj{--c:hsl(var(--h,160) 50% 70%);--c-soft:hsl(var(--h,160) 25% 18%)} }
+:root[data-theme="dark"] .subj{--c:hsl(var(--h,160) 50% 70%);--c-soft:hsl(var(--h,160) 25% 18%)}
+.filters{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-top:-4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.filters::-webkit-scrollbar{display:none}
+.filters button{flex:none;min-height:36px;padding:.3rem .8rem;border-radius:99px;font-size:.88rem;font-weight:600;color:var(--muted)}
+.filters button .dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--c)}
+.filters button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.filters button[aria-pressed="true"] .dot{box-shadow:0 0 0 2px var(--bg)}
+.lesson-list{display:flex;flex-direction:column;gap:12px}
+.subject{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.subject > summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:12px 14px;min-height:52px;border-left:4px solid var(--c);-webkit-tap-highlight-color:transparent}
+.subject > summary::-webkit-details-marker{display:none}
+.subject > summary h3{margin:0;font-size:1rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.subject > summary .count{font-size:.8rem;font-weight:600;padding:.1rem .55rem;border-radius:99px;background:var(--c-soft);color:var(--c);font-variant-numeric:tabular-nums}
+.subject > summary::after{content:"";width:.5rem;height:.5rem;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:0 4px 4px;transition:transform .2s}
+.subject[open] > summary::after{transform:rotate(225deg);margin-bottom:-2px}
+.subject > summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.subject-body{padding:4px 12px 12px;display:flex;flex-direction:column;gap:8px}
+.subject-tools{display:flex;justify-content:flex-end}
+.subject-tools button{min-height:36px;padding:.3rem .8rem;font-size:.85rem}
+.subject ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.lez{width:100%;display:flex;align-items:center;gap:12px;padding:10px 12px;text-align:left;font-weight:500;border-radius:10px;background:var(--bg);border-color:transparent}
+.lez:hover:not(:disabled){border-color:var(--line)}
+.lez.current{border-color:var(--c);background:var(--c-soft)}
+.lez .day{flex:none;width:46px;height:50px;border-radius:9px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05}
+.lez .day b{font-size:1.15rem;font-variant-numeric:tabular-nums}
+.lez .day small{font-size:.66rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--c)}
+.lez .info{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.lez .titolo{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.lez .meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tag{font-size:.72rem;font-weight:600;padding:.05rem .45rem;border-radius:99px;border:1px solid var(--c);color:var(--c)}
 .meta{color:var(--muted);font-size:.82rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.subject > summary::after{transition:none}}
 .usage{font-size:.85rem;color:var(--muted)}
 .thanks a{color:var(--accent);font-weight:600}
 </style>
@@ -201,6 +230,11 @@ input[type=text],input[type=password],input[type=date],input[type=search]{font:i
 
   <section class="panel" aria-labelledby="l2">
     <span class="label" id="l2">2 · Trascrizione</span>
+    <label class="field"><span>Materia della lezione</span>
+      <input type="text" id="materia" list="materieList" autocomplete="off" placeholder="Scegli o scrivi, es. Diritto pubblico">
+    </label>
+    <datalist id="materieList"></datalist>
+    <p class="note" id="materiaNote">Con la materia la trascrizione online scrive meglio i termini tecnici, e Claude prepara appunti adatti a quella disciplina.</p>
     <div class="opts">
       <label class="field"><span>Modalità</span>
         <select id="mode">
@@ -250,12 +284,11 @@ input[type=text],input[type=password],input[type=date],input[type=search]{font:i
       <span class="label" id="lSave">Salva nell'archivio</span>
       <span class="chip" id="currentChip">Nuova lezione</span>
     </div>
+    <p class="note">Materia: <strong id="materiaEco">non scelta</strong> · la cambi al punto 2.</p>
     <div class="form">
-      <label class="field"><span>Materia</span><input type="text" id="materia" list="materieList" placeholder="es. Diritto pubblico"></label>
       <label class="field"><span>Titolo</span><input type="text" id="titolo" placeholder="es. Le fonti del diritto"></label>
       <label class="field"><span>Data</span><input type="date" id="dataLez"></label>
     </div>
-    <datalist id="materieList"></datalist>
     <label class="field"><span>I tuoi appunti (incolla qui quelli fatti con Claude)</span>
       <textarea id="appunti" spellcheck="true" placeholder="Appunti, riassunto, domande d'esame…"></textarea>
     </label>
@@ -273,6 +306,8 @@ input[type=text],input[type=password],input[type=date],input[type=search]{font:i
       <span class="usage" id="usage"></span>
     </div>
     <input type="search" id="cerca" placeholder="Cerca per titolo, materia o parola della lezione" aria-label="Cerca nelle lezioni">
+    <div class="filters" id="filtri" role="group" aria-label="Filtra per materia" hidden></div>
+    <div class="status" id="archStatus" role="status"></div>
     <div class="lesson-list" id="lista"><p class="note">Le lezioni che salvi compaiono qui, divise per materia.</p></div>
   </section>
 
@@ -281,7 +316,7 @@ input[type=text],input[type=password],input[type=date],input[type=search]{font:i
     <div class="sumgrid">
       <div class="sumcard">
         <h3>Con Claude</h3>
-        <p>Apre Claude con la trascrizione e le istruzioni già pronte. Con i testi brevi parte da solo; con le lezioni lunghe il testo viene copiato: incollalo e invia.</p>
+        <p>Apre Claude con la trascrizione, istruzioni adatte alla materia e gli appunti che hai già salvato per quella materia. Con le lezioni lunghe il testo viene copiato: incollalo, allega se vuoi le foto della lavagna e invia.</p>
         <a class="btn primary" id="claudeBtn" href="https://claude.ai/new" target="_blank" rel="noopener">Fai riassunti e appunti</a>
         <a class="btn" id="claudeFixBtn" href="https://claude.ai/new" target="_blank" rel="noopener">Aggiusta la trascrizione</a>
       </div>
@@ -307,7 +342,7 @@ input[type=text],input[type=password],input[type=date],input[type=search]{font:i
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.0</p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.1</p>
 </main>
 
 <script type="module">
@@ -804,7 +839,8 @@ async function sendPiece(pcm, lang){
     if (cancelled) return '';
     let res;
     try {
-      res = await fetch('/api/trascrivi?lang=' + lang, { method: 'POST', headers: PRIVATE && privPw ? { 'content-type': body.type, 'x-chiave': privPw } : { 'content-type': body.type }, body });
+      const mat = materiaCorrente();
+      res = await fetch('/api/trascrivi?lang=' + lang + (mat ? '&materia=' + encodeURIComponent(mat) : ''), { method: 'POST', headers: PRIVATE && privPw ? { 'content-type': body.type, 'x-chiave': privPw } : { 'content-type': body.type }, body });
     } catch (_) { await sleep(2000 * (k + 1)); continue; }
     const data = await res.json().catch(() => ({}));
     if (res.ok) return (data.text || '').trim();
@@ -1134,33 +1170,73 @@ $('shareBtn').addEventListener('click', async () => {
 });
 
 /* ---------- Riassunto con Claude ---------- */
+// Istruzioni per gli appunti: basate sull'app "Appunti universitari" (adattate a Freetrascrizioni).
+// Gli appunti già salvati della stessa materia vengono aggiunti in automatico come memoria.
 function claudePrompt(t){
-  return `<contesto>
-Sono uno studente universitario${$('materia')?.value?.trim() ? ` e questa è una lezione di ${$('materia').value.trim()}` : ''}. Il testo qui sotto è la trascrizione automatica di una lezione: può contenere errori di riconoscimento vocale, ripetizioni e frasi spezzate.
-</contesto>
+  const materia = materiaCorrente() || 'non indicata';
+  const data = fmtData($('dataLez')?.value || todayISO());
+  const precTxt = testoPrecedenti();
+  return `RUOLO
+Sei uno studente modello di università. Il tuo compito è trasformare la trascrizione di una lezione universitaria (ed eventualmente le foto della lavagna allegate) in appunti perfetti, che altri studenti useranno per studiare e preparare l'esame.
 
-<istruzioni>
-1. Riordina la lezione in appunti di studio, divisi in paragrafi con titoli per argomento.
-2. Scrivi in prosa chiara, con pochi elenchi puntati.
-3. Metti in **grassetto** i concetti chiave, le definizioni e le formule.
-4. Correggi gli errori evidenti di trascrizione basandoti sul contesto.
-</istruzioni>
+INPUT
+- Materia: ${materia}
+- Data della lezione: ${data}
+- Trascrizione automatica della lezione (in fondo)
+- Foto della lavagna (opzionali: se ci sono, sono allegate a questo messaggio)
+- Appunti delle lezioni precedenti della stessa materia (opzionali: se ci sono, sono in fondo)
 
-<vincoli>
-- Non inventare contenuti che non sono nella lezione.
-- Se un passaggio è incomprensibile, segnalalo con [?].
-</vincoli>
+Se la materia non è tra quelle note (diritto pubblico, diritto privato, filosofia del diritto, economia aziendale, matematica), adatta la struttura alla natura della disciplina.
 
-<output>
-- Titolo della lezione
-- Appunti divisi per argomento
-- "Concetti chiave": 5-10 punti
-- "Possibili domande d'esame": 3-5 domande
-</output>
+PRINCIPI GENERALI (valgono per tutte le materie)
+1. Fedeltà al professore: usa la terminologia esatta del professore, senza sostituirla con sinonimi tuoi. Se il professore definisce un concetto in un certo modo, riporta quella definizione.
+2. Nessuna invenzione: non aggiungere contenuti, dati, articoli, formule o riferimenti che non sono nella lezione. Se serve un chiarimento tuo, mettilo in una "Nota" separata, distinta dal contenuto del professore.
+3. Esempi: includi tutti gli esempi del professore, collegati al concetto che illustrano.
+4. Completezza utile: cattura ogni concetto, definizione, classificazione, collegamento logico, eccezione e dettaglio che può essere chiesto all'esame. Elimina solo ciò che non serve: chiacchiere, divagazioni, avvisi organizzativi, ripetizioni. Segnala le indicazioni del professore sull'esame o sull'importanza di un argomento.
+5. Chiarezza: scrivi in modo ordinato e leggibile, con gerarchia chiara. Spiega brevemente i termini tecnici non intuitivi, senza cambiare le parole del professore.
+6. Struttura logica: se il professore ha parlato in modo non lineare, riordina in modo coerente senza alterare il significato.
+
+FOTO DELLA LAVAGNA
+- Usale per chiarire e completare la trascrizione: schemi, formule, definizioni, grafici, tabelle.
+- Integra il contenuto della lavagna al punto giusto e riproducilo in forma testuale (schema, tabella o formula).
+- Se una foto è illeggibile, segnalalo invece di indovinare.
+
+ERRORI DI TRASCRIZIONE E INCONGRUENZE CON LA LAVAGNA
+La trascrizione è automatica e può contenere errori, soprattutto nei numeri, nelle formule, nei nomi e nei termini tecnici.
+- Se lavagna e trascrizione sono in contrasto (in particolare sui numeri), prevale la lavagna.
+- Se non hai la foto e un dato è dubbio, non indovinare: scrivilo come l'hai letto, marcalo con [?] ed elencalo in "Da verificare".
+- Ogni correzione fatta in base alla lavagna va segnalata in "Da verificare" (es. "Trascrizione: 1.200 €, lavagna: 12.000 € → usato 12.000 €").
+
+ADATTAMENTO PER MATERIA
+- Diritto pubblico: massima chiarezza concettuale. Spiega bene i concetti, mantieni i termini tecnici del professore e chiariscili quando non sono intuitivi. Evidenzia definizioni, fonti normative citate, classificazioni, principi, organi e competenze, differenze tra istituti.
+- Diritto privato: definizioni, istituti, requisiti, effetti, distinzioni tra figure simili, articoli del codice citati, casi ed esempi.
+- Filosofia del diritto: autori e correnti, tesi centrali, argomenti a sostegno, confronti tra posizioni, concetti chiave con la terminologia del professore.
+- Economia aziendale: definizioni, schemi, formule, calcoli ed esempi numerici passo per passo, collegamento tra concetti. Riporta i numeri esattamente come detti o scritti alla lavagna.
+- Matematica: definizioni, teoremi, proposizioni, dimostrazioni (passaggi in ordine), formule precise, esercizi svolti dal professore con i passaggi. Distingui ipotesi, tesi e dimostrazione.
+- Altre materie: individua la natura della disciplina (teorica, pratica, quantitativa) e usa la struttura più adatta.
+
+STRUTTURA DEGLI APPUNTI DELLA LEZIONE
+1. Titolo della lezione, materia e data (${data}) subito sotto il titolo
+2. Argomenti trattati (elenco breve)
+3. Appunti, organizzati per argomento, con gerarchia chiara
+4. Esempi del professore, accanto ai concetti
+5. Glossario dei termini tecnici (solo quelli utili da ripassare)
+6. Punti importanti per l'esame (solo se indicati dal professore)
+7. Da verificare
+
+APPUNTI PRECEDENTI
+${precTxt ? `Più in basso trovi gli appunti delle lezioni precedenti di questa materia. Non riscriverli e non ripeterli: usali solo come contesto (terminologia, argomenti già trattati). Se la nuova lezione si collega a una lezione precedente, indicalo con un breve rimando (es. "Vedi lezione del [data]"). Se la nuova lezione contraddice gli appunti precedenti, non decidere tu: segnala il contrasto in "Da verificare".` : 'Non ci sono appunti precedenti per questa materia.'}
+
+STILE E USCITA
+Italiano chiaro, preciso e ordinato, adatto allo studio. Restituisci solo gli appunti di questa lezione, seguendo la struttura sopra, senza introduzioni o commenti tuoi. Se la lezione è molto lunga, procedi a blocchi e fermati quando serve: io scriverò "continua".
 
 <trascrizione>
 ${t}
-</trascrizione>`;
+</trascrizione>${precTxt ? `
+
+<appunti_precedenti>
+${precTxt}
+</appunti_precedenti>` : ''}`;
 }
 function claudeFixPrompt(t){
   return `<contesto>
@@ -1206,7 +1282,10 @@ function openClaude(e, btn, prompt, eventName){
   track(eventName + '-copiato');
   let ok = true;
   try { navigator.clipboard.writeText(p).catch(() => fallbackCopy(p)); } catch (_) { ok = fallbackCopy(p); }
-  sum(ok ? 'La lezione è lunga, quindi ho copiato testo e istruzioni. In Claude tieni premuto nel campo di scrittura, scegli Incolla e invia.' : 'Non sono riuscito a copiare: copia il testo a mano e incollalo in Claude.', ok ? '' : 'err');
+  const extra = eventName === 'riassunto-claude'
+    ? ' Se hai le foto della lavagna, allegale prima di inviare.' + (precInfo() ? ' ' + precInfo() : '')
+    : '';
+  sum(ok ? 'Ho copiato testo e istruzioni. In Claude tieni premuto nel campo di scrittura, scegli Incolla e invia.' + extra : 'Non sono riuscito a copiare: copia il testo a mano e incollalo in Claude.', ok ? '' : 'err');
 }
 $('claudeBtn').addEventListener('click', e => openClaude(e, $('claudeBtn'), claudePrompt, 'riassunto-claude'));
 $('claudeFixBtn').addEventListener('click', e => openClaude(e, $('claudeFixBtn'), claudeFixPrompt, 'correzione-claude'));
@@ -1333,7 +1412,7 @@ async function unlock(pw, silent){
     const v = await privApi('verifica');
     lsSet(PW_KEY, pw);
     document.body.classList.remove('locked');
-    showUsage(v); loadList();
+    showUsage(v); loadList(); caricaPrecedenti();
     return true;
   } catch (e) {
     privPw = null;
@@ -1348,39 +1427,142 @@ async function unlock(pw, silent){
 }
 function fmtDurata(sec){ if (!sec) return ''; const m = Math.round(sec / 60); return m >= 60 ? `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}` : `${m} min`; }
 function fmtData(iso){ try { return new Date(iso + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' }); } catch (_) { return iso; } }
-function renderList(items){
-  const box = $('lista'); box.textContent = '';
-  if (!items.length) {
-    const p = document.createElement('p'); p.className = 'note';
-    p.textContent = $('cerca').value.trim() ? 'Nessuna lezione trovata.' : 'Le lezioni che salvi compaiono qui, divise per materia.';
-    box.append(p); return;
+/* ---------- Materia: scelta prima di trascrivere ---------- */
+const MATERIA_KEY = 'trascrittore:materia';
+const MATERIE_BASE = ['Diritto pubblico', 'Diritto privato', 'Filosofia del diritto', 'Economia aziendale', 'Economia politica', 'Matematica', 'Algebra lineare', 'Statistica'];
+let materieArchivio = [];
+function materiaCorrente(){ return ($('materia')?.value || '').replace(/\s+/g, ' ').trim(); }
+function aggiornaMaterie(){
+  const dl = $('materieList'); dl.textContent = '';
+  const tutte = [...new Set([...materieArchivio, ...MATERIE_BASE])].sort((a, b) => a.localeCompare(b, 'it'));
+  for (const m of tutte) { const o = document.createElement('option'); o.value = m; dl.append(o); }
+}
+function onMateria(){
+  const m = materiaCorrente();
+  $('materiaEco').textContent = m || 'non scelta';
+  lsSet(MATERIA_KEY, m || null);
+  clearTimeout(precTimer); precTimer = setTimeout(caricaPrecedenti, 400);
+}
+$('materia').value = lsGet(MATERIA_KEY) || '';
+$('materia').addEventListener('input', onMateria);
+$('materia').addEventListener('change', onMateria);
+aggiornaMaterie();
+
+/* Appunti già salvati della stessa materia: caricati in anticipo, così il pulsante Claude resta istantaneo */
+const PREC_MAX = 80000;   // caratteri massimi di appunti precedenti da mandare a Claude (i più recenti)
+let prec = { materia: '', items: [] }, precTimer = null;
+async function caricaPrecedenti(){
+  const m = materiaCorrente();
+  if (!m || !privPw) { prec = { materia: m, items: [] }; return; }
+  try { const items = await privApi('appunti?materia=' + encodeURIComponent(m)); if (materiaCorrente() === m) prec = { materia: m, items }; }
+  catch (_) { prec = { materia: m, items: [] }; }
+}
+function precScelti(){
+  if (prec.materia !== materiaCorrente()) return [];
+  const list = prec.items.filter(i => i.id !== currentId);
+  const out = []; let tot = 0;
+  for (let i = list.length - 1; i >= 0; i--) {   // dal più recente, finché c'è spazio
+    const n = list[i].appunti.length; if (out.length && tot + n > PREC_MAX) break;
+    out.unshift(list[i]); tot += n;
   }
+  return out;
+}
+function testoPrecedenti(){
+  return precScelti().map(i => `### ${i.titolo} (${fmtData(i.data)})\n${i.appunti.trim()}`).join('\n\n');
+}
+function precInfo(){
+  const n = precScelti().length;
+  return n ? `Ho aggiunto anche gli appunti di ${n} ${n === 1 ? 'lezione precedente' : 'lezioni precedenti'} di ${materiaCorrente()}.` : '';
+}
+
+/* ---------- Archivio ---------- */
+const FILTRO_KEY = 'trascrittore:filtro-materia', CHIUSE_KEY = 'trascrittore:materie-chiuse';
+let filtro = lsGet(FILTRO_KEY) || '', ultimiItems = [];
+let chiuse = new Set(); try { chiuse = new Set(JSON.parse(lsGet(CHIUSE_KEY) || '[]')); } catch (_) {}
+// colore stabile per ogni materia (tonalità ricavata dal nome)
+function tinta(nome){ let h = 0; for (const c of nome) h = (h * 31 + c.codePointAt(0)) >>> 0; return [160, 210, 25, 280, 120, 340, 45, 190, 250, 0][h % 10]; }
+function el(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function renderFiltri(materie){
+  const box = $('filtri'); box.textContent = '';
+  box.hidden = materie.length < 2;
+  if (filtro && !materie.includes(filtro)) filtro = '';
+  const add = (val, label) => {
+    const b = el('button'); b.type = 'button'; b.setAttribute('aria-pressed', String(filtro === val));
+    if (val) { b.className = 'subj'; b.style.setProperty('--h', tinta(val)); b.append(el('span', 'dot')); }
+    b.append(label);
+    b.addEventListener('click', () => { filtro = val; lsSet(FILTRO_KEY, val || null); renderList(ultimiItems); });
+    box.append(b);
+  };
+  add('', 'Tutte');
+  for (const m of materie) add(m, m);
+}
+function renderList(items){
+  ultimiItems = items;
+  const box = $('lista'); box.textContent = '';
   const groups = new Map();
   for (const it of items) { if (!groups.has(it.materia)) groups.set(it.materia, []); groups.get(it.materia).push(it); }
-  for (const [materia, list] of [...groups].sort((a, b) => a[0].localeCompare(b[0], 'it'))) {
-    const g = document.createElement('div'); g.className = 'subject';
-    const h = document.createElement('h3'); h.textContent = `${materia} (${list.length})`;
-    const ul = document.createElement('ul');
+  const materie = [...groups.keys()].sort((a, b) => a.localeCompare(b, 'it'));
+  renderFiltri(materie);
+  if (!items.length) {
+    box.append(el('p', 'note', $('cerca').value.trim() ? 'Nessuna lezione trovata.' : 'Le lezioni che salvi compaiono qui, divise per materia.'));
+    return;
+  }
+  const cercando = !!$('cerca').value.trim();
+  for (const materia of materie) {
+    if (filtro && materia !== filtro) continue;
+    const list = groups.get(materia);
+    const g = el('details', 'subject subj'); g.style.setProperty('--h', tinta(materia));
+    g.open = cercando || !!filtro || !chiuse.has(materia);
+    const s = el('summary'); s.append(el('h3', null, materia), el('span', 'count', String(list.length)));
+    g.addEventListener('toggle', () => {
+      if (cercando || filtro) return;
+      g.open ? chiuse.delete(materia) : chiuse.add(materia);
+      lsSet(CHIUSE_KEY, JSON.stringify([...chiuse]));
+    });
+    const body = el('div', 'subject-body');
+    const tools = el('div', 'subject-tools');
+    const dl = el('button', null, 'Scarica appunti'); dl.type = 'button';
+    dl.title = `Scarica in un unico file tutti gli appunti di ${materia}, in ordine di data`;
+    dl.addEventListener('click', () => scaricaAppunti(materia, dl));
+    tools.append(dl);
+    const ul = el('ul');
     for (const it of list) {
-      const li = document.createElement('li'); const b = document.createElement('button'); b.type = 'button';
-      if (it.id === currentId) b.classList.add('current');
-      const t = document.createElement('span'); t.textContent = it.titolo + (it.conAppunti ? ' · con appunti' : '');
-      const m = document.createElement('span'); m.className = 'meta'; m.textContent = [fmtData(it.data), fmtDurata(it.durata)].filter(Boolean).join(' · ');
-      b.append(t, m); b.addEventListener('click', () => openLesson(it.id));
+      const li = el('li'); const b = el('button', 'lez'); b.type = 'button';
+      if (it.id === currentId) { b.classList.add('current'); b.setAttribute('aria-current', 'true'); }
+      const d = new Date(it.data + 'T12:00:00');
+      const day = el('span', 'day'); day.setAttribute('aria-hidden', 'true');
+      day.append(el('b', null, isNaN(d) ? '–' : String(d.getDate())), el('small', null, isNaN(d) ? '' : d.toLocaleDateString('it-IT', { month: 'short' }).replace('.', '')));
+      const info = el('span', 'info');
+      const meta = el('span', 'meta'); meta.append(fmtData(it.data) + (it.durata ? ' · ' + fmtDurata(it.durata) : ''));
+      if (it.conAppunti) meta.append(el('span', 'tag', 'con appunti'));
+      info.append(el('span', 'titolo', it.titolo), meta);
+      b.append(day, info); b.addEventListener('click', () => openLesson(it.id));
       li.append(b); ul.append(li);
     }
-    g.append(h, ul); box.append(g);
+    body.append(tools, ul); g.append(s, body); box.append(g);
   }
+}
+async function scaricaAppunti(materia, btn){
+  btn.disabled = true;
+  const st = $('archStatus'); st.className = 'status'; st.textContent = '';
+  try {
+    const items = await privApi('appunti?materia=' + encodeURIComponent(materia));
+    if (!items.length) { st.textContent = `Nessuna lezione di ${materia} ha ancora appunti: incollali nel campo «I tuoi appunti» e salva.`; st.className = 'status warn'; return; }
+    const testo = `${materia.toUpperCase()} · APPUNTI COMPLETI\n${items.length} ${items.length === 1 ? 'lezione' : 'lezioni'}, aggiornati al ${fmtData(todayISO())}\n\n` +
+      items.map(i => `==============================\n${i.titolo}\n${fmtData(i.data)}\n==============================\n\n${i.appunti.trim()}`).join('\n\n\n');
+    const nome = materia.replace(/[\\/:*?"<>|]/g, '').trim().replace(/\s+/g, '_') || 'materia';
+    await saveFile(new Blob([testo], { type: 'text/plain;charset=utf-8' }), `${nome}_appunti_completi.txt`);
+    const senza = ultimiItems.filter(i => i.materia === materia && !i.conAppunti).length;
+    st.textContent = `Appunti di ${materia}: ${items.length} ${items.length === 1 ? 'lezione' : 'lezioni'} in un unico file.` + (senza ? ` ${senza} senza appunti non ${senza === 1 ? 'è inclusa' : 'sono incluse'}.` : '');
+  } catch (e) { st.textContent = 'Non riesco a preparare il file: ' + e.message; st.className = 'status err'; }
+  finally { btn.disabled = false; }
 }
 async function loadList(){
   const q = $('cerca').value.trim();
   try {
     const items = await privApi('lezioni' + (q ? '?q=' + encodeURIComponent(q) : ''));
     renderList(items);
-    if (!q) {
-      const dl = $('materieList'); dl.textContent = '';
-      for (const m of [...new Set(items.map(i => i.materia))].sort((a, b) => a.localeCompare(b, 'it'))) { const o = document.createElement('option'); o.value = m; dl.append(o); }
-    }
+    if (!q) { materieArchivio = [...new Set(items.map(i => i.materia))]; aggiornaMaterie(); }
   } catch (e) { $('lista').textContent = 'Non riesco a caricare l’archivio: ' + e.message; }
 }
 let cercaTimer = null;
@@ -1399,7 +1581,7 @@ async function openLesson(id){
     chunks = new Map();
     $('out').value = l.testo; $('appunti').value = l.appunti || '';
     $('materia').value = l.materia; $('titolo').value = l.titolo; $('dataLez').value = l.data;
-    setCurrent(l); doneSec = l.durata || 0;
+    setCurrent(l); doneSec = l.durata || 0; onMateria();
     privStatus(`Aperta: ${l.titolo} (${l.materia}).`);
     loadList();
     $('l3').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1408,16 +1590,16 @@ async function openLesson(id){
 $('saveLesson').addEventListener('click', async () => {
   const testo = $('out').value.trim();
   if (!testo) { privStatus('Non c’è testo da salvare: trascrivi un audio o apri una lezione.', 'warn'); return; }
-  if (!$('materia').value.trim()) { privStatus('Scegli la materia, così la ritrovi più facilmente.', 'warn'); $('materia').focus(); return; }
+  if (!materiaCorrente()) { privStatus('Scegli la materia al punto 2, così la ritrovi più facilmente.', 'warn'); $('materia').focus(); return; }
   $('saveLesson').disabled = true;
   try {
     const l = await privApi('lezioni', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
-      id: currentId, materia: $('materia').value, titolo: $('titolo').value || 'Lezione del ' + fmtData($('dataLez').value || todayISO()),
+      id: currentId, materia: materiaCorrente(), titolo: $('titolo').value || 'Lezione del ' + fmtData($('dataLez').value || todayISO()),
       data: $('dataLez').value || todayISO(), durata: Math.round(doneSec || totalSec || 0), testo: $('out').value, appunti: $('appunti').value,
     }) });
     setCurrent(l); $('titolo').value = l.titolo;
     privStatus(`Salvata in «${l.materia}».`);
-    loadList();
+    loadList(); caricaPrecedenti();
   } catch (e) { privStatus(e.status === 401 ? 'La password non è più valida: ricarica la pagina e reinseriscila.' : 'Non riesco a salvare: ' + e.message, 'err'); }
   finally { $('saveLesson').disabled = false; }
 });
@@ -1452,6 +1634,7 @@ if (PRIVATE) {
   document.body.classList.add('privato', 'locked');
   document.querySelector('header p').textContent = 'La tua app personale: trascrivi le lezioni in pochi minuti e tieni l’archivio diviso per materia, con i tuoi appunti.';
   $('dataLez').value = todayISO();
+  onMateria();
   $('lockForm').addEventListener('submit', e => { e.preventDefault(); const v = $('pw').value.trim(); if (v) unlock(v); });
   // primo avvio: controlla che chiave Groq e password siano impostate
   async function checkSetup(){

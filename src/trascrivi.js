@@ -8,6 +8,30 @@ const MODEL = 'whisper-large-v3-turbo';
 const MAX_BYTES = 5 * 1024 * 1024;
 const LINGUE = new Set(['it', 'en']);
 
+// Parole tipiche per materia: vengono date a Whisper come "suggerimento" (prompt, max ~224 token),
+// così scrive meglio termini tecnici e nomi propri. L'ordine conta: le voci più specifiche prima.
+const VOCABOLARIO = [
+  ['diritto pubblico', 'Costituzione, Corte costituzionale, Parlamento, Presidente della Repubblica, Consiglio dei ministri, decreto-legge, decreto legislativo, legge delega, riserva di legge, gerarchia delle fonti, regolamento, Stato di diritto, sovranità popolare, referendum abrogativo, regioni, autonomie locali, Unione europea'],
+  ['diritto privato', 'Codice civile, negozio giuridico, contratto, obbligazione, capacità giuridica, capacità di agire, diritti reali, proprietà, usufrutto, possesso, usucapione, responsabilità extracontrattuale, risarcimento del danno, nullità, annullabilità, rescissione, risoluzione'],
+  ['filosofia del diritto', 'giusnaturalismo, giuspositivismo, Kelsen, Hart, Bobbio, Dworkin, Radbruch, norma fondamentale, validità, efficacia, ordinamento giuridico, Hobbes, Locke, Rousseau, Kant'],
+  ['economia aziendale', 'bilancio d\'esercizio, stato patrimoniale, conto economico, partita doppia, Dare e Avere, ammortamento, ratei e risconti, rimanenze, patrimonio netto, capitale sociale, reddito d\'esercizio, fabbisogno finanziario, costi fissi, costi variabili, break-even point, IVA'],
+  ['economia politica', 'domanda, offerta, equilibrio di mercato, elasticità, utilità marginale, costo opportunità, curva di indifferenza, vincolo di bilancio, concorrenza perfetta, monopolio, oligopolio, PIL, inflazione, moneta, tasso di interesse'],
+  ['microeconomia', 'domanda, offerta, equilibrio di mercato, elasticità, utilità marginale, costo opportunità, curva di indifferenza, vincolo di bilancio, concorrenza perfetta, monopolio, oligopolio, surplus del consumatore'],
+  ['macroeconomia', 'PIL, inflazione, disoccupazione, moneta, tasso di interesse, politica monetaria, politica fiscale, BCE, moltiplicatore keynesiano, IS-LM, bilancia dei pagamenti, debito pubblico'],
+  ['algebra lineare', 'matrice, determinante, vettore, spazio vettoriale, sottospazio, base, dimensione, rango, autovalore, autovettore, applicazione lineare, nucleo, immagine, sistema lineare, Gauss, Cramer, Rouché-Capelli'],
+  ['statistica', 'media, mediana, moda, varianza, scarto quadratico medio, distribuzione normale, probabilità, campione, popolazione, intervallo di confidenza, test d\'ipotesi, regressione, correlazione'],
+  ['matematica', 'funzione, dominio, limite, derivata, integrale, teorema, dimostrazione, ipotesi, tesi, continuità, asintoto, logaritmo, esponenziale, successione, serie'],
+];
+function suggerimento(lang, materiaGrezza) {
+  const materia = String(materiaGrezza || '').replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+  if (lang !== 'it') return materia ? `University lecture: ${materia}.` : 'University lecture.';
+  if (!materia) return 'Lezione universitaria in italiano.';
+  const m = materia.toLowerCase();
+  const voce = VOCABOLARIO.find(([k]) => m.includes(k));
+  return `Lezione universitaria di ${materia}.` + (voce ? ` Termini: ${voce[1]}.` : '');
+}
+export { suggerimento };
+
 function json(status, body, extra = {}) {
   return new Response(JSON.stringify(body), {
     status,
@@ -47,7 +71,7 @@ export async function onRequest({ request, env }) {
   form.append('language', lang);
   form.append('response_format', 'json');
   form.append('temperature', '0');
-  if (lang === 'it') form.append('prompt', 'Lezione universitaria in italiano.');
+  form.append('prompt', suggerimento(lang, url.searchParams.get('materia')));
 
   let res;
   try {

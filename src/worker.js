@@ -34,6 +34,10 @@ export class Store extends DurableObject {
     }
     return this.sql.exec(`SELECT ${cols} FROM lezioni ORDER BY data DESC, creata DESC`).toArray();
   }
+  appuntiMateria(materia) {
+    return this.sql.exec(`SELECT id, titolo, data, appunti FROM lezioni WHERE materia = ? AND length(appunti) > 0
+      ORDER BY data ASC, creata ASC`, materia).toArray();
+  }
   leggi(id) { return this.sql.exec('SELECT * FROM lezioni WHERE id = ?', id).toArray()[0] || null; }
   salva(l) {
     const now = Date.now(), id = l.id || crypto.randomUUID(), old = this.leggi(id);
@@ -86,6 +90,11 @@ export default {
       if (!autorizzato(request, env)) return json(401, { error: 'Password errata.' });
       const azione = url.pathname.slice('/api/privato/'.length);
       if (azione === 'verifica') return json(200, { ok: true, uso: await store().usoOggi(), limitePubblicoOre: null, limiteGroq: { orePerGiorno: 8, orePerOra: 2 } });
+      // tutti gli appunti salvati di una materia, in ordine di data (per Claude e per "Scarica appunti")
+      if (azione === 'appunti' && request.method === 'GET') {
+        const materia = (url.searchParams.get('materia') || '').trim().slice(0, 80);
+        return materia ? json(200, await store().appuntiMateria(materia)) : json(400, { error: 'Manca la materia.' });
+      }
       if (azione === 'lezioni') {
         if (request.method === 'GET') {
           const id = url.searchParams.get('id');
