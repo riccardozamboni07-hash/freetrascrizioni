@@ -45,11 +45,6 @@ Usa i piani gratuiti di Cloudflare e Groq: con Groq gratis trascrivi circa **8 o
     - **Android**: menu ⋮ → **Aggiungi a schermata Home**
 17. Tocca **"Prova con l'esempio"** per controllare che tutto funzioni.
 
-## Aggiornamenti
-
-L'app si aggiorna **da sola ogni lunedì mattina**. Le tue lezioni e la password restano come sono.
-Per aggiornarla subito: nel tuo repository su GitHub apri **Actions → Aggiorna Freetrascrizioni → Run workflow**.
-
 ## Domande frequenti
 
 - **Quanto costa?** Niente, finché resti nei limiti gratuiti di Groq (~8 ore di audio al giorno, 2 all'ora) e Cloudflare.
