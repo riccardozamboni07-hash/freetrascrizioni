@@ -8,3 +8,6 @@ Freetrascrizioni usa i seguenti componenti di terze parti, caricati dal browser 
 
 La trascrizione online usa l'API di Groq (whisper-large-v3-turbo), soggetta ai termini di Groq.
 I caratteri tipografici sono serviti da Google Fonts (SIL Open Font License).
+
+Le istruzioni per gli appunti con Claude derivano dall'app «Appunti universitari»,
+usate e adattate con il permesso del suo autore.
