@@ -8,6 +8,7 @@ import { DurableObject } from 'cloudflare:workers';
 import { onRequest as trascrivi } from './trascrivi.js';
 import { generaFlashcard } from './flashcard.js';
 import { generaTesto, leggiLavagna, rispondi } from './ai.js';
+import { privacy, condizioni } from './legale.js';
 import { hashPassword, verificaPassword, sha, nuovoToken, nuovoId, leggiCookie, cookie, emailValida, googleInizio, googleFine } from './auth.js';
 
 export class Store extends DurableObject {
@@ -27,15 +28,34 @@ export class Store extends DurableObject {
     this.sql.exec(`CREATE TABLE IF NOT EXISTS utenti (id TEXT PRIMARY KEY, email TEXT UNIQUE, nome TEXT, sale TEXT, hash TEXT, google TEXT, creato INTEGER, ultimo INTEGER)`);
     this.sql.exec(`CREATE TABLE IF NOT EXISTS sessioni (token TEXT PRIMARY KEY, utente TEXT, scade INTEGER)`);
     this.sql.exec(`CREATE TABLE IF NOT EXISTS tentativi (email TEXT, quando INTEGER)`);
+    // versione 1.8: limite ore per utente, blocco, accettazione di privacy e condizioni
+    for (const c of ['ore_limite REAL', 'bloccato INTEGER NOT NULL DEFAULT 0', 'accettato INTEGER']) { try { this.sql.exec(`ALTER TABLE utenti ADD COLUMN ${c}`); } catch (_) {} }
     this.sql.exec(`CREATE TABLE IF NOT EXISTS fc_sessioni (id INTEGER PRIMARY KEY AUTOINCREMENT, quando INTEGER, materia TEXT, lezione TEXT, giuste INTEGER, totale INTEGER)`);
   }
   // ---------- utenti e sessioni (solo nell'archivio "auth") ----------
   utentePerEmail(email) { return this.sql.exec('SELECT * FROM utenti WHERE email = ?', email).toArray()[0] || null; }
   utentePerGoogle(sub) { return this.sql.exec('SELECT * FROM utenti WHERE google = ?', sub).toArray()[0] || null; }
   creaUtente(u) {
-    this.sql.exec('INSERT INTO utenti (id, email, nome, sale, hash, google, creato, ultimo) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      u.id, u.email, u.nome || '', u.sale || null, u.hash || null, u.google || null, Date.now(), Date.now());
+    this.sql.exec('INSERT INTO utenti (id, email, nome, sale, hash, google, creato, ultimo, accettato) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      u.id, u.email, u.nome || '', u.sale || null, u.hash || null, u.google || null, Date.now(), Date.now(), u.accettato || null);
     return this.utentePerEmail(u.email);
+  }
+  elencoUtenti() {
+    return this.sql.exec(`SELECT id, email, nome, creato, ultimo, google IS NOT NULL AS conGoogle, hash IS NOT NULL AS conPassword,
+      ore_limite AS oreLimite, bloccato FROM utenti ORDER BY creato DESC`).toArray();
+  }
+  aggiornaUtente(id, { oreLimite, bloccato }) {
+    this.sql.exec('UPDATE utenti SET ore_limite = ?, bloccato = ? WHERE id = ?', oreLimite, bloccato ? 1 : 0, id);
+    if (bloccato) this.sql.exec('DELETE FROM sessioni WHERE utente = ?', id);
+    return { ok: true };
+  }
+  // riepilogo d'uso di un utente (chiamato sull'archivio di quell'utente)
+  riepilogo() {
+    const l = this.sql.exec(`SELECT count(*) AS n, coalesce(sum(durata), 0) AS secondi FROM lezioni`).toArray()[0] || {};
+    return { settimana: this.usoSettimana(), tokenOggi: this.usoOggi().flashcardToken, lezioni: l.n || 0, secondiLezioni: l.secondi || 0 };
+  }
+  esporta() {
+    return { profilo: this.profilo().profilo, lezioni: this.sql.exec('SELECT materia, titolo, data, durata, testo, appunti, flashcard, creata, aggiornata FROM lezioni ORDER BY data').toArray() };
   }
   utentePerId(id) { return this.sql.exec('SELECT * FROM utenti WHERE id = ?', id).toArray()[0] || null; }
   cambiaPassword(id, sale, hash) { this.sql.exec('UPDATE utenti SET sale = ?, hash = ? WHERE id = ?', sale, hash, id); }
@@ -45,9 +65,9 @@ export class Store extends DurableObject {
     this.sql.exec('INSERT INTO sessioni (token, utente, scade) VALUES (?, ?, ?)', token, utente, Date.now() + giorni * 86400000);
   }
   sessione(token) {
-    const r = this.sql.exec(`SELECT u.id, u.email, u.nome, u.google IS NOT NULL AS conGoogle, u.hash IS NOT NULL AS conPassword, s.scade
+    const r = this.sql.exec(`SELECT u.id, u.email, u.nome, u.google IS NOT NULL AS conGoogle, u.hash IS NOT NULL AS conPassword, u.ore_limite AS oreLimite, u.bloccato, s.scade
       FROM sessioni s JOIN utenti u ON u.id = s.utente WHERE s.token = ?`, token).toArray()[0];
-    if (!r || r.scade < Date.now()) return null;
+    if (!r || r.scade < Date.now() || r.bloccato) return null;
     this.sql.exec('UPDATE utenti SET ultimo = ? WHERE id = ?', Date.now(), r.id);
     return r;
   }
@@ -226,8 +246,9 @@ async function gestisciAuth(request, env, url, auth, utente) {
     if (!u) {
       if (!invitoOk(env, g.invito)) return torna('Per registrarti serve il codice di invito: scrivilo e poi tocca di nuovo «Continua con Google».');
       if (!g.email) return torna('Google non ha condiviso la tua email.');
-      u = await auth().creaUtente({ id: nuovoId(), email: g.email, nome: g.nome, google: g.sub });
+      u = await auth().creaUtente({ id: nuovoId(), email: g.email, nome: g.nome, google: g.sub, accettato: Date.now() });
     }
+    if (u.bloccato) return torna('Questo account è sospeso. Scrivi all’amministratore.');
     return conSessione(auth, u.id, null, url.origin + '/');
   }
   if (request.method !== 'POST') return json(405, { error: 'Usa POST.' });
@@ -237,14 +258,16 @@ async function gestisciAuth(request, env, url, auth, utente) {
     if (!emailValida(email)) return json(400, { error: 'Email non valida.' });
     if (String(b.password || '').length < 8) return json(400, { error: 'La password deve avere almeno 8 caratteri.' });
     if (!invitoOk(env, b.invito)) return json(403, { error: 'Codice di invito non valido.', code: 'invito' });
+    if (!b.accetto) return json(400, { error: 'Per registrarti accetta privacy e condizioni d’uso.', code: 'accetto' });
     if (await auth().utentePerEmail(email)) return json(409, { error: 'Esiste già un account con questa email: accedi.' });
     const { sale, hash } = await hashPassword(String(b.password));
-    const u = await auth().creaUtente({ id: nuovoId(), email, nome: String(b.nome || '').trim().slice(0, 80), sale, hash });
+    const u = await auth().creaUtente({ id: nuovoId(), email, nome: String(b.nome || '').trim().slice(0, 80), sale, hash, accettato: Date.now() });
     return conSessione(auth, u.id, { ok: true });
   }
   if (p === '/api/auth/accedi') {
     if (await auth().troppiTentativi(email)) return json(429, { error: 'Troppi tentativi: riprova tra 15 minuti.' });
     const u = email && await auth().utentePerEmail(email);
+    if (u && u.bloccato) return json(403, { error: 'Questo account è sospeso. Scrivi all’amministratore.' });
     if (u && !u.hash) return json(400, { error: 'Questo account usa Google: tocca «Continua con Google».' });
     if (!u || !await verificaPassword(String(b.password || ''), u.sale, u.hash)) { await auth().tentativoSbagliato(email); return json(401, { error: 'Email o password errate.' }); }
     return conSessione(auth, u.id, { ok: true });
@@ -278,11 +301,16 @@ export default {
     }
     const store = () => env.STORE.get(env.STORE.idFromName(utente ? 'u:' + utente.id : 'principale'));
     const entrato = multi ? !!utente : autorizzato(request, env);
-    const oreSett = Number(env.ORE_SETTIMANA_UTENTE) || 10;
+    const oreSett = utente && utente.oreLimite != null ? utente.oreLimite : (Number(env.ORE_SETTIMANA_UTENTE) || 10);
+    const admins = String(env.ADMIN_EMAIL || '').toLowerCase().split(/[,\s]+/).filter(Boolean);
+    const admin = !!(utente && admins.includes(utente.email));
     const tokenGiorno = Number(env.TOKEN_GIORNO_UTENTE) || 150000;
     const limiteAi = async () => multi && (await store().usoOggi()).flashcardToken >= tokenGiorno
       ? json(429, { error: 'Hai usato tutta l’intelligenza artificiale di oggi: riprova domani.', code: 'limite-ai' }) : null;
 
+    if (url.pathname === '/privacy' || url.pathname === '/condizioni') {
+      return new Response(url.pathname === '/privacy' ? privacy(env) : condizioni(env), { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
     if (url.pathname === '/api/stato') return json(200, {
       groq: Boolean(env.GROQ_API_KEY), password: multi || Boolean(env.PASSWORD), multiutente: multi,
       google: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET), invito: Boolean(env.CODICE_INVITO),
@@ -307,7 +335,7 @@ export default {
       if (azione === 'verifica') return json(200, {
         ok: true, uso: multi ? { ...(await auth().usoOggi()), flashcardToken: (await store().usoOggi()).flashcardToken } : await store().usoOggi(), limitePubblicoOre: null,
         limiteGroq: { orePerGiorno: 8, orePerOra: 2, tokenFlashcardGiorno: multi ? tokenGiorno : 500000, tokenFlashcardMinuto: 30000 },
-        utente: utente ? { email: utente.email, nome: utente.nome, conGoogle: !!utente.conGoogle, conPassword: !!utente.conPassword } : null,
+        utente: utente ? { email: utente.email, nome: utente.nome, conGoogle: !!utente.conGoogle, conPassword: !!utente.conPassword, admin } : null,
         settimana: multi ? { usate: await store().usoSettimana(), limite: oreSett * 3600, tokenOggi: (await store().usoOggi()).flashcardToken } : null,
       });
       // tutti gli appunti salvati di una materia, in ordine di data (per Claude e per "Scarica appunti")
@@ -336,6 +364,28 @@ export default {
         if (r.token) await store().usaToken(r.token);
         if (r.status === 200) r.body.uso = await store().usoOggi();
         return json(r.status, r.body);
+      }
+      if (azione === 'esporta' && request.method === 'GET') return json(200, await store().esporta());
+      if (azione.startsWith('admin/')) {
+        if (!admin) return json(403, { error: 'Solo per l’amministratore.' });
+        if (azione === 'admin/utenti' && request.method === 'GET') {
+          const utenti = await auth().elencoUtenti();
+          const dettagli = await Promise.all(utenti.map(u => Promise.resolve().then(() => env.STORE.get(env.STORE.idFromName('u:' + u.id)).riepilogo()).catch(() => ({}))));
+          const def = Number(env.ORE_SETTIMANA_UTENTE) || 10, settimana = Date.now() - 7 * 86400000;
+          return json(200, {
+            utenti: utenti.map((u, i) => ({ ...u, ...dettagli[i], limite: u.oreLimite != null ? u.oreLimite : def })),
+            totali: { utenti: utenti.length, attivi7: utenti.filter(u => u.ultimo > settimana).length, oggi: await auth().usoOggi() },
+            predefinito: def,
+          });
+        }
+        if (azione === 'admin/aggiorna' && request.method === 'POST') {
+          const b = await request.json().catch(() => null);
+          if (!b || typeof b.id !== 'string') return json(400, { error: 'Dati mancanti.' });
+          const ore = b.oreLimite === null || b.oreLimite === '' ? null : Math.max(0, Math.min(200, Number(b.oreLimite)));
+          if (ore !== null && Number.isNaN(ore)) return json(400, { error: 'Numero di ore non valido.' });
+          return json(200, await auth().aggiornaUtente(b.id.slice(0, 64), { oreLimite: ore, bloccato: !!b.bloccato }));
+        }
+        return json(404, { error: 'Richiesta sconosciuta.' });
       }
       if (azione === 'profilo') {
         if (request.method === 'GET') return json(200, await store().profilo());

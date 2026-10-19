@@ -156,6 +156,23 @@ body.locked .topbar{display:none}
 .pw-wrap input{padding-right:48px !important}
 .pw-occhio{position:absolute;right:4px;top:50%;transform:translateY(-50%);min-height:0;width:40px;height:40px;padding:0;justify-content:center;border:none;background:transparent;color:var(--muted)}
 .pw-occhio:hover{color:var(--fg)}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:.9rem;color:var(--muted)}
+.check input{width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--accent)}
+.check a,.note a{color:var(--accent)}
+.drawer.wide{width:min(560px,96vw)}
+.adm-tot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.adm-tot div{background:var(--accent-soft);border-radius:14px;padding:10px;text-align:center}
+.adm-tot b{display:block;font-size:1.3rem;color:var(--accent)}
+.adm-tot span{font-size:.78rem;color:var(--muted)}
+.adm-list{display:flex;flex-direction:column;gap:10px}
+.adm-u{border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.adm-u.off{opacity:.6}
+.adm-u .chi{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.adm-u .meta{font-size:.82rem;color:var(--muted);white-space:normal;overflow-wrap:anywhere;min-width:0}
+.adm-u .row label{display:flex;align-items:center;gap:8px}
+.adm-bar{height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.adm-bar i{display:block;height:100%;background:var(--accent)}
+.adm-u .row input{width:90px;min-height:40px}
 .banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px;border-radius:18px;border:1px solid var(--warn)}
 .banner p{margin:0;flex:1 1 240px}
 .live{font-size:.78rem;font-weight:600;color:var(--rec)}
@@ -178,7 +195,7 @@ body.locked main > :not(header):not(#lock):not(#setup){display:none}
 body.privato:not(.locked) #lock{display:none}
 #lock{max-width:420px}
 .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
-input[type=text],input[type=password],input[type=date],input[type=search],input[type=email],input[type=tel]{font:inherit;padding:.55rem .8rem;min-height:44px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);width:100%}
+input[type=text],input[type=password],input[type=date],input[type=search],input[type=email],input[type=tel],input[type=number]{font:inherit;padding:.55rem .8rem;min-height:44px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);width:100%}
 #appunti{min-height:180px}
 /* Archivio: filtri per materia, sezioni apribili, una scheda per lezione */
 .subj{--c:hsl(var(--h,160) 42% 38%);--c-soft:hsl(var(--h,160) 45% 94%)}
@@ -256,8 +273,10 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
         <label class="field" id="nomeBox" hidden><span>Nome</span><input type="text" id="aNome" autocomplete="given-name"></label>
         <label class="field"><span>Email</span><input type="email" id="aEmail" autocomplete="email" required></label>
         <label class="field"><span>Password</span><input type="password" id="aPw" autocomplete="current-password" required minlength="8"></label>
+        <label class="check" id="accettoBox" hidden><input type="checkbox" id="aAccetto"> <span>Ho letto e accetto l'<a href="/privacy" target="_blank">informativa privacy</a> e le <a href="/condizioni" target="_blank">condizioni d'uso</a></span></label>
         <button class="primary" type="submit" id="authGo">Accedi</button>
       </form>
+      <p class="note" id="googleNota" hidden>Registrandoti con Google accetti l'<a href="/privacy" target="_blank">informativa privacy</a> e le <a href="/condizioni" target="_blank">condizioni d'uso</a>.</p>
     </div>
     <p class="note" id="lockNota">Inserisci la password che hai scelto durante l’installazione. Su questo dispositivo te la chiede una volta sola.</p>
     <form class="row" id="lockForm">
@@ -531,7 +550,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.7.1</p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.8<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
 </main>
 <div class="overlay" id="overlay" hidden></div>
 <nav class="drawer" id="menu" aria-label="Menu" hidden>
@@ -549,6 +568,13 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <li><button type="button" id="menuProf"><span>👤</span>Profilo</button></li>
   </ul>
 </nav>
+<aside class="drawer wide" id="admin" aria-labelledby="admT" hidden>
+  <div class="row between"><strong id="admT">Pannello amministratore</strong><button type="button" class="icon-btn" data-chiudi aria-label="Chiudi">✕</button></div>
+  <div class="adm-tot" id="admTot"></div>
+  <input type="search" id="admCerca" placeholder="Cerca per nome o email" aria-label="Cerca utenti">
+  <div class="status" id="admStatus" role="status"></div>
+  <div class="adm-list" id="admLista"></div>
+</aside>
 <aside class="drawer" id="profilo" aria-labelledby="profT" hidden>
   <div class="row between"><strong id="profT">Il tuo profilo</strong><button type="button" class="icon-btn" data-chiudi aria-label="Chiudi">✕</button></div>
   <div class="prof-top">
@@ -578,6 +604,8 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <label class="field"><span>Nuova password (almeno 8 caratteri)</span><input type="password" id="pwNuova" autocomplete="new-password"></label>
       <button type="button" class="primary" id="pwSalva">Salva nuova password</button>
     </div>
+    <button type="button" id="adminBtn" hidden>Pannello amministratore</button>
+    <button type="button" id="esportaBtn">Scarica i miei dati</button>
     <button type="button" id="logoutBtn">Esci da questo dispositivo</button>
     <button type="button" class="danger" id="delAccBtn">Elimina account</button>
     <div id="delAccBox" hidden style="display:flex;flex-direction:column;gap:8px">
@@ -1809,6 +1837,7 @@ function authModo(reg){
   modoReg = reg;
   $('tabAccedi').setAttribute('aria-selected', !reg); $('tabReg').setAttribute('aria-selected', reg);
   $('nomeBox').hidden = !reg; $('invitoBox').hidden = !(reg && statoApp.invito);
+  $('accettoBox').hidden = !reg; $('googleNota').hidden = !(reg && statoApp.google);
   $('authGo').textContent = reg ? 'Crea account' : 'Accedi';
   $('aPw').autocomplete = reg ? 'new-password' : 'current-password';
   $('lockT').textContent = reg ? 'Crea il tuo account' : 'Accedi';
@@ -1817,6 +1846,9 @@ function authModo(reg){
 function preparaMulti(st){
   MULTI = true; statoApp = st;
   $('authBox').hidden = false; $('lockForm').style.display = 'none'; $('lockNota').hidden = true;
+  $('linkLegali').hidden = false;
+  document.querySelector('header p').textContent = 'Registra le lezioni, ottieni la trascrizione in pochi minuti e studia con appunti, flashcard e domande create dall’intelligenza artificiale.';
+  document.title = 'Freetrascrizioni';
   $('googleBtn').hidden = !st.google; $('oppure').hidden = !st.google;
   authModo(false);
   const err = new URLSearchParams(location.search).get('errore');
@@ -1831,10 +1863,11 @@ $('googleBtn').addEventListener('click', () => {
 });
 $('authForm').addEventListener('submit', async e => {
   e.preventDefault();
+  if (modoReg && !$('aAccetto').checked) { authSt('Per registrarti accetta privacy e condizioni d’uso.', 'warn'); return; }
   $('authGo').disabled = true; authSt(modoReg ? 'Creo l’account…' : 'Accedo…');
   try {
     const res = await fetch('/api/auth/' + (modoReg ? 'registrati' : 'accedi'), { method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email: $('aEmail').value, password: $('aPw').value, nome: $('aNome').value, invito: $('aInvito').value }) });
+      body: JSON.stringify({ email: $('aEmail').value, password: $('aPw').value, nome: $('aNome').value, invito: $('aInvito').value, accetto: $('aAccetto').checked }) });
     const d = await res.json().catch(() => ({}));
     if (!res.ok) { authSt(d.error || 'Errore ' + res.status, 'err'); if (d.code === 'invito') { $('invitoBox').hidden = false; $('aInvito').focus(); } return; }
     $('aPw').value = ''; authSt('');
@@ -1859,6 +1892,7 @@ function mostraAccount(v){
   $('pwCambia').hidden = false; $('pwCambia').textContent = utenteInfo.conPassword ? 'Cambia password' : 'Imposta una password';
   $('pwAttBox').hidden = !utenteInfo.conPassword;
   $('logoutBtn').textContent = 'Esci';
+  $('adminBtn').hidden = !utenteInfo.admin;
   $('delAccTxt').innerHTML = 'Verranno cancellati <strong>per sempre</strong> il tuo account e tutti i tuoi dati: lezioni, appunti, flashcard e statistiche. Scrivi <strong>ELIMINA</strong> per confermare.';
   if (v.settimana) {
     const h = x => (x / 3600).toFixed(1).replace('.', ',');
@@ -1866,16 +1900,75 @@ function mostraAccount(v){
     $('limInfo').textContent = `Il tuo piano: ${h(v.settimana.limite)} ore di trascrizione a settimana (usate ${h(v.settimana.usate)}).`;
   }
 }
+
+/* ---------- Pannello amministratore, esporta dati ---------- */
+let admUtenti = [];
+function admSt(t, kind){ const s = $('admStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
+async function admCarica(){
+  admSt('Carico gli utenti…');
+  try {
+    const r = await privApi('admin/utenti');
+    admUtenti = r.utenti || [];
+    const h = x => (x / 3600).toFixed(1).replace('.', ',');
+    const tot = $('admTot'); tot.textContent = '';
+    [[r.totali.utenti, 'iscritti'], [r.totali.attivi7, 'attivi in 7 giorni'], [h(r.totali.oggi?.privato || 0) + ' h', 'trascritte oggi (tutti)']].forEach(([n, t]) => {
+      const d = document.createElement('div'); const b = document.createElement('b'); b.textContent = n; const sp = document.createElement('span'); sp.textContent = t; d.append(b, sp); tot.append(d);
+    });
+    admSt(''); admRender();
+  } catch (e) { admSt('Non riesco a caricare: ' + e.message, 'err'); }
+}
+function admRender(){
+  const q = $('admCerca').value.trim().toLowerCase(), box = $('admLista'); box.textContent = '';
+  const h = x => (x / 3600).toFixed(1).replace('.', ',');
+  const quando = t => t ? new Date(t).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) : '—';
+  for (const u of admUtenti.filter(u => !q || (u.email + ' ' + u.nome).toLowerCase().includes(q))) {
+    const d = document.createElement('div'); d.className = 'adm-u' + (u.bloccato ? ' off' : '');
+    const chi = document.createElement('div'); chi.className = 'chi';
+    const n = document.createElement('strong'); n.textContent = (u.nome || '(senza nome)') + (u.bloccato ? ' · sospeso' : '');
+    const e = document.createElement('span'); e.className = 'meta'; e.textContent = u.email + (u.conGoogle ? ' · Google' : '');
+    chi.append(n, e);
+    const meta = document.createElement('div'); meta.className = 'meta';
+    meta.textContent = `Iscritto ${quando(u.creato)} · ultimo accesso ${quando(u.ultimo)} · ${u.lezioni || 0} lezioni · AI oggi ${Math.round((u.tokenOggi || 0) / 1000)}k token`;
+    const usate = u.settimana || 0, lim = u.limite * 3600;
+    const lab = document.createElement('div'); lab.className = 'meta'; lab.textContent = `Questa settimana: ${h(usate)} h su ${String(u.limite).replace('.', ',')} h`;
+    const bar = document.createElement('div'); bar.className = 'adm-bar'; const bi = document.createElement('i'); bi.style.width = Math.min(100, lim ? usate / lim * 100 : 100) + '%'; bar.append(bi);
+    const row = document.createElement('div'); row.className = 'row';
+    const lb = document.createElement('label'); lb.className = 'meta'; lb.textContent = 'Ore a settimana ';
+    const inp = document.createElement('input'); inp.type = 'number'; inp.min = 0; inp.max = 200; inp.step = 0.5; inp.value = u.oreLimite ?? ''; inp.placeholder = String(u.limite);
+    lb.append(inp);
+    const salva = document.createElement('button'); salva.type = 'button'; salva.textContent = 'Salva';
+    const blocca = document.createElement('button'); blocca.type = 'button'; blocca.className = u.bloccato ? '' : 'danger'; blocca.textContent = u.bloccato ? 'Riattiva' : 'Sospendi';
+    const invia = async (dati, msg) => {
+      try { await privApi('admin/aggiorna', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: u.id, oreLimite: inp.value === '' ? null : Number(inp.value), bloccato: !!u.bloccato, ...dati }) }); admSt(msg); admCarica(); }
+      catch (err) { admSt('Errore: ' + err.message, 'err'); }
+    };
+    salva.addEventListener('click', () => invia({}, `Limite di ${u.email} aggiornato.`));
+    blocca.addEventListener('click', () => invia({ bloccato: !u.bloccato }, u.bloccato ? `${u.email} riattivato.` : `${u.email} sospeso: è stato disconnesso.`));
+    row.append(lb, salva, blocca);
+    d.append(chi, meta, lab, bar, row); box.append(d);
+  }
+  if (!box.children.length) { const p = document.createElement('p'); p.className = 'note'; p.textContent = 'Nessun utente.'; box.append(p); }
+}
+$('admCerca').addEventListener('input', admRender);
+$('adminBtn').addEventListener('click', () => { apri('admin'); admCarica(); });
+$('esportaBtn').addEventListener('click', async () => {
+  $('esportaBtn').disabled = true;
+  try {
+    const d = await privApi('esporta');
+    await saveFile(new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' }), 'freetrascrizioni_i_miei_dati.json');
+  } catch (e) { $('profStatus').textContent = 'Non riesco a scaricare: ' + e.message; $('profStatus').className = 'status err'; }
+  finally { $('esportaBtn').disabled = false; }
+});
 /* ---------- Menu e profilo (in alto a destra) ---------- */
 let profDati = {}, profFoto = '';
 function apri(id){
-  ['menu', 'profilo'].forEach(x => { $(x).hidden = x !== id; });
+  ['menu', 'profilo', 'admin'].forEach(x => { $(x).hidden = x !== id; });
   $('overlay').hidden = false; document.body.style.overflow = 'hidden';
   $('menuBtn').setAttribute('aria-expanded', id === 'menu'); $('profBtn').setAttribute('aria-expanded', id === 'profilo');
   $(id).querySelector('[data-chiudi]')?.focus();
 }
 function chiudi(){
-  ['menu', 'profilo'].forEach(x => { $(x).hidden = true; });
+  ['menu', 'profilo', 'admin'].forEach(x => { $(x).hidden = true; });
   $('overlay').hidden = true; document.body.style.overflow = '';
   $('menuBtn').setAttribute('aria-expanded', 'false'); $('profBtn').setAttribute('aria-expanded', 'false');
 }
