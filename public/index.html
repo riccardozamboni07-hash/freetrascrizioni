@@ -112,6 +112,20 @@ textarea{width:100%;min-height:280px;resize:vertical;font:16px/1.65 var(--sans);
 #aiOut{min-height:320px;background:var(--surface)}
 .aiview{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:6px 16px;max-height:480px;overflow:auto;line-height:1.6}
 .aiview h1{font-size:1.3rem;color:var(--accent);margin:.6em 0 .2em}.aiview h2{font-size:1.1rem;color:var(--accent);margin:1em 0 .3em}.aiview h3{font-size:1rem;margin:.8em 0 .2em}.aiview p{margin:.4em 0}.aiview ul{margin:.3em 0;padding-left:1.2rem}
+.thumbs{display:flex;flex-wrap:wrap;gap:8px}
+.thumbs figure{position:relative;margin:0;width:74px;height:74px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.thumbs img{width:100%;height:100%;object-fit:cover;display:block}
+.thumbs button{position:absolute;top:3px;right:3px;min-height:0;width:24px;height:24px;padding:0;justify-content:center;border-radius:50%;font-size:.8rem;background:var(--surface)}
+.fc-mat{border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:8px}
+select{font:inherit;padding:.55rem .8rem;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);min-height:44px;max-width:100%}
+.ask-log{display:flex;flex-direction:column;gap:10px;max-height:520px;overflow:auto}
+.msg{border-radius:18px;padding:10px 14px;max-width:92%;line-height:1.55}
+.msg.io{align-self:flex-end;background:var(--accent);color:var(--accent-fg)}
+.msg.ai{align-self:flex-start;background:var(--accent-soft)}
+.msg.ai p{margin:.35em 0}.msg.ai ul{margin:.3em 0;padding-left:1.2rem}.msg.ai h2,.msg.ai h3{font-size:1rem;margin:.5em 0 .2em}
+.msg .fonti{margin-top:6px;font-size:.82rem;color:var(--muted)}
+.ask-in{display:flex;gap:10px;align-items:flex-end}
+.ask-in textarea{min-height:56px;flex:1}
 .banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px;border-radius:18px;border:1px solid var(--warn)}
 .banner p{margin:0;flex:1 1 240px}
 .live{font-size:.78rem;font-weight:600;color:var(--rec)}
@@ -339,6 +353,14 @@ input[type=text],input[type=password],input[type=date],input[type=search]{font:i
     <div class="aicard">
       <h3>Crea qui nell'app</h3>
       <p class="note">L'intelligenza artificiale scrive gli <strong>appunti</strong> della lezione o <strong>corregge la trascrizione</strong> direttamente qui. Poi li salvi nella lezione o li scarichi come file Word. Una lezione di 2 ore richiede 1-3 minuti.</p>
+      <div class="lav">
+        <div class="row">
+          <label class="btn" for="lavIn">📷 Foto della lavagna</label>
+          <input type="file" id="lavIn" accept="image/*" multiple>
+          <span class="note" id="lavNota">Facoltative: l'AI le usa per schemi, formule e numeri giusti negli appunti.</span>
+        </div>
+        <div class="thumbs" id="lavThumbs" hidden></div>
+      </div>
       <div class="row">
         <button type="button" class="primary" id="aiAppunti">Crea appunti</button>
         <button type="button" id="aiAggiusta">Aggiusta la trascrizione</button>
@@ -395,6 +417,14 @@ input[type=text],input[type=password],input[type=date],input[type=search]{font:i
         <button type="button" id="fcRipassa" style="align-self:flex-end" hidden>Ripassa</button>
       </div>
       <p class="note" id="fcLimiti"></p>
+      <div class="fc-mat" id="fcMatBox" hidden>
+        <strong>Ripasso per materia</strong>
+        <p class="note">Mescola le flashcard di tutte le lezioni salvate di una materia e ti ripropone più spesso quelle che sbagli.</p>
+        <div class="row">
+          <select id="fcMateria" aria-label="Materia da ripassare"></select>
+          <button type="button" id="fcRipMat">Ripassa la materia</button>
+        </div>
+      </div>
     </div>
     <div id="fcQuiz" hidden style="display:flex;flex-direction:column;gap:14px">
       <div class="row between"><span class="note" id="fcConta"></span><button type="button" id="fcEsci">Esci</button></div>
@@ -410,6 +440,7 @@ input[type=text],input[type=password],input[type=date],input[type=search]{font:i
           <span><span class="fc-ok" id="fcGiuste"></span> · <span class="fc-ko" id="fcSbagliate"></span></span>
         </div>
       </div>
+      <p class="note" id="fcStorico" hidden></p>
       <div class="fc-wrong" id="fcErrori"></div>
       <div class="row">
         <button type="button" class="primary" id="fcRifaiErr">Rifai le sbagliate</button>
@@ -418,6 +449,23 @@ input[type=text],input[type=password],input[type=date],input[type=search]{font:i
       </div>
     </div>
     <div class="status" id="fcStatus" role="status"></div>
+  </section>
+
+  <section class="panel priv" aria-labelledby="lAsk">
+    <div class="row between">
+      <span class="label" id="lAsk">6 · Chiedi alle tue lezioni</span>
+      <button type="button" id="askNuova" hidden>Nuova chat</button>
+    </div>
+    <p class="note">Fai una domanda: l'AI cerca nelle lezioni e negli appunti salvati e risponde indicando da quale lezione viene ogni informazione.</p>
+    <div class="ask-log" id="askLog" hidden></div>
+    <div class="row">
+      <select id="askMateria" aria-label="Dove cercare"><option value="">Tutte le materie</option></select>
+    </div>
+    <div class="ask-in">
+      <textarea id="askIn" rows="2" placeholder="es. Cosa ha detto il prof sulla riserva di legge?"></textarea>
+      <button type="button" class="primary" id="askGo">Chiedi</button>
+    </div>
+    <div class="status" id="askStatus" role="status"></div>
   </section>
 
   <section class="panel" aria-labelledby="l5">
@@ -429,7 +477,7 @@ input[type=text],input[type=password],input[type=date],input[type=search]{font:i
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.4</p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.5</p>
 </main>
 
 <script type="module">
@@ -1489,6 +1537,48 @@ function spezza(t, max){
   if (resto) out.push(resto);
   return out;
 }
+let lavFoto = [];
+function lavRender(){
+  const box = $('lavThumbs'); box.textContent = ''; box.hidden = !lavFoto.length;
+  lavFoto.forEach((u, i) => {
+    const f = document.createElement('figure'); const im = document.createElement('img'); im.src = u; im.alt = 'Foto ' + (i + 1);
+    const x = document.createElement('button'); x.type = 'button'; x.textContent = '✕'; x.setAttribute('aria-label', 'Togli foto ' + (i + 1));
+    x.addEventListener('click', () => { lavFoto.splice(i, 1); lavRender(); });
+    f.append(im, x); box.append(f);
+  });
+  $('lavNota').textContent = lavFoto.length ? `${lavFoto.length} ${lavFoto.length === 1 ? 'foto' : 'foto'}: verranno usate da «Crea appunti».` : 'Facoltative: l’AI le usa per schemi, formule e numeri giusti negli appunti.';
+}
+async function comprimiFoto(file){
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = url; });
+    const k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', 0.75);
+  } finally { URL.revokeObjectURL(url); }
+}
+$('lavIn').addEventListener('change', async e => {
+  const files = [...e.target.files].slice(0, 10 - lavFoto.length); e.target.value = '';
+  for (const f of files) { try { lavFoto.push(await comprimiFoto(f)); } catch (_) { aiSt('Non riesco a leggere una delle foto.', 'warn'); } }
+  if (lavFoto.length >= 10) aiSt('Massimo 10 foto per lezione.', 'warn');
+  lavRender();
+});
+// chiamata all'AI con attesa automatica quando Groq è al limite
+async function aiChiama(path, body, cosa){
+  for (let tent = 0; tent < 12 && !aiStop; tent++) {
+    try { return await privApi(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }); }
+    catch (e) {
+      if (e.status === 429 || e.status >= 500 && !e.code) {
+        const wait = e.status === 429 ? 30 : 5;
+        for (let w = wait; w > 0 && !aiStop; w--) { aiSt(`Groq è al limite per qualche secondo: riprendo tra ${w} s (${cosa})…`, 'warn'); await sleep(1000); }
+        continue;
+      }
+      throw e;
+    }
+  }
+  return null;
+}
 async function aiRun(tipo){
   const testo = $('out').value.trim();
   if (testo.length < 200) { aiSt('Prima trascrivi una lezione o aprila dall’archivio: il testo è troppo corto.', 'warn'); return; }
@@ -1498,25 +1588,23 @@ async function aiRun(tipo){
   const parti = spezza(testo, tipo === 'aggiusta' ? 9000 : 18000);
   const materia = materiaCorrente(), data = fmtData($('dataLez')?.value || todayISO());
   const fatti = [], verifica = [];
+  let lavagna = '';
   $('aiAppunti').disabled = $('aiAggiusta').disabled = true; $('aiStop').hidden = false; $('aiBarBox').hidden = false; $('aiBar').style.width = '0%';
   try {
+    if (tipo === 'appunti' && lavFoto.length) {
+      const pezzi = [];
+      for (let k = 0; k < lavFoto.length && !aiStop; k += 5) {
+        aiSt(`Leggo le foto della lavagna (${Math.min(k + 5, lavFoto.length)} di ${lavFoto.length})…`);
+        try {
+          const r = await aiChiama('lavagna', { immagini: lavFoto.slice(k, k + 5), materia }, 'foto della lavagna');
+          if (r) pezzi.push(r.testo.replace(/Foto (\d+)/g, (_, n) => 'Foto ' + (Number(n) + k)));
+        } catch (e) { if (e.code) throw e; aiSt('Non riesco a leggere le foto della lavagna: continuo senza.', 'warn'); await sleep(1500); break; }
+      }
+      lavagna = pezzi.join('\n\n').slice(0, 8000);
+    }
     for (let i = 0; i < parti.length && !aiStop; i++) {
       aiSt(`${tipo === 'aggiusta' ? 'Correggo' : 'Scrivo gli appunti'}: parte ${i + 1} di ${parti.length}…`);
-      let r = null;
-      for (let tent = 0; tent < 12 && !aiStop; tent++) {
-        try {
-          r = await privApi('ai', { method: 'POST', headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ tipo, testo: parti[i], materia, data, parte: i + 1, totale: parti.length }) });
-          break;
-        } catch (e) {
-          if (e.status === 429 || e.status >= 500 && !e.code) {
-            const wait = e.status === 429 ? 30 : 5;
-            for (let w = wait; w > 0 && !aiStop; w--) { aiSt(`Groq è al limite per qualche secondo: riprendo tra ${w} s (parte ${i + 1} di ${parti.length})…`, 'warn'); await sleep(1000); }
-            continue;
-          }
-          throw e;
-        }
-      }
+      const r = await aiChiama('ai', { tipo, testo: parti[i], materia, data, parte: i + 1, totale: parti.length, lavagna }, `parte ${i + 1} di ${parti.length}`);
       if (!r) break;
       let [corpo, ver] = r.testo.split(AI_SEP);
       fatti.push(corpo.trim());
@@ -1587,8 +1675,40 @@ function aiRender(){ $('aiView').innerHTML = mdHtml($('aiOut').value); }
 function aiModifica(on){ $('aiOut').hidden = !on; $('aiView').hidden = on; $('aiMod').textContent = on ? 'Fine modifica' : 'Modifica'; if (!on) aiRender(); }
 $('aiMod').addEventListener('click', () => aiModifica($('aiView').hidden === false));
 $('aiCopia').addEventListener('click', () => copy($('aiOut').value, $('aiCopia'), 'Copia'));
+/* ---------- Chiedi alle tue lezioni ---------- */
+let askStoria = [];
+function askSt(t, kind){ const s = $('askStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
+function askMsg(ruolo, testo, fonti){
+  const d = document.createElement('div'); d.className = 'msg ' + (ruolo === 'io' ? 'io' : 'ai');
+  if (ruolo === 'io') d.textContent = testo; else d.innerHTML = mdHtml(testo);
+  if (fonti && fonti.length) {
+    const f = document.createElement('div'); f.className = 'fonti';
+    const gruppi = new Map();
+    fonti.forEach((x, i) => { const k = `${x.titolo} · ${fmtData(x.data)} (${x.tipo})`; gruppi.set(k, [...(gruppi.get(k) || []), i + 1]); });
+    f.textContent = 'Fonti: ' + [...gruppi].map(([k, n]) => n.map(i => `[${i}]`).join('') + ' ' + k).join(' · ');
+    d.append(f);
+  }
+  $('askLog').append(d); $('askLog').hidden = false; $('askNuova').hidden = false;
+  $('askLog').scrollTop = $('askLog').scrollHeight;
+}
+async function askGo(){
+  const domanda = $('askIn').value.trim(); if (!domanda) return;
+  $('askGo').disabled = true; askMsg('io', domanda); $('askIn').value = ''; askSt('Cerco nelle tue lezioni…');
+  try {
+    const r = await privApi('chiedi', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ domanda, materia: $('askMateria').value, storia: askStoria }) });
+    askMsg('ai', r.testo, r.fonti); askStoria.push({ ruolo: 'io', testo: domanda }, { ruolo: 'ai', testo: r.testo }); askSt('');
+    if (r.uso && fcUso) { fcUso.uso = r.uso; fcLimiti(); }
+  } catch (e) {
+    askSt(e.status === 429 ? 'Groq è al limite per qualche secondo: riprova tra poco.' : e.code === 'chiave-groq' ? 'La chiave Groq non è valida: controlla GROQ_API_KEY su Cloudflare.' : 'Non riesco a rispondere: ' + e.message, 'err');
+    $('askIn').value = domanda;
+  } finally { $('askGo').disabled = false; }
+}
+$('askGo').addEventListener('click', askGo);
+$('askIn').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !isMobile) { e.preventDefault(); askGo(); } });
+$('askNuova').addEventListener('click', () => { askStoria = []; $('askLog').textContent = ''; $('askLog').hidden = true; $('askNuova').hidden = true; askSt(''); });
+
 /* ---------- Flashcard: quiz a risposta multipla creato da Groq, risultati solo alla fine ---------- */
-let fcCarte = [], fcDaSalvare = false, fcGiro = [], fcPos = 0, fcRisposte = [];
+let fcCarte = [], fcDaSalvare = false, fcGiro = [], fcPos = 0, fcRisposte = [], fcCtx = null;
 let fcUso = null;
 function fcLimiti(v){
   if (v) fcUso = v;
@@ -1637,7 +1757,7 @@ $('fcCrea').addEventListener('click', async () => {
     if (r.uso && fcUso) { fcUso.uso = r.uso; fcLimiti(); }
     const salvate = await fcSalva();
     fcSt(`${r.carte.length} flashcard pronte.` + (salvate ? ' Salvate nella lezione.' : ' Salva la lezione per tenerle nell’archivio.'));
-    fcInizia(fcCarte);
+    fcInizia(fcCarte, { tipo: 'lezione' });
   } catch (e) {
     const msg = e.code === 'chiave-groq' ? 'La chiave Groq non è valida: controlla GROQ_API_KEY su Cloudflare.'
       : e.code === 'fondi-esauriti' ? 'Hai raggiunto il tetto di spesa che hai impostato su Groq.'
@@ -1647,8 +1767,10 @@ $('fcCrea').addEventListener('click', async () => {
     fcSt(msg, 'err');
   } finally { $('fcCrea').disabled = false; }
 });
-function fcInizia(carte){
+function fcInizia(carte, ctx){
   if (!carte.length) return;
+  fcCtx = ctx || { tipo: 'lezione' };
+  $('fcChip').hidden = fcCtx.tipo === 'materia' || !fcCarte.length;
   fcGiro = fcMescola(carte).map(c => { const ord = fcMescola(c.opzioni.map((_, i) => i)); return { ...c, opzioni: ord.map(i => c.opzioni[i]), corretta: ord.indexOf(c.corretta), orig: c }; });
   fcPos = 0; fcRisposte = []; fcSt(''); fcVista('quiz'); fcMostra();
   $('fcPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1669,6 +1791,7 @@ function fcMostra(){
   });
 }
 function fcFine(){
+  fcSt('');
   const giuste = fcGiro.filter((c, i) => fcRisposte[i] === c.corretta).length, tot = fcGiro.length, sbagl = tot - giuste;
   const perc = Math.round(giuste / tot * 100);
   $('fcRing').style.setProperty('--p', perc); $('fcPerc').textContent = perc + '%';
@@ -1686,13 +1809,56 @@ function fcFine(){
     box.append(d);
   });
   $('fcRifaiErr').hidden = !errori.length;
-  $('fcRifaiErr').onclick = () => fcInizia(errori.map(x => x.c.orig));
+  $('fcRifaiErr').onclick = () => fcInizia(errori.map(x => x.c.orig), { ...fcCtx, ripetizione: true });
+  fcRegistra(fcGiro.map((c, i) => ({ domanda: c.domanda, ok: fcRisposte[i] === c.corretta })));
   $('fcBar').style.width = '100%';
   fcVista('ris');
   $('fcPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
-$('fcRipassa').addEventListener('click', () => fcInizia(fcCarte));
-$('fcRifai').addEventListener('click', () => fcInizia(fcCarte));
+$('fcRipassa').addEventListener('click', () => fcInizia(fcCarte, { tipo: 'lezione' }));
+$('fcRifai').addEventListener('click', () => fcCtx?.tipo === 'materia' ? $('fcRipMat').click() : fcInizia(fcCarte, { tipo: 'lezione' }));
+async function fcRegistra(risultati){
+  $('fcStorico').hidden = true;
+  const ctx = fcCtx || {};
+  const materia = ctx.tipo === 'materia' ? ctx.materia : materiaCorrente();
+  const lezione = ctx.tipo === 'materia' ? '' : currentId;
+  if (ctx.ripetizione || !materia || (ctx.tipo !== 'materia' && !lezione)) return;
+  try {
+    const r = await privApi('quiz', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ materia, lezione, risultati }) });
+    const st = r.storico || [];
+    if (st.length > 1) {
+      const fmt = q => { const d = new Date(q.quando), oggi = new Date(); return d.toDateString() === oggi.toDateString() ? 'oggi' : d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }); };
+      $('fcStorico').textContent = 'I tuoi ultimi risultati' + (ctx.tipo === 'materia' ? ` in ${materia}` : ' in questa lezione') + ': ' + st.map(q => `${fmt(q)} ${Math.round(q.giuste / q.totale * 100)}%`).join(' → ');
+      $('fcStorico').hidden = false;
+    }
+  } catch (_) {}
+}
+function aggiornaSelezioni(items){
+  const conFc = [...new Set(items.filter(i => i.conFlashcard).map(i => i.materia))].sort((a, b) => a.localeCompare(b, 'it'));
+  const sel = $('fcMateria'), prima = sel.value || materiaCorrente();
+  sel.textContent = ''; conFc.forEach(m => { const o = document.createElement('option'); o.value = o.textContent = m; sel.append(o); });
+  if (conFc.includes(prima)) sel.value = prima;
+  $('fcMatBox').hidden = !conFc.length;
+  const as = $('askMateria'), primaA = as.value;
+  as.length = 1; [...new Set(items.map(i => i.materia))].sort((a, b) => a.localeCompare(b, 'it')).forEach(m => { const o = document.createElement('option'); o.value = o.textContent = m; as.append(o); });
+  as.value = [...as.options].some(o => o.value === primaA) ? primaA : '';
+}
+$('fcRipMat').addEventListener('click', async () => {
+  const materia = $('fcMateria').value; if (!materia) return;
+  $('fcRipMat').disabled = true; fcSt('Preparo il ripasso…');
+  try {
+    const r = await privApi('flashcard-materia?materia=' + encodeURIComponent(materia));
+    const tutte = r.carte || [];
+    if (!tutte.length) { fcSt('Non ci sono flashcard salvate per questa materia.', 'warn'); return; }
+    const n = Math.min(Number($('fcQuante').value) || 15, tutte.length);
+    const peso = c => { const viste = c.giuste + c.sbagliate; return (viste ? (c.sbagliate + 1) / (viste + 2) : 0.6) + Math.random() * 0.35; };
+    const scelte = tutte.map(c => ({ c, p: peso(c) })).sort((a, b) => b.p - a.p).slice(0, n).map(x => x.c);
+    const lez = new Set(scelte.map(c => c.lezione)).size;
+    fcInizia(scelte, { tipo: 'materia', materia });
+    fcSt(`${materia}: ${n} domande da ${lez} ${lez === 1 ? 'lezione' : 'lezioni'}, prima quelle che sbagli di più.`);
+  } catch (e) { fcSt('Non riesco a preparare il ripasso: ' + e.message, 'err'); }
+  finally { $('fcRipMat').disabled = false; }
+});
 $('fcNuove').addEventListener('click', () => { fcVista('start'); $('fcCrea').click(); });
 $('fcEsci').addEventListener('click', () => { fcVista('start'); fcSt(''); });
 fcVista('start');
@@ -1874,7 +2040,7 @@ async function loadList(){
   try {
     const items = await privApi('lezioni' + (q ? '?q=' + encodeURIComponent(q) : ''));
     renderList(items);
-    if (!q) { materieArchivio = [...new Set(items.map(i => i.materia))]; aggiornaMaterie(); }
+    if (!q) { materieArchivio = [...new Set(items.map(i => i.materia))]; aggiornaMaterie(); aggiornaSelezioni(items); }
   } catch (e) { $('lista').textContent = 'Non riesco a caricare l’archivio: ' + e.message; }
 }
 let cercaTimer = null;
@@ -1921,7 +2087,7 @@ $('saveLesson').addEventListener('click', async () => {
 function privNewRun(){
   setCurrent(null);
   $('appunti').value = ''; $('titolo').value = ''; $('dataLez').value = todayISO();
-  privStatus(''); fcSet([], false); fcSt('');
+  privStatus(''); fcSet([], false); fcSt(''); lavFoto = []; lavRender();
 }
 $('newLesson').addEventListener('click', () => {
   if (running || segRec) { privStatus('Aspetta che finisca la trascrizione o la registrazione in corso.', 'warn'); return; }

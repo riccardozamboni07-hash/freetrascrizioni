@@ -41,17 +41,12 @@ function istruzioniAggiusta(materia) {
 Restituisci solo il testo corretto, senza titoli, commenti o introduzioni.`;
 }
 
-export async function generaTesto(env, { tipo, testo, materia, data, parte, totale }) {
+// Chiamata a Groq con modelli di riserva: se uno è al limite o non esiste più, prova il successivo.
+async function chat(env, modelli, messages, { temperature = 0.3, maxOut = 8000 } = {}) {
   if (!env.GROQ_API_KEY) return { status: 503, body: { error: 'Manca la chiave Groq.', code: 'no-key' } };
-  const system = tipo === 'aggiusta' ? istruzioniAggiusta(materia) : istruzioniAppunti(materia, data, parte, totale);
   let attesa = 0, ultimoErrore = '';
-  for (const modello of (env.GROQ_MODELLO_TESTO ? [env.GROQ_MODELLO_TESTO, ...MODELLI] : MODELLI)) {
-    const body = {
-      model: modello,
-      messages: [{ role: 'system', content: system }, { role: 'user', content: (tipo === 'aggiusta' ? 'Trascrizione da correggere:\n\n' : 'Trascrizione:\n\n') + testo }],
-      temperature: tipo === 'aggiusta' ? 0.1 : 0.3,
-      max_completion_tokens: 8000,
-    };
+  for (const modello of modelli) {
+    const body = { model: modello, messages, temperature, max_completion_tokens: maxOut };
     if (modello.startsWith('openai/')) body.reasoning_effort = 'low';
     let res;
     try {
@@ -64,7 +59,7 @@ export async function generaTesto(env, { tipo, testo, materia, data, parte, tota
       ultimoErrore = 'risposta vuota'; continue;
     }
     const detail = (await res.text().catch(() => '')).slice(0, 300);
-    console.log('Groq testo', modello, res.status, detail);
+    console.log('Groq', modello, res.status, detail);
     if (res.status === 401 || detail.includes('invalid_api_key')) return { status: 502, body: { error: 'Chiave Groq non valida.', code: 'chiave-groq' } };
     if (detail.includes('blocked_api_access')) return { status: 503, body: { error: 'Fondi del mese esauriti.', code: 'fondi-esauriti' } };
     if (res.status === 429) attesa = Math.max(attesa, Number(res.headers.get('retry-after')) || 30);
@@ -72,4 +67,44 @@ export async function generaTesto(env, { tipo, testo, materia, data, parte, tota
   }
   if (attesa) return { status: 429, body: { error: 'Limite di Groq raggiunto per ora.', retryAfter: attesa } };
   return { status: 502, body: { error: 'Il servizio non risponde (' + ultimoErrore + ').' } };
+}
+const modelliTesto = env => (env.GROQ_MODELLO_TESTO ? [env.GROQ_MODELLO_TESTO, ...MODELLI] : MODELLI);
+const MODELLI_VISTA = ['meta-llama/llama-4-scout-17b-16e-instruct', 'meta-llama/llama-4-maverick-17b-128e-instruct'];
+
+export async function generaTesto(env, { tipo, testo, materia, data, parte, totale, lavagna }) {
+  let system = tipo === 'aggiusta' ? istruzioniAggiusta(materia) : istruzioniAppunti(materia, data, parte, totale);
+  if (tipo !== 'aggiusta' && lavagna) system += `
+
+FOTO DELLA LAVAGNA
+Qui sotto c'è il contenuto delle foto della lavagna di questa lezione, già trascritto. Usalo per completare e correggere gli appunti: integra schemi, formule e definizioni al punto giusto. Se lavagna e trascrizione sono in contrasto (soprattutto sui numeri) prevale la lavagna: segnala la correzione nei punti da verificare. Usa solo la parte che riguarda il pezzo di lezione che stai scrivendo.
+<lavagna>
+${lavagna}
+</lavagna>`;
+  return chat(env, modelliTesto(env), [
+    { role: 'system', content: system },
+    { role: 'user', content: (tipo === 'aggiusta' ? 'Trascrizione da correggere:\n\n' : 'Trascrizione:\n\n') + testo },
+  ], { temperature: tipo === 'aggiusta' ? 0.1 : 0.3 });
+}
+
+// Legge le foto della lavagna (massimo 5 per volta) e le trascrive in testo
+export async function leggiLavagna(env, { immagini, materia }) {
+  const content = [{ type: 'text', text: `Sono foto della lavagna di una lezione universitaria${materia ? ` di ${materia}` : ''}. Trascrivi fedelmente in testo tutto quello che c'è scritto: titoli, definizioni, schemi (come elenchi puntati con rientri), tabelle, formule e calcoli passo per passo, numeri esatti. Una sezione "Foto N" per ogni foto. Se una parte è illeggibile scrivi [illeggibile], non indovinare. Rispondi solo con la trascrizione, in italiano.` }];
+  for (const url of immagini) content.push({ type: 'image_url', image_url: { url } });
+  return chat(env, env.GROQ_MODELLO_VISTA ? [env.GROQ_MODELLO_VISTA, ...MODELLI_VISTA] : MODELLI_VISTA, [{ role: 'user', content }], { temperature: 0.1, maxOut: 4000 });
+}
+
+// Risponde a una domanda usando solo i passaggi delle lezioni trovati nell'archivio
+export async function rispondi(env, { domanda, passaggi, storia }) {
+  const fonti = passaggi.map((p, i) => `[${i + 1}] ${p.titolo} · ${p.materia} · ${p.data} (${p.tipo})\n${p.testo}`).join('\n\n---\n\n');
+  const messages = [{ role: 'system', content: `Sei un tutor universitario. Rispondi alle domande dello studente usando SOLO i brani delle sue lezioni qui sotto (trascrizioni e appunti). Regole:
+- Rispondi in italiano, in modo chiaro e completo ma senza giri di parole, in prosa; elenchi solo se servono.
+- Dopo ogni informazione indica da dove viene con il numero del brano tra parentesi quadre, es. [2].
+- Se i brani non contengono la risposta, dillo chiaramente ("Nelle tue lezioni non trovo…") e non inventare. Puoi aggiungere una tua spiegazione generale solo se la segnali come "Fuori dalle lezioni:".
+- La trascrizione è automatica: correggi mentalmente i termini evidentemente sbagliati.
+
+BRANI DELLE LEZIONI
+${fonti || '(nessun brano trovato)'}` }];
+  for (const m of (storia || []).slice(-4)) messages.push({ role: m.ruolo === 'io' ? 'user' : 'assistant', content: String(m.testo || '').slice(0, 4000) });
+  messages.push({ role: 'user', content: domanda });
+  return chat(env, modelliTesto(env), messages, { temperature: 0.2, maxOut: 2500 });
 }
