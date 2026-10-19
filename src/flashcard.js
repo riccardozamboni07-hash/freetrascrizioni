@@ -83,7 +83,7 @@ export async function generaFlashcard(env, { testo, materia, quante }) {
     if (res.ok) {
       const data = await res.json().catch(() => ({}));
       const carte = pulisci(leggiJson(data?.choices?.[0]?.message?.content));
-      if (carte.length >= 3) return { status: 200, body: { carte, modello } };
+      if (carte.length >= 3) return { status: 200, body: { carte, modello }, token: Number(data?.usage?.total_tokens) || 0 };
       ultimoErrore = 'risposta non valida'; continue;
     }
     const detail = (await res.text().catch(() => '')).slice(0, 300);

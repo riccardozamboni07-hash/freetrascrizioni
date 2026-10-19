@@ -25,9 +25,13 @@ export class Store extends DurableObject {
     add(new Date().toISOString().slice(0, 10));
     add('ora:' + new Date().toISOString().slice(0, 13));
   }
+  usaToken(n) {
+    this.sql.exec(`INSERT INTO uso (giorno, chi, secondi) VALUES (?, 'flashcard', ?)
+      ON CONFLICT (giorno, chi) DO UPDATE SET secondi = secondi + excluded.secondi`, 'fc:' + new Date().toISOString().slice(0, 10), n);
+  }
   usoOggi() {
     const get = (g) => (this.sql.exec('SELECT secondi FROM uso WHERE giorno = ?', g).toArray()[0] || {}).secondi || 0;
-    return { privato: get(new Date().toISOString().slice(0, 10)), pubblico: 0, oraCorrente: get('ora:' + new Date().toISOString().slice(0, 13)) };
+    return { privato: get(new Date().toISOString().slice(0, 10)), pubblico: 0, oraCorrente: get('ora:' + new Date().toISOString().slice(0, 13)), flashcardToken: get('fc:' + new Date().toISOString().slice(0, 10)) };
   }
   elenco(q) {
     const cols = 'id, materia, titolo, data, durata, creata, aggiornata, length(testo) AS caratteri, length(appunti) > 0 AS conAppunti, length(flashcard) > 2 AS conFlashcard';
@@ -97,7 +101,7 @@ export default {
       if (!env.PASSWORD) return json(503, { error: 'Password non impostata.', code: 'no-password' });
       if (!autorizzato(request, env)) return json(401, { error: 'Password errata.' });
       const azione = url.pathname.slice('/api/privato/'.length);
-      if (azione === 'verifica') return json(200, { ok: true, uso: await store().usoOggi(), limitePubblicoOre: null, limiteGroq: { orePerGiorno: 8, orePerOra: 2 } });
+      if (azione === 'verifica') return json(200, { ok: true, uso: await store().usoOggi(), limitePubblicoOre: null, limiteGroq: { orePerGiorno: 8, orePerOra: 2, tokenFlashcardGiorno: 500000, tokenFlashcardMinuto: 30000 } });
       // tutti gli appunti salvati di una materia, in ordine di data (per Claude e per "Scarica appunti")
       if (azione === 'appunti' && request.method === 'GET') {
         const materia = (url.searchParams.get('materia') || '').trim().slice(0, 80);
@@ -108,6 +112,8 @@ export default {
         const b = await request.json().catch(() => null);
         if (!b || typeof b.testo !== 'string' || b.testo.trim().length < 200) return json(400, { error: 'Il testo è troppo corto per creare flashcard.' });
         const r = await generaFlashcard(env, { testo: b.testo.slice(0, 1_500_000), materia: String(b.materia || '').slice(0, 80), quante: b.quante });
+        if (r.token) await store().usaToken(r.token);
+        if (r.status === 200) r.body.uso = await store().usoOggi();
         return json(r.status, r.body);
       }
       if (azione === 'flashcard-salva' && request.method === 'POST') {

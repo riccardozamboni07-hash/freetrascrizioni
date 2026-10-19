@@ -365,6 +365,7 @@ input[type=text],input[type=password],input[type=date],input[type=search]{font:i
         <button type="button" class="primary" id="fcCrea" style="align-self:flex-end">Crea flashcard</button>
         <button type="button" id="fcRipassa" style="align-self:flex-end" hidden>Ripassa</button>
       </div>
+      <p class="note" id="fcLimiti"></p>
     </div>
     <div id="fcQuiz" hidden style="display:flex;flex-direction:column;gap:14px">
       <div class="row between"><span class="note" id="fcConta"></span><button type="button" id="fcEsci">Esci</button></div>
@@ -399,7 +400,7 @@ input[type=text],input[type=password],input[type=date],input[type=search]{font:i
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.3</p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.3.1</p>
 </main>
 
 <script type="module">
@@ -1445,6 +1446,20 @@ $('demoBtn').addEventListener('click', async () => {
 
 /* ---------- Flashcard: quiz a risposta multipla creato da Groq, risultati solo alla fine ---------- */
 let fcCarte = [], fcDaSalvare = false, fcGiro = [], fcPos = 0, fcRisposte = [];
+let fcUso = null;
+function fcLimiti(v){
+  if (v) fcUso = v;
+  if (!fcUso || !fcUso.uso) return;
+  const lim = fcUso.limiteGroq || {}, gg = lim.tokenFlashcardGiorno || 500000;
+  const usati = fcUso.uso.flashcardToken || 0, resta = Math.max(0, gg - usati);
+  const n = x => Math.round(x).toLocaleString('it-IT');
+  const len = Math.min(($('out')?.value || '').length, 60000);
+  const perQuesta = len >= 200 ? len / 3.2 + 3000 : 20000;
+  const volte = Math.floor(resta / perQuesta);
+  $('fcLimiti').textContent = `Limite gratuito di oggi: usati circa ${n(usati)} token su ${n(gg)} · `
+    + `${len >= 200 ? 'con questa lezione' : 'con una lezione di 2 ore'} puoi crearle ancora circa ${volte} ${volte === 1 ? 'volta' : 'volte'}`
+    + `${len >= 25000 ? ' (una al minuto)' : ''}. Ripassare è gratis e non tocca le ore di trascrizione.`;
+}
 function fcSt(t, kind){ const s = $('fcStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
 function fcMescola(a){ a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function fcVista(v){ $('fcStart').hidden = v !== 'start'; $('fcQuiz').hidden = v !== 'quiz'; $('fcRis').hidden = v !== 'ris';
@@ -1457,8 +1472,10 @@ function fcSet(carte, daSalvare){
   $('fcChip').hidden = !fcCarte.length;
   $('fcChip').textContent = fcDaSalvare ? 'non ancora salvate' : 'salvate';
   $('fcChip').classList.toggle('ok', !fcDaSalvare);
-  fcVista('start');
+  fcVista('start'); fcLimiti();
 }
+let fcLimT = null;
+$('out').addEventListener('input', () => { clearTimeout(fcLimT); fcLimT = setTimeout(() => fcLimiti(), 800); });
 async function fcSalva(){
   if (!currentId || !fcCarte.length) return false;
   try { await privApi('flashcard-salva', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: currentId, carte: fcCarte }) });
@@ -1474,6 +1491,7 @@ $('fcCrea').addEventListener('click', async () => {
     const r = await privApi('flashcard', { method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ testo, materia: materiaCorrente(), quante: Number($('fcQuante').value) }) });
     fcSet(r.carte, true);
+    if (r.uso && fcUso) { fcUso.uso = r.uso; fcLimiti(); }
     const salvate = await fcSalva();
     fcSt(`${r.carte.length} flashcard pronte.` + (salvate ? ' Salvate nella lezione.' : ' Salva la lezione per tenerle nell’archivio.'));
     fcInizia(fcCarte);
@@ -1562,7 +1580,7 @@ async function unlock(pw, silent){
     const v = await privApi('verifica');
     lsSet(PW_KEY, pw);
     document.body.classList.remove('locked');
-    showUsage(v); loadList(); caricaPrecedenti();
+    showUsage(v); fcLimiti(v); loadList(); caricaPrecedenti();
     return true;
   } catch (e) {
     privPw = null;
