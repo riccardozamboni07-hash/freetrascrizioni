@@ -9,5 +9,14 @@
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Store"] }],
   // i segreti GROQ_API_KEY e PASSWORD si impostano su Cloudflare e non vengono toccati dagli aggiornamenti
   "keep_vars": true,
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  // App pubblica con registrazione (email/password e Google): si pubblica con "npx wrangler deploy --env pubblica".
+  // Segreti da impostare su Cloudflare: GROQ_API_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, CODICE_INVITO (facoltativo).
+  "env": {
+    "pubblica": {
+      "name": "freetrascrizioni-app",
+      "vars": { "MULTIUTENTE": "si", "ORE_SETTIMANA_UTENTE": "10", "TOKEN_GIORNO_UTENTE": "150000" },
+      "durable_objects": { "bindings": [{ "name": "STORE", "class_name": "Store" }] }
+    }
+  }
 }

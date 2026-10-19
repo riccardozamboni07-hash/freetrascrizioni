@@ -8,6 +8,7 @@ import { DurableObject } from 'cloudflare:workers';
 import { onRequest as trascrivi } from './trascrivi.js';
 import { generaFlashcard } from './flashcard.js';
 import { generaTesto, leggiLavagna, rispondi } from './ai.js';
+import { hashPassword, verificaPassword, sha, nuovoToken, nuovoId, leggiCookie, cookie, emailValida, googleInizio, googleFine } from './auth.js';
 
 export class Store extends DurableObject {
   constructor(ctx, env) {
@@ -22,7 +23,45 @@ export class Store extends DurableObject {
     // versione 1.5: statistiche per flashcard e storico dei ripassi
     this.sql.exec(`CREATE TABLE IF NOT EXISTS fc_stat (chiave TEXT PRIMARY KEY, materia TEXT, giuste INTEGER NOT NULL DEFAULT 0, sbagliate INTEGER NOT NULL DEFAULT 0, ultima INTEGER)`);
     this.sql.exec(`CREATE TABLE IF NOT EXISTS profilo (k TEXT PRIMARY KEY, v TEXT)`);
+    // versione 1.7 (app pubblica): utenti e sessioni, usati solo dall'archivio "auth"
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS utenti (id TEXT PRIMARY KEY, email TEXT UNIQUE, nome TEXT, sale TEXT, hash TEXT, google TEXT, creato INTEGER, ultimo INTEGER)`);
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS sessioni (token TEXT PRIMARY KEY, utente TEXT, scade INTEGER)`);
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS tentativi (email TEXT, quando INTEGER)`);
     this.sql.exec(`CREATE TABLE IF NOT EXISTS fc_sessioni (id INTEGER PRIMARY KEY AUTOINCREMENT, quando INTEGER, materia TEXT, lezione TEXT, giuste INTEGER, totale INTEGER)`);
+  }
+  // ---------- utenti e sessioni (solo nell'archivio "auth") ----------
+  utentePerEmail(email) { return this.sql.exec('SELECT * FROM utenti WHERE email = ?', email).toArray()[0] || null; }
+  utentePerGoogle(sub) { return this.sql.exec('SELECT * FROM utenti WHERE google = ?', sub).toArray()[0] || null; }
+  creaUtente(u) {
+    this.sql.exec('INSERT INTO utenti (id, email, nome, sale, hash, google, creato, ultimo) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      u.id, u.email, u.nome || '', u.sale || null, u.hash || null, u.google || null, Date.now(), Date.now());
+    return this.utentePerEmail(u.email);
+  }
+  utentePerId(id) { return this.sql.exec('SELECT * FROM utenti WHERE id = ?', id).toArray()[0] || null; }
+  cambiaPassword(id, sale, hash) { this.sql.exec('UPDATE utenti SET sale = ?, hash = ? WHERE id = ?', sale, hash, id); }
+  collegaGoogle(id, sub) { this.sql.exec('UPDATE utenti SET google = ? WHERE id = ?', sub, id); }
+  creaSessione(token, utente, giorni) {
+    this.sql.exec('DELETE FROM sessioni WHERE scade < ?', Date.now());
+    this.sql.exec('INSERT INTO sessioni (token, utente, scade) VALUES (?, ?, ?)', token, utente, Date.now() + giorni * 86400000);
+  }
+  sessione(token) {
+    const r = this.sql.exec(`SELECT u.id, u.email, u.nome, u.google IS NOT NULL AS conGoogle, u.hash IS NOT NULL AS conPassword, s.scade
+      FROM sessioni s JOIN utenti u ON u.id = s.utente WHERE s.token = ?`, token).toArray()[0];
+    if (!r || r.scade < Date.now()) return null;
+    this.sql.exec('UPDATE utenti SET ultimo = ? WHERE id = ?', Date.now(), r.id);
+    return r;
+  }
+  chiudiSessione(token) { this.sql.exec('DELETE FROM sessioni WHERE token = ?', token); }
+  eliminaUtente(id) { this.sql.exec('DELETE FROM sessioni WHERE utente = ?', id); this.sql.exec('DELETE FROM utenti WHERE id = ?', id); return { ok: true }; }
+  // massimo 10 tentativi sbagliati ogni 15 minuti per email
+  troppiTentativi(email) {
+    this.sql.exec('DELETE FROM tentativi WHERE quando < ?', Date.now() - 15 * 60000);
+    return (this.sql.exec('SELECT count(*) AS n FROM tentativi WHERE email = ?', email).toArray()[0] || {}).n >= 10;
+  }
+  tentativoSbagliato(email) { this.sql.exec('INSERT INTO tentativi (email, quando) VALUES (?, ?)', email, Date.now()); }
+  usoSettimana() {
+    const da = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
+    return (this.sql.exec(`SELECT coalesce(sum(secondi), 0) AS s FROM uso WHERE chi = 'privato' AND giorno >= ? AND giorno <= '9999' AND giorno NOT LIKE 'ora:%'`, da).toArray()[0] || {}).s || 0;
   }
   profilo() {
     let p = {}; try { p = JSON.parse((this.sql.exec(`SELECT v FROM profilo WHERE k = 'profilo'`).toArray()[0] || {}).v || '{}'); } catch (_) {}
@@ -156,26 +195,121 @@ const VUOTE = new Set('della delle degli dello nella nelle negli sulla sulle com
 const paroleChiave = q => [...new Set(String(q).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^a-z0-9]+/).filter(w => w.length >= 4 && !VUOTE.has(w)).map(w => w.length > 6 ? w.slice(0, w.length - 2) : w))].slice(0, 12);
 const oggi = () => new Date().toISOString().slice(0, 10);
 
+
+// ---------- Registrazione, accesso, Google (solo app pubblica) ----------
+const GIORNI_SESSIONE = 60;
+async function conSessione(auth, idUtente, corpo, dove) {
+  const token = nuovoToken();
+  await auth().creaSessione(await sha(token), idUtente, GIORNI_SESSIONE);
+  const h = new Headers({ 'set-cookie': cookie('sessione', token, GIORNI_SESSIONE * 86400), 'cache-control': 'no-store' });
+  if (dove) { h.set('location', dove); h.append('set-cookie', cookie('g_stato', '', 0)); return new Response(null, { status: 302, headers: h }); }
+  h.set('content-type', 'application/json; charset=utf-8');
+  return new Response(JSON.stringify(corpo), { status: 200, headers: h });
+}
+const invitoOk = (env, codice) => !env.CODICE_INVITO || String(codice || '').trim().toLowerCase() === String(env.CODICE_INVITO).trim().toLowerCase();
+
+async function gestisciAuth(request, env, url, auth, utente) {
+  const p = url.pathname;
+  if (p === '/auth/google') {
+    if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) return new Response('Accesso con Google non configurato.', { status: 503 });
+    return googleInizio(env, url, url.searchParams.get('invito') || '');
+  }
+  if (p === '/auth/google/callback') {
+    const torna = msg => Response.redirect(url.origin + '/?errore=' + encodeURIComponent(msg), 302);
+    const g = await googleFine(env, url, request);
+    if (g.errore) return torna(g.errore);
+    let u = await auth().utentePerGoogle(g.sub);
+    if (!u && g.email && g.verificata) {
+      u = await auth().utentePerEmail(g.email);
+      if (u) await auth().collegaGoogle(u.id, g.sub);
+    }
+    if (!u) {
+      if (!invitoOk(env, g.invito)) return torna('Per registrarti serve il codice di invito: scrivilo e poi tocca di nuovo «Continua con Google».');
+      if (!g.email) return torna('Google non ha condiviso la tua email.');
+      u = await auth().creaUtente({ id: nuovoId(), email: g.email, nome: g.nome, google: g.sub });
+    }
+    return conSessione(auth, u.id, null, url.origin + '/');
+  }
+  if (request.method !== 'POST') return json(405, { error: 'Usa POST.' });
+  const b = await request.json().catch(() => ({}));
+  const email = String(b.email || '').trim().toLowerCase().slice(0, 254);
+  if (p === '/api/auth/registrati') {
+    if (!emailValida(email)) return json(400, { error: 'Email non valida.' });
+    if (String(b.password || '').length < 8) return json(400, { error: 'La password deve avere almeno 8 caratteri.' });
+    if (!invitoOk(env, b.invito)) return json(403, { error: 'Codice di invito non valido.', code: 'invito' });
+    if (await auth().utentePerEmail(email)) return json(409, { error: 'Esiste già un account con questa email: accedi.' });
+    const { sale, hash } = await hashPassword(String(b.password));
+    const u = await auth().creaUtente({ id: nuovoId(), email, nome: String(b.nome || '').trim().slice(0, 80), sale, hash });
+    return conSessione(auth, u.id, { ok: true });
+  }
+  if (p === '/api/auth/accedi') {
+    if (await auth().troppiTentativi(email)) return json(429, { error: 'Troppi tentativi: riprova tra 15 minuti.' });
+    const u = email && await auth().utentePerEmail(email);
+    if (u && !u.hash) return json(400, { error: 'Questo account usa Google: tocca «Continua con Google».' });
+    if (!u || !await verificaPassword(String(b.password || ''), u.sale, u.hash)) { await auth().tentativoSbagliato(email); return json(401, { error: 'Email o password errate.' }); }
+    return conSessione(auth, u.id, { ok: true });
+  }
+  if (p === '/api/auth/password') {
+    if (!utente) return json(401, { error: 'Accedi di nuovo.' });
+    const u = await auth().utentePerId(utente.id);
+    if (u.hash && !await verificaPassword(String(b.attuale || ''), u.sale, u.hash)) return json(401, { error: 'La password attuale non è corretta.' });
+    if (String(b.nuova || '').length < 8) return json(400, { error: 'La nuova password deve avere almeno 8 caratteri.' });
+    const { sale, hash } = await hashPassword(String(b.nuova));
+    await auth().cambiaPassword(u.id, sale, hash);
+    return json(200, { ok: true });
+  }
+  if (p === '/api/auth/esci') {
+    const t = leggiCookie(request, 'sessione');
+    if (t) await auth().chiudiSessione(await sha(t));
+    return new Response(JSON.stringify({ ok: true }), { headers: { 'content-type': 'application/json', 'set-cookie': cookie('sessione', '', 0) } });
+  }
+  return json(404, { error: 'Richiesta sconosciuta.' });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    const store = () => env.STORE.get(env.STORE.idFromName('principale'));
+    const multi = env.MULTIUTENTE === 'si' || env.MULTIUTENTE === 'true';
+    const auth = () => env.STORE.get(env.STORE.idFromName('auth'));
+    let utente = null;
+    if (multi && (url.pathname.startsWith('/api/') || url.pathname.startsWith('/auth/'))) {
+      const t = leggiCookie(request, 'sessione');
+      if (t) utente = await auth().sessione(await sha(t));
+    }
+    const store = () => env.STORE.get(env.STORE.idFromName(utente ? 'u:' + utente.id : 'principale'));
+    const entrato = multi ? !!utente : autorizzato(request, env);
+    const oreSett = Number(env.ORE_SETTIMANA_UTENTE) || 10;
+    const tokenGiorno = Number(env.TOKEN_GIORNO_UTENTE) || 150000;
+    const limiteAi = async () => multi && (await store().usoOggi()).flashcardToken >= tokenGiorno
+      ? json(429, { error: 'Hai usato tutta l’intelligenza artificiale di oggi: riprova domani.', code: 'limite-ai' }) : null;
 
-    if (url.pathname === '/api/stato') return json(200, { groq: Boolean(env.GROQ_API_KEY), password: Boolean(env.PASSWORD) });
+    if (url.pathname === '/api/stato') return json(200, {
+      groq: Boolean(env.GROQ_API_KEY), password: multi || Boolean(env.PASSWORD), multiutente: multi,
+      google: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET), invito: Boolean(env.CODICE_INVITO),
+    });
+
+    if (multi && (url.pathname.startsWith('/api/auth/') || url.pathname.startsWith('/auth/'))) return gestisciAuth(request, env, url, auth, utente);
 
     if (url.pathname === '/api/trascrivi') {
       if (request.method === 'POST') {
-        if (!autorizzato(request, env)) return json(401, { error: 'Password mancante o errata.' });
-        if (env.GROQ_API_KEY) await store().usa(secondiAudio(request));
+        if (!entrato) return json(401, { error: multi ? 'Accedi per trascrivere.' : 'Password mancante o errata.' });
+        if (multi && await store().usoSettimana() >= oreSett * 3600) return json(429, { error: `Hai usato le ${oreSett} ore di questa settimana.`, code: 'limite-utente' });
+        if (env.GROQ_API_KEY) { const sec = secondiAudio(request); await store().usa(sec); if (multi) await auth().usa(sec); }
       }
       return trascrivi({ request, env });
     }
 
     if (url.pathname.startsWith('/api/privato/')) {
-      if (!env.PASSWORD) return json(503, { error: 'Password non impostata.', code: 'no-password' });
-      if (!autorizzato(request, env)) return json(401, { error: 'Password errata.' });
+      if (!multi && !env.PASSWORD) return json(503, { error: 'Password non impostata.', code: 'no-password' });
+      if (!entrato) return json(401, { error: multi ? 'Accedi di nuovo.' : 'Password errata.' });
       const azione = url.pathname.slice('/api/privato/'.length);
-      if (azione === 'verifica') return json(200, { ok: true, uso: await store().usoOggi(), limitePubblicoOre: null, limiteGroq: { orePerGiorno: 8, orePerOra: 2, tokenFlashcardGiorno: 500000, tokenFlashcardMinuto: 30000 } });
+      if (['ai', 'flashcard', 'lavagna', 'chiedi'].includes(azione)) { const l = await limiteAi(); if (l) return l; }
+      if (azione === 'verifica') return json(200, {
+        ok: true, uso: multi ? { ...(await auth().usoOggi()), flashcardToken: (await store().usoOggi()).flashcardToken } : await store().usoOggi(), limitePubblicoOre: null,
+        limiteGroq: { orePerGiorno: 8, orePerOra: 2, tokenFlashcardGiorno: multi ? tokenGiorno : 500000, tokenFlashcardMinuto: 30000 },
+        utente: utente ? { email: utente.email, nome: utente.nome, conGoogle: !!utente.conGoogle, conPassword: !!utente.conPassword } : null,
+        settimana: multi ? { usate: await store().usoSettimana(), limite: oreSett * 3600, tokenOggi: (await store().usoOggi()).flashcardToken } : null,
+      });
       // tutti gli appunti salvati di una materia, in ordine di data (per Claude e per "Scarica appunti")
       if (azione === 'appunti' && request.method === 'GET') {
         const materia = (url.searchParams.get('materia') || '').trim().slice(0, 80);
@@ -216,7 +350,10 @@ export default {
       if (azione === 'elimina-tutto' && request.method === 'POST') {
         const b = await request.json().catch(() => null);
         if (b?.conferma !== 'ELIMINA') return json(400, { error: 'Conferma mancante.' });
-        return json(200, await store().eliminaTutto());
+        await store().eliminaTutto();
+        if (!multi) return json(200, { ok: true });
+        await auth().eliminaUtente(utente.id);
+        return new Response(JSON.stringify({ ok: true }), { headers: { 'content-type': 'application/json', 'set-cookie': cookie('sessione', '', 0) } });
       }
       if (azione === 'lavagna' && request.method === 'POST') {
         const b = await request.json().catch(() => null);

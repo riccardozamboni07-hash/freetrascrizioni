@@ -11,6 +11,7 @@ La tua app personale per **trascrivere le lezioni**, anche di 2 ore, in pochi mi
 - **Ripasso per materia** con le flashcard di tutte le lezioni e lo storico dei risultati
 - **Menu** per spostarsi tra le sezioni e **profilo** con foto, dati, uscita ed eliminazione dei dati
 - **Chiedi alle tue lezioni**: domande con risposte prese dalle tue lezioni, con le fonti
+- **Versione pubblica** con registrazione (email o Google) e archivio per ogni utente: vedi [PUBBLICA.md](PUBBLICA.md)
 - **Tutto nei tuoi account**: nessuno, nemmeno chi ti ha installato l'app, vede le tue lezioni
 
 Usa i piani gratuiti di Cloudflare e Groq: con Groq gratis trascrivi circa **8 ore di audio al giorno**. Resta gratuita finché lo restano questi servizi.

@@ -145,6 +145,13 @@ body.locked .topbar{display:none}
 .menu-list span{width:1.6rem;text-align:center}
 .prof-top{display:flex;flex-direction:column;align-items:center;gap:10px}
 .prof-sez{border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.auth{display:flex;flex-direction:column;gap:12px}
+.tabs{display:flex;gap:6px;background:var(--bg);border-radius:999px;padding:4px;border:1px solid var(--line)}
+.tabs button{flex:1;justify-content:center;border-color:transparent;background:transparent}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.google{justify-content:center;background:#fff;color:#1f1f1f;border-color:#dadce0}
+.oppure{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.85rem}
+.oppure::before,.oppure::after{content:"";flex:1;height:1px;background:var(--line)}
 .banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px;border-radius:18px;border:1px solid var(--warn)}
 .banner p{margin:0;flex:1 1 240px}
 .live{font-size:.78rem;font-weight:600;color:var(--rec)}
@@ -230,7 +237,25 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
 
   <section class="panel priv" id="lock" aria-labelledby="lockT" style="flex-direction:column">
     <span class="label" id="lockT">Area personale</span>
-    <p class="note">Inserisci la password che hai scelto durante l’installazione. Su questo dispositivo te la chiede una volta sola.</p>
+    <div id="authBox" class="auth" hidden>
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" id="tabAccedi" aria-selected="true">Accedi</button>
+        <button type="button" role="tab" id="tabReg" aria-selected="false">Registrati</button>
+      </div>
+      <label class="field" id="invitoBox" hidden><span>Codice di invito</span><input type="text" id="aInvito" autocomplete="off" placeholder="Te l'ha dato chi ti ha invitato"></label>
+      <button type="button" class="google" id="googleBtn" hidden>
+        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+        Continua con Google
+      </button>
+      <div class="oppure" id="oppure" hidden><span>oppure con email</span></div>
+      <form id="authForm" style="display:flex;flex-direction:column;gap:10px">
+        <label class="field" id="nomeBox" hidden><span>Nome</span><input type="text" id="aNome" autocomplete="given-name"></label>
+        <label class="field"><span>Email</span><input type="email" id="aEmail" autocomplete="email" required></label>
+        <label class="field"><span>Password</span><input type="password" id="aPw" autocomplete="current-password" required minlength="8"></label>
+        <button class="primary" type="submit" id="authGo">Accedi</button>
+      </form>
+    </div>
+    <p class="note" id="lockNota">Inserisci la password che hai scelto durante l’installazione. Su questo dispositivo te la chiede una volta sola.</p>
     <form class="row" id="lockForm">
       <input type="password" id="pw" autocomplete="current-password" placeholder="Password" aria-label="Password" style="flex:1 1 200px">
       <button class="primary" type="submit">Entra</button>
@@ -502,7 +527,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.6</p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.7</p>
 </main>
 <div class="overlay" id="overlay" hidden></div>
 <nav class="drawer" id="menu" aria-label="Menu" hidden>
@@ -541,11 +566,18 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
   <div class="status" id="profStatus" role="status"></div>
   <div class="prof-sez">
     <strong>Account</strong>
-    <p class="note">Per cambiare la password: su Cloudflare apri il tuo Worker → Settings → Variables and Secrets → PASSWORD.</p>
+    <p class="note" id="accInfo">Per cambiare la password: su Cloudflare apri il tuo Worker → Settings → Variables and Secrets → PASSWORD.</p>
+    <p class="note" id="limInfo" hidden></p>
+    <button type="button" id="pwCambia" hidden>Cambia password</button>
+    <div id="pwBox" hidden style="display:flex;flex-direction:column;gap:8px;width:100%">
+      <label class="field" id="pwAttBox"><span>Password attuale</span><input type="password" id="pwAtt" autocomplete="current-password"></label>
+      <label class="field"><span>Nuova password (almeno 8 caratteri)</span><input type="password" id="pwNuova" autocomplete="new-password"></label>
+      <button type="button" class="primary" id="pwSalva">Salva nuova password</button>
+    </div>
     <button type="button" id="logoutBtn">Esci da questo dispositivo</button>
     <button type="button" class="danger" id="delAccBtn">Elimina account</button>
     <div id="delAccBox" hidden style="display:flex;flex-direction:column;gap:8px">
-      <p class="note">Verranno cancellati <strong>per sempre</strong> tutte le lezioni, gli appunti, le flashcard, le statistiche e il profilo. L'app resta installata e la password resta la stessa. Scrivi <strong>ELIMINA</strong> per confermare.</p>
+      <p class="note" id="delAccTxt">Verranno cancellati <strong>per sempre</strong> tutte le lezioni, gli appunti, le flashcard, le statistiche e il profilo. L'app resta installata e la password resta la stessa. Scrivi <strong>ELIMINA</strong> per confermare.</p>
       <input type="text" id="delAccIn" autocomplete="off" aria-label="Scrivi ELIMINA per confermare">
       <button type="button" class="danger" id="delAccOk" disabled>Elimina tutto per sempre</button>
     </div>
@@ -1053,6 +1085,8 @@ async function sendPiece(pcm, lang){
     const data = await res.json().catch(() => ({}));
     if (res.ok) return (data.text || '').trim();
     if (res.status === 429 && data.code === 'quota-pubblica') throw new Error('La modalità veloce ha raggiunto il limite di oggi. Puoi usare «Sul dispositivo» oppure riprovare domani.');
+    if (data.code === 'limite-utente') throw new Error((data.error || 'Hai finito le ore di questa settimana.') + ' Torneranno disponibili nei prossimi giorni.');
+    if (res.status === 401 && MULTI) throw new Error('Sessione scaduta: ricarica la pagina e accedi di nuovo.');
     if (res.status === 503 && data.code === 'fondi-esauriti') throw new Error('Hai raggiunto il tetto di spesa che hai impostato su Groq. Per ora usa «Sul dispositivo», oppure alza il tetto su console.groq.com.');
     if (res.status === 429) {
       const wait = Math.min(Number(data.retryAfter) || 20, 600);
@@ -1642,7 +1676,7 @@ async function aiChiama(path, body, cosa){
   for (let tent = 0; tent < 12 && !aiStop; tent++) {
     try { return await privApi(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }); }
     catch (e) {
-      if (e.status === 429 || e.status >= 500 && !e.code) {
+      if (e.code !== 'limite-ai' && (e.status === 429 || e.status >= 500 && !e.code)) {
         const wait = e.status === 429 ? 30 : 5;
         for (let w = wait; w > 0 && !aiStop; w--) { aiSt(`Groq è al limite per qualche secondo: riprendo tra ${w} s (${cosa})…`, 'warn'); await sleep(1000); }
         continue;
@@ -1703,6 +1737,7 @@ async function aiRun(tipo){
     const msg = e.code === 'chiave-groq' ? 'La chiave Groq non è valida: controlla GROQ_API_KEY su Cloudflare.'
       : e.code === 'fondi-esauriti' ? 'Hai raggiunto il tetto di spesa che hai impostato su Groq.'
       : e.status === 401 ? 'La password non è più valida: ricarica la pagina e reinseriscila.'
+      : e.code === 'limite-ai' ? e.message
       : 'Non riesco a completare: ' + e.message;
     aiSt(msg, 'err');
     if (fatti.length) { $('aiOut').value = fatti.join('\n\n'); aiRender(); aiModifica(false); $('aiRis').hidden = false; $('aiRis').style.display = 'flex'; }
@@ -1749,6 +1784,71 @@ function aiModifica(on){ $('aiOut').hidden = !on; $('aiView').hidden = on; $('ai
 $('aiMod').addEventListener('click', () => aiModifica($('aiView').hidden === false));
 $('aiCopia').addEventListener('click', () => copy($('aiOut').value, $('aiCopia'), 'Copia'));
 
+
+/* ---------- App pubblica: registrazione e accesso ---------- */
+let MULTI = false, statoApp = {}, modoReg = false, utenteInfo = null;
+function authSt(t, kind){ const s = $('lockStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
+function authModo(reg){
+  modoReg = reg;
+  $('tabAccedi').setAttribute('aria-selected', !reg); $('tabReg').setAttribute('aria-selected', reg);
+  $('nomeBox').hidden = !reg; $('invitoBox').hidden = !(reg && statoApp.invito);
+  $('authGo').textContent = reg ? 'Crea account' : 'Accedi';
+  $('aPw').autocomplete = reg ? 'new-password' : 'current-password';
+  $('lockT').textContent = reg ? 'Crea il tuo account' : 'Accedi';
+  authSt('');
+}
+function preparaMulti(st){
+  MULTI = true; statoApp = st;
+  $('authBox').hidden = false; $('lockForm').style.display = 'none'; $('lockNota').hidden = true;
+  $('googleBtn').hidden = !st.google; $('oppure').hidden = !st.google;
+  authModo(false);
+  const err = new URLSearchParams(location.search).get('errore');
+  if (err) { if (/invito/i.test(err)) authModo(true); authSt(err, 'err'); history.replaceState(null, '', location.pathname); }
+}
+$('tabAccedi').addEventListener('click', () => authModo(false));
+$('tabReg').addEventListener('click', () => authModo(true));
+$('googleBtn').addEventListener('click', () => {
+  const inv = $('aInvito').value.trim();
+  if (statoApp.invito && modoReg && !inv) { authSt('Scrivi il codice di invito, poi tocca «Continua con Google».', 'warn'); $('aInvito').focus(); return; }
+  location.href = '/auth/google' + (inv ? '?invito=' + encodeURIComponent(inv) : '');
+});
+$('authForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('authGo').disabled = true; authSt(modoReg ? 'Creo l’account…' : 'Accedo…');
+  try {
+    const res = await fetch('/api/auth/' + (modoReg ? 'registrati' : 'accedi'), { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: $('aEmail').value, password: $('aPw').value, nome: $('aNome').value, invito: $('aInvito').value }) });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) { authSt(d.error || 'Errore ' + res.status, 'err'); if (d.code === 'invito') { $('invitoBox').hidden = false; $('aInvito').focus(); } return; }
+    $('aPw').value = ''; authSt('');
+    await unlock('', true);
+  } catch (_) { authSt('Non riesco a collegarmi: controlla la connessione.', 'err'); }
+  finally { $('authGo').disabled = false; }
+});
+$('pwCambia').addEventListener('click', () => { const b = $('pwBox'); b.hidden = !b.hidden; b.style.display = b.hidden ? 'none' : 'flex'; });
+$('pwSalva').addEventListener('click', async () => {
+  $('pwSalva').disabled = true;
+  try {
+    const res = await fetch('/api/auth/password', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ attuale: $('pwAtt').value, nuova: $('pwNuova').value }) });
+    const d = await res.json().catch(() => ({}));
+    $('profStatus').textContent = res.ok ? 'Password cambiata.' : (d.error || 'Errore ' + res.status); $('profStatus').className = 'status' + (res.ok ? '' : ' err');
+    if (res.ok) { $('pwAtt').value = $('pwNuova').value = ''; $('pwBox').hidden = true; $('pwBox').style.display = 'none'; if (utenteInfo) utenteInfo.conPassword = true; $('pwAttBox').hidden = false; }
+  } finally { $('pwSalva').disabled = false; }
+});
+function mostraAccount(v){
+  utenteInfo = v.utente || null;
+  if (!MULTI || !utenteInfo) return;
+  $('accInfo').textContent = `Sei entrato come ${utenteInfo.email}` + (utenteInfo.conGoogle ? ' (anche con Google)' : '') + '.';
+  $('pwCambia').hidden = false; $('pwCambia').textContent = utenteInfo.conPassword ? 'Cambia password' : 'Imposta una password';
+  $('pwAttBox').hidden = !utenteInfo.conPassword;
+  $('logoutBtn').textContent = 'Esci';
+  $('delAccTxt').innerHTML = 'Verranno cancellati <strong>per sempre</strong> il tuo account e tutti i tuoi dati: lezioni, appunti, flashcard e statistiche. Scrivi <strong>ELIMINA</strong> per confermare.';
+  if (v.settimana) {
+    const h = x => (x / 3600).toFixed(1).replace('.', ',');
+    $('limInfo').hidden = false;
+    $('limInfo').textContent = `Il tuo piano: ${h(v.settimana.limite)} ore di trascrizione a settimana (usate ${h(v.settimana.usate)}).`;
+  }
+}
 /* ---------- Menu e profilo (in alto a destra) ---------- */
 let profDati = {}, profFoto = '';
 function apri(id){
@@ -1817,7 +1917,8 @@ $('profSalva').addEventListener('click', async () => {
   } catch (e) { $('profStatus').textContent = 'Non riesco a salvare: ' + e.message; $('profStatus').className = 'status err'; }
   finally { $('profSalva').disabled = false; }
 });
-$('logoutBtn').addEventListener('click', () => {
+$('logoutBtn').addEventListener('click', async () => {
+  if (MULTI) { try { await fetch('/api/auth/esci', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }); } catch (_) {} }
   lsSet(PW_KEY, null); privPw = null;
   try { localStorage.removeItem(LS); } catch (_) {}
   location.reload();
@@ -1856,7 +1957,7 @@ async function askGo(){
     askMsg('ai', r.testo, r.fonti); askStoria.push({ ruolo: 'io', testo: domanda }, { ruolo: 'ai', testo: r.testo }); askSt('');
     if (r.uso && fcUso) { fcUso.uso = r.uso; fcLimiti(); }
   } catch (e) {
-    askSt(e.status === 429 ? 'Groq è al limite per qualche secondo: riprova tra poco.' : e.code === 'chiave-groq' ? 'La chiave Groq non è valida: controlla GROQ_API_KEY su Cloudflare.' : 'Non riesco a rispondere: ' + e.message, 'err');
+    askSt(e.code === 'limite-ai' ? e.message : e.status === 429 ? 'Groq è al limite per qualche secondo: riprova tra poco.' : e.code === 'chiave-groq' ? 'La chiave Groq non è valida: controlla GROQ_API_KEY su Cloudflare.' : 'Non riesco a rispondere: ' + e.message, 'err');
     $('askIn').value = domanda;
   } finally { $('askGo').disabled = false; }
 }
@@ -1918,6 +2019,7 @@ $('fcCrea').addEventListener('click', async () => {
   } catch (e) {
     const msg = e.code === 'chiave-groq' ? 'La chiave Groq non è valida: controlla GROQ_API_KEY su Cloudflare.'
       : e.code === 'fondi-esauriti' ? 'Hai raggiunto il tetto di spesa che hai impostato su Groq.'
+      : e.code === 'limite-ai' ? e.message
       : e.status === 429 ? 'Groq è al limite per ora: riprova tra qualche minuto.'
       : e.status === 401 ? 'La password non è più valida: ricarica la pagina e reinseriscila.'
       : 'Non riesco a creare le flashcard: ' + e.message;
@@ -2037,23 +2139,25 @@ function showUsage(v){
   const tot = (v.uso.privato || 0) + (v.uso.pubblico || 0);
   const restaGiorno = Math.max(0, lim.orePerGiorno * 3600 - tot);
   const restaOra = Math.min(restaGiorno, Math.max(0, lim.orePerOra * 3600 - (v.uso.oraCorrente || 0)));
-  $('usage').textContent = `Restano circa ${h(restaGiorno)} oggi (${h(restaOra)} in quest’ora) · usate oggi ${h(tot)}`;
+  $('usage').textContent = v.settimana
+    ? `Questa settimana ti restano circa ${h(Math.max(0, v.settimana.limite - v.settimana.usate))} di trascrizione`
+    : `Restano circa ${h(restaGiorno)} oggi (${h(restaOra)} in quest’ora) · usate oggi ${h(tot)}`;
   $('usage').title = 'Stima: il limite gratuito di Groq è di circa 8 ore al giorno e 2 ore all’ora, per tutti insieme. Il conteggio giornaliero si azzera alle 2 di notte (ora italiana).';
 }
 async function unlock(pw, silent){
   privPw = pw;
   try {
     const v = await privApi('verifica');
-    lsSet(PW_KEY, pw);
+    if (!MULTI) lsSet(PW_KEY, pw);
     document.body.classList.remove('locked');
-    showUsage(v); fcLimiti(v); loadList(); caricaPrecedenti(); caricaProfilo();
+    showUsage(v); fcLimiti(v); mostraAccount(v); loadList(); caricaPrecedenti(); caricaProfilo();
     return true;
   } catch (e) {
     privPw = null;
     if (e.status === 401) lsSet(PW_KEY, null);
     if (!silent) {
       const st = $('lockStatus');
-      st.textContent = e.status === 401 ? 'Password errata.' : e.code === 'no-password' ? 'Manca la password: impostala come segreto PASSWORD nelle impostazioni del Worker su Cloudflare.' : 'Non riesco a verificare la password: ' + e.message;
+      st.textContent = MULTI ? (e.status === 401 ? '' : 'Non riesco a collegarmi: ' + e.message) : e.status === 401 ? 'Password errata.' : e.code === 'no-password' ? 'Manca la password: impostala come segreto PASSWORD nelle impostazioni del Worker su Cloudflare.' : 'Non riesco a verificare la password: ' + e.message;
       st.className = 'status err';
     }
     return false;
@@ -2279,13 +2383,15 @@ if (PRIVATE) {
     let st = null;
     try { st = await (await fetch('/api/stato', { cache: 'no-store' })).json(); } catch (_) {}
     const missing = [];
+    if (st && st.multiutente && !MULTI) preparaMulti(st);
     if (st && !st.password) missing.push(['PASSWORD', 'la password con cui entrerai nell’app (scegline una lunga)']);
     if (st && !st.groq) missing.push(['GROQ_API_KEY', 'la tua chiave Groq: su console.groq.com → API Keys → Create API Key']);
     $('setup').hidden = !missing.length;
     $('lock').style.display = missing.some(m => m[0] === 'PASSWORD') ? 'none' : '';
     const ul = $('setupList'); ul.textContent = '';
     for (const [k, d] of missing) { const li = document.createElement('li'); const c = document.createElement('code'); c.textContent = k; li.append(c, ' — ' + d); ul.append(li); }
-    if (!missing.some(m => m[0] === 'PASSWORD')) { const saved = lsGet(PW_KEY); if (saved) unlock(saved, true); }
+    if (MULTI) unlock('', true);
+    else if (!missing.some(m => m[0] === 'PASSWORD')) { const saved = lsGet(PW_KEY); if (saved) unlock(saved, true); }
   }
   $('setupRetry').addEventListener('click', checkSetup);
   checkSetup();
