@@ -126,6 +126,25 @@ select{font:inherit;padding:.55rem .8rem;border-radius:14px;border:1px solid var
 .msg .fonti{margin-top:6px;font-size:.82rem;color:var(--muted)}
 .ask-in{display:flex;gap:10px;align-items:flex-end}
 .ask-in textarea{min-height:56px;flex:1}
+header.top{position:relative;padding-right:104px}
+.topbar{position:absolute;top:0;right:0;display:flex;gap:8px;align-items:center}
+body.locked .topbar{display:none}
+.icon-btn{width:44px;height:44px;padding:0;justify-content:center;border-radius:50%}
+.avatar{width:44px;height:44px;padding:0;border-radius:50%;justify-content:center;overflow:hidden;background:var(--accent-soft);color:var(--accent);font-weight:800;border-color:var(--accent);font-size:.95rem}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.avatar.big{width:88px;height:88px;font-size:1.8rem;display:flex;align-items:center;border:2px solid var(--accent)}
+.overlay{position:fixed;inset:0;background:rgba(20,10,5,.42);z-index:40}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(380px,92vw);background:var(--surface);z-index:41;padding:18px;overflow:auto;
+  display:flex;flex-direction:column;gap:14px;box-shadow:-8px 0 30px rgba(0,0,0,.18);border-radius:22px 0 0 22px;animation:entra .2s ease-out}
+.drawer[hidden]{display:none}
+@keyframes entra{from{transform:translateX(30px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.drawer{animation:none}}
+.menu-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.menu-list button{width:100%;justify-content:flex-start;border-color:transparent;border-radius:16px;padding:.75rem 1rem;font-size:1rem}
+.menu-list button:hover{background:var(--accent-soft)}
+.menu-list span{width:1.6rem;text-align:center}
+.prof-top{display:flex;flex-direction:column;align-items:center;gap:10px}
+.prof-sez{border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
 .banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px;border-radius:18px;border:1px solid var(--warn)}
 .banner p{margin:0;flex:1 1 240px}
 .live{font-size:.78rem;font-weight:600;color:var(--rec)}
@@ -148,7 +167,7 @@ body.locked main > :not(header):not(#lock):not(#setup){display:none}
 body.privato:not(.locked) #lock{display:none}
 #lock{max-width:420px}
 .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
-input[type=text],input[type=password],input[type=date],input[type=search]{font:inherit;padding:.55rem .8rem;min-height:44px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);width:100%}
+input[type=text],input[type=password],input[type=date],input[type=search],input[type=email],input[type=tel]{font:inherit;padding:.55rem .8rem;min-height:44px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);width:100%}
 #appunti{min-height:180px}
 /* Archivio: filtri per materia, sezioni apribili, una scheda per lezione */
 .subj{--c:hsl(var(--h,160) 42% 38%);--c-soft:hsl(var(--h,160) 45% 94%)}
@@ -191,9 +210,15 @@ input[type=text],input[type=password],input[type=date],input[type=search]{font:i
 </head>
 <body>
 <main>
-  <header>
+  <header class="top">
+    <div class="topbar">
+      <button type="button" class="icon-btn" id="menuBtn" aria-label="Apri il menu" aria-controls="menu" aria-expanded="false">
+        <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </button>
+      <button type="button" class="avatar" id="profBtn" aria-label="Il tuo profilo" aria-controls="profilo" aria-expanded="false"><span id="avatarTxt">👤</span></button>
+    </div>
     <h1>Freetrascrizioni</h1>
-    <p>Registra o carica una lezione, anche di 2 ore, e ottieni il testo e il riassunto in pochi minuti. Gratis e senza account.</p>
+    <p>Registra o carica una lezione, anche di 2 ore, e ottieni il testo e il riassunto in pochi minuti. Gratis.</p>
   </header>
 
   <section class="panel" id="setup" aria-labelledby="setupT" style="flex-direction:column" hidden>
@@ -477,8 +502,56 @@ input[type=text],input[type=password],input[type=date],input[type=search]{font:i
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.5</p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.6</p>
 </main>
+<div class="overlay" id="overlay" hidden></div>
+<nav class="drawer" id="menu" aria-label="Menu" hidden>
+  <div class="row between"><strong>Menu</strong><button type="button" class="icon-btn" data-chiudi aria-label="Chiudi">✕</button></div>
+  <ul class="menu-list">
+    <li><button type="button" data-vai="l1"><span>🎙️</span>Registra o carica</button></li>
+    <li><button type="button" data-vai="l2"><span>⚡</span>Trascrizione</button></li>
+    <li><button type="button" data-vai="l3"><span>📄</span>Testo</button></li>
+    <li><button type="button" data-vai="l4"><span>✍️</span>Appunti e correzione</button></li>
+    <li><button type="button" data-vai="lFc"><span>🃏</span>Flashcard</button></li>
+    <li><button type="button" data-vai="lAsk"><span>💬</span>Chiedi alle tue lezioni</button></li>
+    <li><button type="button" data-vai="lSave"><span>💾</span>Salva lezione</button></li>
+    <li><button type="button" data-vai="lArch"><span>📚</span>Le tue lezioni</button></li>
+    <li><button type="button" data-vai="l5"><span>💡</span>Consigli</button></li>
+    <li><button type="button" id="menuProf"><span>👤</span>Profilo</button></li>
+  </ul>
+</nav>
+<aside class="drawer" id="profilo" aria-labelledby="profT" hidden>
+  <div class="row between"><strong id="profT">Il tuo profilo</strong><button type="button" class="icon-btn" data-chiudi aria-label="Chiudi">✕</button></div>
+  <div class="prof-top">
+    <div class="avatar big" id="profFoto"><span id="profIniz">👤</span></div>
+    <div class="row">
+      <label class="btn" for="fotoIn">Cambia foto</label><input type="file" id="fotoIn" accept="image/*">
+      <button type="button" id="fotoVia" hidden>Togli</button>
+    </div>
+  </div>
+  <p class="note" id="profStats"></p>
+  <div class="form">
+    <label class="field"><span>Nome</span><input type="text" id="pNome" autocomplete="given-name"></label>
+    <label class="field"><span>Cognome</span><input type="text" id="pCognome" autocomplete="family-name"></label>
+  </div>
+  <label class="field"><span>Email</span><input type="email" id="pEmail" autocomplete="email"></label>
+  <label class="field"><span>Telefono</span><input type="tel" id="pTel" autocomplete="tel"></label>
+  <label class="field"><span>Professione</span><input type="text" id="pProf" placeholder="es. Studente di Economia"></label>
+  <button type="button" class="primary" id="profSalva">Salva profilo</button>
+  <div class="status" id="profStatus" role="status"></div>
+  <div class="prof-sez">
+    <strong>Account</strong>
+    <p class="note">Per cambiare la password: su Cloudflare apri il tuo Worker → Settings → Variables and Secrets → PASSWORD.</p>
+    <button type="button" id="logoutBtn">Esci da questo dispositivo</button>
+    <button type="button" class="danger" id="delAccBtn">Elimina account</button>
+    <div id="delAccBox" hidden style="display:flex;flex-direction:column;gap:8px">
+      <p class="note">Verranno cancellati <strong>per sempre</strong> tutte le lezioni, gli appunti, le flashcard, le statistiche e il profilo. L'app resta installata e la password resta la stessa. Scrivi <strong>ELIMINA</strong> per confermare.</p>
+      <input type="text" id="delAccIn" autocomplete="off" aria-label="Scrivi ELIMINA per confermare">
+      <button type="button" class="danger" id="delAccOk" disabled>Elimina tutto per sempre</button>
+    </div>
+  </div>
+</aside>
+
 
 <script type="module">
 const $ = id => document.getElementById(id);
@@ -1675,6 +1748,90 @@ function aiRender(){ $('aiView').innerHTML = mdHtml($('aiOut').value); }
 function aiModifica(on){ $('aiOut').hidden = !on; $('aiView').hidden = on; $('aiMod').textContent = on ? 'Fine modifica' : 'Modifica'; if (!on) aiRender(); }
 $('aiMod').addEventListener('click', () => aiModifica($('aiView').hidden === false));
 $('aiCopia').addEventListener('click', () => copy($('aiOut').value, $('aiCopia'), 'Copia'));
+
+/* ---------- Menu e profilo (in alto a destra) ---------- */
+let profDati = {}, profFoto = '';
+function apri(id){
+  ['menu', 'profilo'].forEach(x => { $(x).hidden = x !== id; });
+  $('overlay').hidden = false; document.body.style.overflow = 'hidden';
+  $('menuBtn').setAttribute('aria-expanded', id === 'menu'); $('profBtn').setAttribute('aria-expanded', id === 'profilo');
+  $(id).querySelector('[data-chiudi]')?.focus();
+}
+function chiudi(){
+  ['menu', 'profilo'].forEach(x => { $(x).hidden = true; });
+  $('overlay').hidden = true; document.body.style.overflow = '';
+  $('menuBtn').setAttribute('aria-expanded', 'false'); $('profBtn').setAttribute('aria-expanded', 'false');
+}
+$('menuBtn').addEventListener('click', () => apri('menu'));
+$('profBtn').addEventListener('click', () => { apri('profilo'); caricaProfilo(); });
+$('menuProf').addEventListener('click', () => { apri('profilo'); caricaProfilo(); });
+$('overlay').addEventListener('click', chiudi);
+document.querySelectorAll('[data-chiudi]').forEach(b => b.addEventListener('click', chiudi));
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('overlay').hidden) chiudi(); });
+document.querySelectorAll('[data-vai]').forEach(b => b.addEventListener('click', () => {
+  chiudi();
+  const sez = $(b.dataset.vai)?.closest('section');
+  if (sez) setTimeout(() => sez.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+}));
+function iniziali(p){ return ((p.nome || '')[0] || '') + ((p.cognome || '')[0] || '') ; }
+function mostraAvatar(){
+  const ini = iniziali(profDati).toUpperCase();
+  for (const [box, txt] of [[$('profBtn'), $('avatarTxt')], [$('profFoto'), $('profIniz')]]) {
+    box.querySelector('img')?.remove();
+    if (profFoto) { const im = document.createElement('img'); im.src = profFoto; im.alt = ''; box.prepend(im); txt.hidden = true; }
+    else { txt.hidden = false; txt.textContent = ini || '👤'; }
+  }
+  $('fotoVia').hidden = !profFoto;
+}
+async function caricaProfilo(){
+  try {
+    const r = await privApi('profilo');
+    profDati = r.profilo || {}; profFoto = profDati.foto || '';
+    $('pNome').value = profDati.nome || ''; $('pCognome').value = profDati.cognome || '';
+    $('pEmail').value = profDati.email || ''; $('pTel').value = profDati.telefono || ''; $('pProf').value = profDati.professione || '';
+    const st = r.stats || {}, ore = (st.secondi || 0) / 3600;
+    $('profStats').textContent = `${st.lezioni || 0} ${st.lezioni === 1 ? 'lezione salvata' : 'lezioni salvate'} · ${ore.toFixed(1).replace('.', ',')} h di audio · ${st.materie || 0} ${st.materie === 1 ? 'materia' : 'materie'} · ${st.conFlashcard || 0} con flashcard`;
+    mostraAvatar();
+  } catch (_) {}
+}
+$('fotoIn').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  const url = URL.createObjectURL(f);
+  try {
+    const img = await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = url; });
+    const lato = Math.min(img.naturalWidth, img.naturalHeight), c = document.createElement('canvas'); c.width = c.height = 256;
+    c.getContext('2d').drawImage(img, (img.naturalWidth - lato) / 2, (img.naturalHeight - lato) / 2, lato, lato, 0, 0, 256, 256);
+    profFoto = c.toDataURL('image/jpeg', 0.82); mostraAvatar();
+    $('profStatus').textContent = 'Foto pronta: tocca «Salva profilo».'; $('profStatus').className = 'status';
+  } catch (_) { $('profStatus').textContent = 'Non riesco a leggere la foto.'; $('profStatus').className = 'status err'; }
+  finally { URL.revokeObjectURL(url); }
+});
+$('fotoVia').addEventListener('click', () => { profFoto = ''; mostraAvatar(); $('profStatus').textContent = 'Tocca «Salva profilo» per confermare.'; });
+$('profSalva').addEventListener('click', async () => {
+  $('profSalva').disabled = true;
+  try {
+    const r = await privApi('profilo', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
+      nome: $('pNome').value, cognome: $('pCognome').value, email: $('pEmail').value, telefono: $('pTel').value, professione: $('pProf').value, foto: profFoto }) });
+    profDati = r.profilo || {}; profFoto = profDati.foto || ''; mostraAvatar();
+    $('profStatus').textContent = 'Profilo salvato.'; $('profStatus').className = 'status';
+  } catch (e) { $('profStatus').textContent = 'Non riesco a salvare: ' + e.message; $('profStatus').className = 'status err'; }
+  finally { $('profSalva').disabled = false; }
+});
+$('logoutBtn').addEventListener('click', () => {
+  lsSet(PW_KEY, null); privPw = null;
+  try { localStorage.removeItem(LS); } catch (_) {}
+  location.reload();
+});
+$('delAccBtn').addEventListener('click', () => { const b = $('delAccBox'); b.hidden = !b.hidden; b.style.display = b.hidden ? 'none' : 'flex'; $('delAccIn').value = ''; $('delAccOk').disabled = true; });
+$('delAccIn').addEventListener('input', () => { $('delAccOk').disabled = $('delAccIn').value.trim().toUpperCase() !== 'ELIMINA'; });
+$('delAccOk').addEventListener('click', async () => {
+  $('delAccOk').disabled = true;
+  try {
+    await privApi('elimina-tutto', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ conferma: 'ELIMINA' }) });
+    try { localStorage.removeItem(LS); } catch (_) {}
+    lsSet(PW_KEY, null); location.reload();
+  } catch (e) { $('profStatus').textContent = 'Non riesco a eliminare: ' + e.message; $('profStatus').className = 'status err'; $('delAccOk').disabled = false; }
+});
 /* ---------- Chiedi alle tue lezioni ---------- */
 let askStoria = [];
 function askSt(t, kind){ const s = $('askStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
@@ -1889,7 +2046,7 @@ async function unlock(pw, silent){
     const v = await privApi('verifica');
     lsSet(PW_KEY, pw);
     document.body.classList.remove('locked');
-    showUsage(v); fcLimiti(v); loadList(); caricaPrecedenti();
+    showUsage(v); fcLimiti(v); loadList(); caricaPrecedenti(); caricaProfilo();
     return true;
   } catch (e) {
     privPw = null;

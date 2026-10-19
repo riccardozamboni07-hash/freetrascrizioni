@@ -9,6 +9,7 @@ La tua app personale per **trascrivere le lezioni**, anche di 2 ore, in pochi mi
 - **Flashcard** a risposta multipla create dalla lezione: punteggio finale, risposte sbagliate con quella corretta, salvate nell'archivio
 - **Appunti e trascrizione corretta creati nell'app**, anche con le **foto della lavagna**, da salvare nella lezione o scaricare come file Word
 - **Ripasso per materia** con le flashcard di tutte le lezioni e lo storico dei risultati
+- **Menu** per spostarsi tra le sezioni e **profilo** con foto, dati, uscita ed eliminazione dei dati
 - **Chiedi alle tue lezioni**: domande con risposte prese dalle tue lezioni, con le fonti
 - **Tutto nei tuoi account**: nessuno, nemmeno chi ti ha installato l'app, vede le tue lezioni
 

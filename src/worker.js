@@ -21,7 +21,22 @@ export class Store extends DurableObject {
     try { this.sql.exec(`ALTER TABLE lezioni ADD COLUMN flashcard TEXT NOT NULL DEFAULT ''`); } catch (_) {}
     // versione 1.5: statistiche per flashcard e storico dei ripassi
     this.sql.exec(`CREATE TABLE IF NOT EXISTS fc_stat (chiave TEXT PRIMARY KEY, materia TEXT, giuste INTEGER NOT NULL DEFAULT 0, sbagliate INTEGER NOT NULL DEFAULT 0, ultima INTEGER)`);
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS profilo (k TEXT PRIMARY KEY, v TEXT)`);
     this.sql.exec(`CREATE TABLE IF NOT EXISTS fc_sessioni (id INTEGER PRIMARY KEY AUTOINCREMENT, quando INTEGER, materia TEXT, lezione TEXT, giuste INTEGER, totale INTEGER)`);
+  }
+  profilo() {
+    let p = {}; try { p = JSON.parse((this.sql.exec(`SELECT v FROM profilo WHERE k = 'profilo'`).toArray()[0] || {}).v || '{}'); } catch (_) {}
+    const st = this.sql.exec(`SELECT count(*) AS lezioni, coalesce(sum(durata), 0) AS secondi, count(DISTINCT materia) AS materie,
+      sum(length(flashcard) > 2) AS conFlashcard, sum(length(appunti) > 0) AS conAppunti FROM lezioni`).toArray()[0] || {};
+    return { profilo: p, stats: st };
+  }
+  salvaProfilo(p) {
+    this.sql.exec(`INSERT INTO profilo (k, v) VALUES ('profilo', ?) ON CONFLICT (k) DO UPDATE SET v = excluded.v`, JSON.stringify(p));
+    return this.profilo();
+  }
+  eliminaTutto() {
+    for (const t of ['lezioni', 'fc_stat', 'fc_sessioni', 'profilo']) this.sql.exec(`DELETE FROM ${t}`);
+    return { ok: true };
   }
   flashcardMateria(materia) {
     const righe = this.sql.exec(`SELECT id, titolo, data, flashcard FROM lezioni WHERE materia = ? AND length(flashcard) > 2 ORDER BY data ASC`, materia).toArray();
@@ -187,6 +202,21 @@ export default {
         if (r.token) await store().usaToken(r.token);
         if (r.status === 200) r.body.uso = await store().usoOggi();
         return json(r.status, r.body);
+      }
+      if (azione === 'profilo') {
+        if (request.method === 'GET') return json(200, await store().profilo());
+        if (request.method === 'POST') {
+          const b = await request.json().catch(() => null);
+          if (!b) return json(400, { error: 'Dati mancanti.' });
+          const campo = (k, n = 120) => String(b[k] || '').trim().slice(0, n);
+          const foto = typeof b.foto === 'string' && b.foto.startsWith('data:image/') && b.foto.length < 300_000 ? b.foto : '';
+          return json(200, await store().salvaProfilo({ nome: campo('nome'), cognome: campo('cognome'), email: campo('email'), telefono: campo('telefono', 40), professione: campo('professione'), foto }));
+        }
+      }
+      if (azione === 'elimina-tutto' && request.method === 'POST') {
+        const b = await request.json().catch(() => null);
+        if (b?.conferma !== 'ELIMINA') return json(400, { error: 'Conferma mancante.' });
+        return json(200, await store().eliminaTutto());
       }
       if (azione === 'lavagna' && request.method === 'POST') {
         const b = await request.json().catch(() => null);
