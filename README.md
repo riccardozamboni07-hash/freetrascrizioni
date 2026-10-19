@@ -7,6 +7,7 @@ La tua app personale per **trascrivere le lezioni**, anche di 2 ore, in pochi mi
 - **Archivio delle lezioni** diviso per materia, con filtri, ricerca, i tuoi appunti e **download di tutti gli appunti di una materia**
 - Pulsanti per **correggere la trascrizione** o farne **appunti con Claude**, con istruzioni adatte alla materia e gli appunti delle lezioni precedenti
 - **Flashcard** a risposta multipla create dalla lezione: punteggio finale, risposte sbagliate con quella corretta, salvate nell'archivio
+- **Appunti e trascrizione corretta creati nell'app**, da salvare nella lezione o scaricare come file Word
 - **Tutto nei tuoi account**: nessuno, nemmeno chi ti ha installato l'app, vede le tue lezioni
 
 Usa i piani gratuiti di Cloudflare e Groq: con Groq gratis trascrivi circa **8 ore di audio al giorno**. Resta gratuita finché lo restano questi servizi.

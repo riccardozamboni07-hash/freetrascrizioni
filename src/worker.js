@@ -7,6 +7,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { onRequest as trascrivi } from './trascrivi.js';
 import { generaFlashcard } from './flashcard.js';
+import { generaTesto } from './ai.js';
 
 export class Store extends DurableObject {
   constructor(ctx, env) {
@@ -112,6 +113,19 @@ export default {
         const b = await request.json().catch(() => null);
         if (!b || typeof b.testo !== 'string' || b.testo.trim().length < 200) return json(400, { error: 'Il testo è troppo corto per creare flashcard.' });
         const r = await generaFlashcard(env, { testo: b.testo.slice(0, 1_500_000), materia: String(b.materia || '').slice(0, 80), quante: b.quante });
+        if (r.token) await store().usaToken(r.token);
+        if (r.status === 200) r.body.uso = await store().usoOggi();
+        return json(r.status, r.body);
+      }
+      // appunti / trascrizione corretta creati nell'app, una parte della lezione per richiesta
+      if (azione === 'ai' && request.method === 'POST') {
+        const b = await request.json().catch(() => null);
+        if (!b || typeof b.testo !== 'string' || !b.testo.trim()) return json(400, { error: 'Testo mancante.' });
+        const r = await generaTesto(env, {
+          tipo: b.tipo === 'aggiusta' ? 'aggiusta' : 'appunti', testo: b.testo.slice(0, 40000),
+          materia: String(b.materia || '').slice(0, 80), data: String(b.data || '').slice(0, 40),
+          parte: Number(b.parte) || 1, totale: Number(b.totale) || 1,
+        });
         if (r.token) await store().usaToken(r.token);
         if (r.status === 200) r.body.uso = await store().usoOggi();
         return json(r.status, r.body);

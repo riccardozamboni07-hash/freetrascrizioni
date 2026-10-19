@@ -107,6 +107,11 @@ textarea{width:100%;min-height:280px;resize:vertical;font:16px/1.65 var(--sans);
 .fc-item p{margin:0}
 .fc-item .tua{color:var(--err)} .fc-item .giusta{color:var(--good);font-weight:600}
 .fc-item .perche{color:var(--muted);font-size:.9rem}
+.aicard{border:1px solid var(--accent);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--accent-soft)}
+.aicard h3{margin:0;font-size:1.05rem}
+#aiOut{min-height:320px;background:var(--surface)}
+.aiview{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:6px 16px;max-height:480px;overflow:auto;line-height:1.6}
+.aiview h1{font-size:1.3rem;color:var(--accent);margin:.6em 0 .2em}.aiview h2{font-size:1.1rem;color:var(--accent);margin:1em 0 .3em}.aiview h3{font-size:1rem;margin:.8em 0 .2em}.aiview p{margin:.4em 0}.aiview ul{margin:.3em 0;padding-left:1.2rem}
 .banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px;border-radius:18px;border:1px solid var(--warn)}
 .banner p{margin:0;flex:1 1 240px}
 .live{font-size:.78rem;font-weight:600;color:var(--rec)}
@@ -330,12 +335,36 @@ input[type=text],input[type=password],input[type=date],input[type=search]{font:i
   </section>
 
   <section class="panel" aria-labelledby="l4">
-    <span class="label" id="l4">4 · Riassunto</span>
+    <span class="label" id="l4">4 · Appunti e correzione</span>
+    <div class="aicard">
+      <h3>Crea qui nell'app</h3>
+      <p class="note">L'intelligenza artificiale scrive gli <strong>appunti</strong> della lezione o <strong>corregge la trascrizione</strong> direttamente qui. Poi li salvi nella lezione o li scarichi come file Word. Una lezione di 2 ore richiede 1-3 minuti.</p>
+      <div class="row">
+        <button type="button" class="primary" id="aiAppunti">Crea appunti</button>
+        <button type="button" id="aiAggiusta">Aggiusta la trascrizione</button>
+        <button type="button" id="aiStop" hidden>Interrompi</button>
+      </div>
+      <div class="bar" id="aiBarBox" hidden><i id="aiBar"></i></div>
+      <div class="status" id="aiStatus" role="status"></div>
+      <div id="aiRis" hidden style="display:flex;flex-direction:column;gap:10px">
+        <strong id="aiTitolo"></strong>
+        <div class="aiview" id="aiView"></div>
+        <textarea id="aiOut" spellcheck="true" hidden></textarea>
+        <div class="row">
+          <button type="button" class="primary" id="aiUsa"></button>
+          <button type="button" id="aiWord">Scarica Word</button>
+          <button type="button" id="aiTxt">Scarica .txt</button>
+          <button type="button" id="aiCopia">Copia</button>
+          <button type="button" id="aiMod">Modifica</button>
+        </div>
+      </div>
+    </div>
+    <span class="label">Altre opzioni</span>
     <div class="sumgrid">
       <div class="sumcard">
         <h3>Con Claude</h3>
         <p>Apre Claude con la trascrizione, istruzioni adatte alla materia e gli appunti che hai già salvato per quella materia. Con le lezioni lunghe il testo viene copiato: incollalo, allega se vuoi le foto della lavagna e invia.</p>
-        <a class="btn primary" id="claudeBtn" href="https://claude.ai/new" target="_blank" rel="noopener">Fai riassunti e appunti</a>
+        <a class="btn" id="claudeBtn" href="https://claude.ai/new" target="_blank" rel="noopener">Fai riassunti e appunti</a>
         <a class="btn" id="claudeFixBtn" href="https://claude.ai/new" target="_blank" rel="noopener">Aggiusta la trascrizione</a>
       </div>
       <div class="sumcard">
@@ -400,7 +429,7 @@ input[type=text],input[type=password],input[type=date],input[type=search]{font:i
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.3.1</p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.4</p>
 </main>
 
 <script type="module">
@@ -1444,6 +1473,120 @@ $('demoBtn').addEventListener('click', async () => {
   } finally { $('demoBtn').disabled = false; }
 });
 
+
+/* ---------- Appunti e trascrizione corretta creati nell'app (Groq, a parti) ---------- */
+const AI_SEP = '@@DA_VERIFICARE@@';
+let aiStop = false, aiTipo = null, aiBusy = false;
+function aiSt(t, kind){ const s = $('aiStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
+function spezza(t, max){
+  const out = []; let resto = t.trim();
+  while (resto.length > max) {
+    let cut = -1;
+    for (const sep of ['\n\n', '. ', '? ', '! ', '\n', ', ', ' ']) { const i = resto.lastIndexOf(sep, max); if (i > max * 0.5) { cut = i + sep.length; break; } }
+    if (cut < 0) cut = max;
+    out.push(resto.slice(0, cut).trim()); resto = resto.slice(cut).trim();
+  }
+  if (resto) out.push(resto);
+  return out;
+}
+async function aiRun(tipo){
+  const testo = $('out').value.trim();
+  if (testo.length < 200) { aiSt('Prima trascrivi una lezione o aprila dall’archivio: il testo è troppo corto.', 'warn'); return; }
+  if (running) { aiSt('Aspetta che finisca la trascrizione.', 'warn'); return; }
+  if (aiBusy) return;
+  aiBusy = true; aiStop = false; aiTipo = tipo;
+  const parti = spezza(testo, tipo === 'aggiusta' ? 9000 : 18000);
+  const materia = materiaCorrente(), data = fmtData($('dataLez')?.value || todayISO());
+  const fatti = [], verifica = [];
+  $('aiAppunti').disabled = $('aiAggiusta').disabled = true; $('aiStop').hidden = false; $('aiBarBox').hidden = false; $('aiBar').style.width = '0%';
+  try {
+    for (let i = 0; i < parti.length && !aiStop; i++) {
+      aiSt(`${tipo === 'aggiusta' ? 'Correggo' : 'Scrivo gli appunti'}: parte ${i + 1} di ${parti.length}…`);
+      let r = null;
+      for (let tent = 0; tent < 12 && !aiStop; tent++) {
+        try {
+          r = await privApi('ai', { method: 'POST', headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ tipo, testo: parti[i], materia, data, parte: i + 1, totale: parti.length }) });
+          break;
+        } catch (e) {
+          if (e.status === 429 || e.status >= 500 && !e.code) {
+            const wait = e.status === 429 ? 30 : 5;
+            for (let w = wait; w > 0 && !aiStop; w--) { aiSt(`Groq è al limite per qualche secondo: riprendo tra ${w} s (parte ${i + 1} di ${parti.length})…`, 'warn'); await sleep(1000); }
+            continue;
+          }
+          throw e;
+        }
+      }
+      if (!r) break;
+      let [corpo, ver] = r.testo.split(AI_SEP);
+      fatti.push(corpo.trim());
+      if (ver) ver.split('\n').map(x => x.replace(/^\s*[-•*]\s*/, '').trim()).filter(Boolean).forEach(x => verifica.push(x));
+      if (r.uso && fcUso) { fcUso.uso = r.uso; fcLimiti(); }
+      $('aiBar').style.width = ((i + 1) / parti.length * 100) + '%';
+    }
+    if (!fatti.length) { aiSt('Interrotto.', 'warn'); return; }
+    let finale;
+    if (tipo === 'aggiusta') finale = fatti.join('\n\n');
+    else {
+      const titolo = ($('titolo').value || '').trim() || 'Lezione';
+      finale = `# ${titolo}\n${materia || 'Materia non indicata'} · ${data}\n\n` + fatti.join('\n\n')
+        + (verifica.length ? '\n\n## Da verificare\n' + verifica.map(x => '- ' + x).join('\n') : '');
+    }
+    $('aiOut').value = finale; aiRender(); aiModifica(false);
+    $('aiTitolo').textContent = tipo === 'aggiusta' ? 'Trascrizione corretta' : 'Appunti della lezione';
+    $('aiUsa').textContent = tipo === 'aggiusta' ? 'Usa come trascrizione' : 'Salva negli appunti della lezione';
+    $('aiRis').hidden = false; $('aiRis').style.display = 'flex';
+    const parz = aiStop || fatti.length < parti.length;
+    aiSt(parz ? `Interrotto: pronte ${fatti.length} parti su ${parti.length}.` : (tipo === 'aggiusta' ? 'Trascrizione corretta pronta: controllala e tocca «Usa come trascrizione».' : 'Appunti pronti: puoi modificarli qui sotto, salvarli o scaricarli.'), parz ? 'warn' : '');
+  } catch (e) {
+    const msg = e.code === 'chiave-groq' ? 'La chiave Groq non è valida: controlla GROQ_API_KEY su Cloudflare.'
+      : e.code === 'fondi-esauriti' ? 'Hai raggiunto il tetto di spesa che hai impostato su Groq.'
+      : e.status === 401 ? 'La password non è più valida: ricarica la pagina e reinseriscila.'
+      : 'Non riesco a completare: ' + e.message;
+    aiSt(msg, 'err');
+    if (fatti.length) { $('aiOut').value = fatti.join('\n\n'); aiRender(); aiModifica(false); $('aiRis').hidden = false; $('aiRis').style.display = 'flex'; }
+  } finally {
+    aiBusy = false; $('aiAppunti').disabled = $('aiAggiusta').disabled = false; $('aiStop').hidden = true; $('aiBarBox').hidden = true;
+  }
+}
+$('aiAppunti').addEventListener('click', () => aiRun('appunti'));
+$('aiAggiusta').addEventListener('click', () => aiRun('aggiusta'));
+$('aiStop').addEventListener('click', () => { aiStop = true; aiSt('Mi fermo dopo la parte in corso…', 'warn'); });
+$('aiUsa').addEventListener('click', async () => {
+  const t = $('aiOut').value.trim(); if (!t) return;
+  if (aiTipo === 'aggiusta') { $('out').value = t; $('out').dispatchEvent(new Event('input')); }
+  else $('appunti').value = t;
+  if (currentId) { $('saveLesson').click(); aiSt(aiTipo === 'aggiusta' ? 'Trascrizione sostituita e salvata nella lezione.' : 'Appunti salvati nella lezione.'); }
+  else aiSt((aiTipo === 'aggiusta' ? 'Trascrizione sostituita.' : 'Appunti inseriti.') + ' Ora tocca «Salva lezione» per tenerli nell’archivio.');
+});
+function aiNome(){
+  const base = ($('titolo').value || materiaCorrente() || 'lezione').trim().replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, '_').slice(0, 60) || 'lezione';
+  return base + (aiTipo === 'aggiusta' ? '_trascrizione' : '_appunti');
+}
+function mdHtml(md){
+  const esc = x => x.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const inl = x => esc(x).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  let html = '', lista = false;
+  for (const raw of md.split('\n')) {
+    const l = raw.trim();
+    if (/^[-•*]\s+/.test(l)) { if (!lista) { html += '<ul>'; lista = true; } html += '<li>' + inl(l.replace(/^[-•*]\s+/, '')) + '</li>'; continue; }
+    if (lista) { html += '</ul>'; lista = false; }
+    if (!l) continue;
+    const h = l.match(/^(#{1,4})\s+(.*)$/);
+    html += h ? `<h${h[1].length}>${inl(h[2])}</h${h[1].length}>` : '<p>' + inl(l) + '</p>';
+  }
+  return html + (lista ? '</ul>' : '');
+}
+$('aiWord').addEventListener('click', () => {
+  const doc = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>${aiNome()}</title>
+<style>body{font-family:Calibri,Arial,sans-serif;font-size:12pt;line-height:1.5}h1{font-size:20pt;color:#c9522a}h2{font-size:15pt;color:#c9522a;margin-top:16pt}h3{font-size:13pt}</style></head><body>${mdHtml($('aiOut').value)}</body></html>`;
+  saveFile(new Blob(['﻿', doc], { type: 'application/msword' }), aiNome() + '.doc');
+});
+$('aiTxt').addEventListener('click', () => saveFile(new Blob([$('aiOut').value.replace(/\*\*(.+?)\*\*/g, '$1')], { type: 'text/plain;charset=utf-8' }), aiNome() + '.txt'));
+function aiRender(){ $('aiView').innerHTML = mdHtml($('aiOut').value); }
+function aiModifica(on){ $('aiOut').hidden = !on; $('aiView').hidden = on; $('aiMod').textContent = on ? 'Fine modifica' : 'Modifica'; if (!on) aiRender(); }
+$('aiMod').addEventListener('click', () => aiModifica($('aiView').hidden === false));
+$('aiCopia').addEventListener('click', () => copy($('aiOut').value, $('aiCopia'), 'Copia'));
 /* ---------- Flashcard: quiz a risposta multipla creato da Groq, risultati solo alla fine ---------- */
 let fcCarte = [], fcDaSalvare = false, fcGiro = [], fcPos = 0, fcRisposte = [];
 let fcUso = null;
