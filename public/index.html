@@ -1455,10 +1455,10 @@ function fcLimiti(v){
   const n = x => Math.round(x).toLocaleString('it-IT');
   const len = Math.min(($('out')?.value || '').length, 60000);
   const perQuesta = len >= 200 ? len / 3.2 + 3000 : 20000;
-  const volte = Math.floor(resta / perQuesta);
-  $('fcLimiti').textContent = `Limite gratuito di oggi: usati circa ${n(usati)} token su ${n(gg)} · `
-    + `${len >= 200 ? 'con questa lezione' : 'con una lezione di 2 ore'} puoi crearle ancora circa ${volte} ${volte === 1 ? 'volta' : 'volte'}`
-    + `${len >= 25000 ? ' (una al minuto)' : ''}. Ripassare è gratis e non tocca le ore di trascrizione.`;
+  const volte = Math.min(99, Math.floor(resta / perQuesta));
+  $('fcLimiti').textContent = volte > 0
+    ? `Oggi ti ${volte === 1 ? 'rimane' : 'rimangono'} ${volte} ${volte === 1 ? 'creazione' : 'creazioni'} di flashcard${len >= 200 ? ' per questa lezione' : ''}. Ripassare è sempre gratis.`
+    : 'Per oggi hai finito le creazioni di flashcard: riprova domani. Ripassare è sempre gratis.';
 }
 function fcSt(t, kind){ const s = $('fcStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
 function fcMescola(a){ a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
