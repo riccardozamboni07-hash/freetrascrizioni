@@ -16,7 +16,7 @@
 :root{
   --bg:#fff7f0; --surface:#ffffff; --fg:#3b2418; --muted:#85604c; --line:#f2dccb;
   --accent:#c9522a; --accent-fg:#ffffff; --accent-soft:#ffe6d6;
-  --rec:#b8323f; --warn:#8f6200; --err:#b3261e;
+  --rec:#b8323f; --warn:#8f6200; --err:#b3261e; --good:#1f7a4d;
   --sans:"Nunito", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
   color-scheme:light;
@@ -24,11 +24,11 @@
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#1c1512; --surface:#271d18; --fg:#f7ebe2; --muted:#c7a897; --line:#42322a;
   --accent:#ff9c73; --accent-fg:#2a130a; --accent-soft:#3b2419;
-  --rec:#ff8a8f; --warn:#e8b955; --err:#ff8a80; color-scheme:dark; } }
+  --rec:#ff8a8f; --warn:#e8b955; --err:#ff8a80; --good:#7fd6a4; color-scheme:dark; } }
 :root[data-theme="dark"]{
   --bg:#1c1512; --surface:#271d18; --fg:#f7ebe2; --muted:#c7a897; --line:#42322a;
   --accent:#ff9c73; --accent-fg:#2a130a; --accent-soft:#3b2419;
-  --rec:#ff8a8f; --warn:#e8b955; --err:#ff8a80; color-scheme:dark; }
+  --rec:#ff8a8f; --warn:#e8b955; --err:#ff8a80; --good:#7fd6a4; color-scheme:dark; }
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -90,6 +90,23 @@ textarea{width:100%;min-height:280px;resize:vertical;font:16px/1.65 var(--sans);
 .sumcard{border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:8px;align-items:flex-start;min-width:0}
 .sumcard h3{margin:0;font-size:1rem}
 .sumcard p{margin:0;color:var(--muted);font-size:.9rem}
+.fc-q{font-size:1.12rem;font-weight:700;line-height:1.4;margin:0}
+.fc-opts{display:flex;flex-direction:column;gap:10px}
+.fc-opts button{justify-content:flex-start;text-align:left;border-radius:18px;padding:.8rem 1rem;font-weight:500;white-space:normal;line-height:1.4}
+.fc-opts button b{flex:none;width:1.7rem;height:1.7rem;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font-size:.85rem}
+.fc-prog{height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.fc-prog > i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s}
+.fc-score{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.fc-ring{--p:0;flex:none;width:96px;height:96px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--accent) calc(var(--p)*1%),var(--line) 0)}
+.fc-ring span{width:76px;height:76px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font-size:1.35rem;font-weight:800;font-variant-numeric:tabular-nums}
+.fc-nums{display:flex;flex-direction:column;gap:4px}
+.fc-nums strong{font-size:1.05rem}
+.fc-ok{color:var(--good)} .fc-ko{color:var(--err)}
+.fc-wrong{display:flex;flex-direction:column;gap:10px}
+.fc-item{border:1px solid var(--line);border-radius:18px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.fc-item p{margin:0}
+.fc-item .tua{color:var(--err)} .fc-item .giusta{color:var(--good);font-weight:600}
+.fc-item .perche{color:var(--muted);font-size:.9rem}
 .banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px;border-radius:18px;border:1px solid var(--warn)}
 .banner p{margin:0;flex:1 1 240px}
 .live{font-size:.78rem;font-weight:600;color:var(--rec)}
@@ -334,6 +351,45 @@ input[type=text],input[type=password],input[type=date],input[type=search]{font:i
     </div>
   </section>
 
+  <section class="panel priv" aria-labelledby="lFc" id="fcPanel">
+    <div class="row between">
+      <span class="label" id="lFc">5 · Flashcard</span>
+      <span class="chip" id="fcChip" hidden></span>
+    </div>
+    <div id="fcStart" class="fc-start" style="display:flex;flex-direction:column;gap:12px">
+      <p class="note">Crea domande a risposta multipla dalla lezione e mettiti alla prova. Scopri cosa hai sbagliato solo alla fine, con il punteggio e le risposte corrette. Se la lezione è salvata, le flashcard restano nell'archivio.</p>
+      <div class="row">
+        <label class="field" style="flex:0 0 auto"><span>Quante domande</span>
+          <select id="fcQuante"><option>10</option><option selected>15</option><option>20</option><option>30</option></select>
+        </label>
+        <button type="button" class="primary" id="fcCrea" style="align-self:flex-end">Crea flashcard</button>
+        <button type="button" id="fcRipassa" style="align-self:flex-end" hidden>Ripassa</button>
+      </div>
+    </div>
+    <div id="fcQuiz" hidden style="display:flex;flex-direction:column;gap:14px">
+      <div class="row between"><span class="note" id="fcConta"></span><button type="button" id="fcEsci">Esci</button></div>
+      <div class="fc-prog"><i id="fcBar"></i></div>
+      <p class="fc-q" id="fcDomanda"></p>
+      <div class="fc-opts" id="fcOpzioni"></div>
+    </div>
+    <div id="fcRis" hidden style="display:flex;flex-direction:column;gap:14px">
+      <div class="fc-score">
+        <div class="fc-ring" id="fcRing"><span id="fcPerc"></span></div>
+        <div class="fc-nums">
+          <strong id="fcGiudizio"></strong>
+          <span><span class="fc-ok" id="fcGiuste"></span> · <span class="fc-ko" id="fcSbagliate"></span></span>
+        </div>
+      </div>
+      <div class="fc-wrong" id="fcErrori"></div>
+      <div class="row">
+        <button type="button" class="primary" id="fcRifaiErr">Rifai le sbagliate</button>
+        <button type="button" id="fcRifai">Rifai tutte</button>
+        <button type="button" id="fcNuove">Crea nuove flashcard</button>
+      </div>
+    </div>
+    <div class="status" id="fcStatus" role="status"></div>
+  </section>
+
   <section class="panel" aria-labelledby="l5">
     <span class="label" id="l5">Consigli</span>
     <ul class="tips">
@@ -343,7 +399,7 @@ input[type=text],input[type=password],input[type=date],input[type=search]{font:i
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.2</p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.3</p>
 </main>
 
 <script type="module">
@@ -1386,6 +1442,99 @@ $('demoBtn').addEventListener('click', async () => {
     setStatus('Non riesco a caricare l’audio di esempio. Controlla la connessione e riprova.', 'err');
   } finally { $('demoBtn').disabled = false; }
 });
+
+/* ---------- Flashcard: quiz a risposta multipla creato da Groq, risultati solo alla fine ---------- */
+let fcCarte = [], fcDaSalvare = false, fcGiro = [], fcPos = 0, fcRisposte = [];
+function fcSt(t, kind){ const s = $('fcStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
+function fcMescola(a){ a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function fcVista(v){ $('fcStart').hidden = v !== 'start'; $('fcQuiz').hidden = v !== 'quiz'; $('fcRis').hidden = v !== 'ris';
+  ['fcStart', 'fcQuiz', 'fcRis'].forEach(id => { $(id).style.display = $(id).hidden ? 'none' : 'flex'; }); }
+function fcSet(carte, daSalvare){
+  fcCarte = Array.isArray(carte) ? carte : []; fcDaSalvare = !!daSalvare;
+  $('fcRipassa').hidden = !fcCarte.length;
+  $('fcRipassa').textContent = `Ripassa (${fcCarte.length})`;
+  $('fcCrea').textContent = fcCarte.length ? 'Crea nuove' : 'Crea flashcard';
+  $('fcChip').hidden = !fcCarte.length;
+  $('fcChip').textContent = fcDaSalvare ? 'non ancora salvate' : 'salvate';
+  $('fcChip').classList.toggle('ok', !fcDaSalvare);
+  fcVista('start');
+}
+async function fcSalva(){
+  if (!currentId || !fcCarte.length) return false;
+  try { await privApi('flashcard-salva', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: currentId, carte: fcCarte }) });
+    fcDaSalvare = false; $('fcChip').textContent = 'salvate'; $('fcChip').classList.add('ok'); return true;
+  } catch (_) { return false; }
+}
+$('fcCrea').addEventListener('click', async () => {
+  const testo = $('out').value.trim();
+  if (testo.length < 200) { fcSt('Prima trascrivi una lezione o aprila dall’archivio: il testo è troppo corto.', 'warn'); return; }
+  if (running) { fcSt('Aspetta che finisca la trascrizione.', 'warn'); return; }
+  $('fcCrea').disabled = true; fcSt('Creo le flashcard… di solito ci vogliono 10-40 secondi.');
+  try {
+    const r = await privApi('flashcard', { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ testo, materia: materiaCorrente(), quante: Number($('fcQuante').value) }) });
+    fcSet(r.carte, true);
+    const salvate = await fcSalva();
+    fcSt(`${r.carte.length} flashcard pronte.` + (salvate ? ' Salvate nella lezione.' : ' Salva la lezione per tenerle nell’archivio.'));
+    fcInizia(fcCarte);
+  } catch (e) {
+    const msg = e.code === 'chiave-groq' ? 'La chiave Groq non è valida: controlla GROQ_API_KEY su Cloudflare.'
+      : e.code === 'fondi-esauriti' ? 'Hai raggiunto il tetto di spesa che hai impostato su Groq.'
+      : e.status === 429 ? 'Groq è al limite per ora: riprova tra qualche minuto.'
+      : e.status === 401 ? 'La password non è più valida: ricarica la pagina e reinseriscila.'
+      : 'Non riesco a creare le flashcard: ' + e.message;
+    fcSt(msg, 'err');
+  } finally { $('fcCrea').disabled = false; }
+});
+function fcInizia(carte){
+  if (!carte.length) return;
+  fcGiro = fcMescola(carte).map(c => { const ord = fcMescola(c.opzioni.map((_, i) => i)); return { ...c, opzioni: ord.map(i => c.opzioni[i]), corretta: ord.indexOf(c.corretta), orig: c }; });
+  fcPos = 0; fcRisposte = []; fcSt(''); fcVista('quiz'); fcMostra();
+  $('fcPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function fcMostra(){
+  const c = fcGiro[fcPos];
+  $('fcConta').textContent = `Domanda ${fcPos + 1} di ${fcGiro.length}`;
+  $('fcBar').style.width = (fcPos / fcGiro.length * 100) + '%';
+  $('fcDomanda').textContent = c.domanda;
+  const box = $('fcOpzioni'); box.textContent = '';
+  c.opzioni.forEach((o, i) => {
+    const b = document.createElement('button'); b.type = 'button';
+    const k = document.createElement('b'); k.textContent = 'ABCD'[i] || String(i + 1);
+    const t = document.createElement('span'); t.textContent = o;
+    b.append(k, t);
+    b.addEventListener('click', () => { fcRisposte.push(i); fcPos++; fcPos < fcGiro.length ? fcMostra() : fcFine(); });
+    box.append(b);
+  });
+}
+function fcFine(){
+  const giuste = fcGiro.filter((c, i) => fcRisposte[i] === c.corretta).length, tot = fcGiro.length, sbagl = tot - giuste;
+  const perc = Math.round(giuste / tot * 100);
+  $('fcRing').style.setProperty('--p', perc); $('fcPerc').textContent = perc + '%';
+  $('fcGiudizio').textContent = perc >= 90 ? 'Ottimo, sei pronto!' : perc >= 70 ? 'Bene, ripassa le sbagliate.' : perc >= 50 ? 'Ci sei quasi: rivedi gli errori.' : 'Da ripassare con calma.';
+  $('fcGiuste').textContent = `${giuste} ${giuste === 1 ? 'giusta' : 'giuste'}`;
+  $('fcSbagliate').textContent = `${sbagl} ${sbagl === 1 ? 'sbagliata' : 'sbagliate'}`;
+  const box = $('fcErrori'); box.textContent = '';
+  const errori = fcGiro.map((c, i) => ({ c, r: fcRisposte[i] })).filter(x => x.r !== x.c.corretta);
+  if (errori.length) { const h = document.createElement('strong'); h.textContent = 'Le risposte sbagliate'; box.append(h); }
+  errori.forEach(({ c, r }, n) => {
+    const d = document.createElement('div'); d.className = 'fc-item';
+    const p = (cls, txt) => { const e = document.createElement('p'); if (cls) e.className = cls; e.textContent = txt; return e; };
+    d.append(p('', `${n + 1}. ${c.domanda}`), p('tua', 'La tua risposta: ' + c.opzioni[r]), p('giusta', 'Risposta corretta: ' + c.opzioni[c.corretta]));
+    if (c.spiegazione) d.append(p('perche', c.spiegazione));
+    box.append(d);
+  });
+  $('fcRifaiErr').hidden = !errori.length;
+  $('fcRifaiErr').onclick = () => fcInizia(errori.map(x => x.c.orig));
+  $('fcBar').style.width = '100%';
+  fcVista('ris');
+  $('fcPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+$('fcRipassa').addEventListener('click', () => fcInizia(fcCarte));
+$('fcRifai').addEventListener('click', () => fcInizia(fcCarte));
+$('fcNuove').addEventListener('click', () => { fcVista('start'); $('fcCrea').click(); });
+$('fcEsci').addEventListener('click', () => { fcVista('start'); fcSt(''); });
+fcVista('start');
 /* ---------- Area personale (/privato): password, archivio delle lezioni ---------- */
 const PW_KEY = 'trascrittore:password';
 let privPw = null, currentId = null, delArm = null;
@@ -1536,6 +1685,7 @@ function renderList(items){
       const info = el('span', 'info');
       const meta = el('span', 'meta'); meta.append(fmtData(it.data) + (it.durata ? ' · ' + fmtDurata(it.durata) : ''));
       if (it.conAppunti) meta.append(el('span', 'tag', 'con appunti'));
+      if (it.conFlashcard) meta.append(el('span', 'tag', 'flashcard'));
       info.append(el('span', 'titolo', it.titolo), meta);
       b.append(day, info); b.addEventListener('click', () => openLesson(it.id));
       li.append(b); ul.append(li);
@@ -1583,6 +1733,8 @@ async function openLesson(id){
     $('out').value = l.testo; $('appunti').value = l.appunti || '';
     $('materia').value = l.materia; $('titolo').value = l.titolo; $('dataLez').value = l.data;
     setCurrent(l); doneSec = l.durata || 0; onMateria();
+    let fc = []; try { fc = l.flashcard ? JSON.parse(l.flashcard) : []; } catch (_) {}
+    fcSet(fc, false); fcSt('');
     privStatus(`Aperta: ${l.titolo} (${l.materia}).`);
     loadList();
     $('l3').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1599,6 +1751,7 @@ $('saveLesson').addEventListener('click', async () => {
       data: $('dataLez').value || todayISO(), durata: Math.round(doneSec || totalSec || 0), testo: $('out').value, appunti: $('appunti').value,
     }) });
     setCurrent(l); $('titolo').value = l.titolo;
+    if (fcDaSalvare) await fcSalva();
     privStatus(`Salvata in «${l.materia}».`);
     loadList(); caricaPrecedenti();
   } catch (e) { privStatus(e.status === 401 ? 'La password non è più valida: ricarica la pagina e reinseriscila.' : 'Non riesco a salvare: ' + e.message, 'err'); }
@@ -1607,7 +1760,7 @@ $('saveLesson').addEventListener('click', async () => {
 function privNewRun(){
   setCurrent(null);
   $('appunti').value = ''; $('titolo').value = ''; $('dataLez').value = todayISO();
-  privStatus('');
+  privStatus(''); fcSet([], false); fcSt('');
 }
 $('newLesson').addEventListener('click', () => {
   if (running || segRec) { privStatus('Aspetta che finisca la trascrizione o la registrazione in corso.', 'warn'); return; }

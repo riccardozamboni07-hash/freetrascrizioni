@@ -6,6 +6,7 @@
 // Segreti da impostare su Cloudflare: GROQ_API_KEY e PASSWORD.
 import { DurableObject } from 'cloudflare:workers';
 import { onRequest as trascrivi } from './trascrivi.js';
+import { generaFlashcard } from './flashcard.js';
 
 export class Store extends DurableObject {
   constructor(ctx, env) {
@@ -15,6 +16,8 @@ export class Store extends DurableObject {
     this.sql.exec(`CREATE TABLE IF NOT EXISTS lezioni (
       id TEXT PRIMARY KEY, materia TEXT NOT NULL, titolo TEXT NOT NULL, data TEXT NOT NULL,
       durata REAL, testo TEXT NOT NULL, appunti TEXT NOT NULL DEFAULT '', creata INTEGER, aggiornata INTEGER)`);
+    // versione 1.3: flashcard salvate con la lezione (JSON)
+    try { this.sql.exec(`ALTER TABLE lezioni ADD COLUMN flashcard TEXT NOT NULL DEFAULT ''`); } catch (_) {}
   }
   usa(secondi) {
     const add = (g) => this.sql.exec(`INSERT INTO uso (giorno, chi, secondi) VALUES (?, 'privato', ?)
@@ -27,7 +30,7 @@ export class Store extends DurableObject {
     return { privato: get(new Date().toISOString().slice(0, 10)), pubblico: 0, oraCorrente: get('ora:' + new Date().toISOString().slice(0, 13)) };
   }
   elenco(q) {
-    const cols = 'id, materia, titolo, data, durata, creata, aggiornata, length(testo) AS caratteri, length(appunti) > 0 AS conAppunti';
+    const cols = 'id, materia, titolo, data, durata, creata, aggiornata, length(testo) AS caratteri, length(appunti) > 0 AS conAppunti, length(flashcard) > 2 AS conFlashcard';
     if (q) {
       const like = '%' + q.replace(/[%_]/g, '') + '%';
       return this.sql.exec(`SELECT ${cols} FROM lezioni WHERE titolo LIKE ? OR materia LIKE ? OR testo LIKE ? OR appunti LIKE ? ORDER BY data DESC, creata DESC`, like, like, like, like).toArray();
@@ -47,6 +50,11 @@ export class Store extends DurableObject {
         durata = excluded.durata, testo = excluded.testo, appunti = excluded.appunti, aggiornata = excluded.aggiornata`,
       id, l.materia, l.titolo, l.data, l.durata || 0, l.testo, l.appunti || '', old ? old.creata : now, now);
     return this.leggi(id);
+  }
+  salvaFlashcard(id, carte) {
+    if (!this.leggi(id)) return null;
+    this.sql.exec('UPDATE lezioni SET flashcard = ?, aggiornata = ? WHERE id = ?', carte, Date.now(), id);
+    return { ok: true };
   }
   elimina(id) { this.sql.exec('DELETE FROM lezioni WHERE id = ?', id); return { ok: true }; }
 }
@@ -94,6 +102,19 @@ export default {
       if (azione === 'appunti' && request.method === 'GET') {
         const materia = (url.searchParams.get('materia') || '').trim().slice(0, 80);
         return materia ? json(200, await store().appuntiMateria(materia)) : json(400, { error: 'Manca la materia.' });
+      }
+      // flashcard: "flashcard" le crea dal testo con Groq, "flashcard-salva" le salva nella lezione
+      if (azione === 'flashcard' && request.method === 'POST') {
+        const b = await request.json().catch(() => null);
+        if (!b || typeof b.testo !== 'string' || b.testo.trim().length < 200) return json(400, { error: 'Il testo è troppo corto per creare flashcard.' });
+        const r = await generaFlashcard(env, { testo: b.testo.slice(0, 1_500_000), materia: String(b.materia || '').slice(0, 80), quante: b.quante });
+        return json(r.status, r.body);
+      }
+      if (azione === 'flashcard-salva' && request.method === 'POST') {
+        const b = await request.json().catch(() => null);
+        if (!b || typeof b.id !== 'string' || !Array.isArray(b.carte)) return json(400, { error: 'Dati mancanti.' });
+        const r = await store().salvaFlashcard(b.id.slice(0, 64), JSON.stringify(b.carte.slice(0, 100)).slice(0, 200_000));
+        return r ? json(200, r) : json(404, { error: 'Lezione non trovata.' });
       }
       if (azione === 'lezioni') {
         if (request.method === 'GET') {
