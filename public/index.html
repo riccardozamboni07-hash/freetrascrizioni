@@ -398,6 +398,8 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 .dopo[hidden]{display:none}
 .contesto{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--tenue);border:1px solid var(--line);border-radius:16px;padding:10px 14px;font-size:.88rem}
 .contesto b{font-weight:700}
+.link.rimuovi{color:var(--err)}
+.link.rimuovi.armed{font-weight:700}
 .banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px;border-radius:18px;border:1px solid var(--warn)}
 .banner p{margin:0;flex:1 1 240px}
 .live{font-size:.78rem;font-weight:600;color:var(--rec)}
@@ -899,12 +901,12 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <span class="label" id="lSave">La lezione</span>
       <span class="chip" id="currentChip">Non ancora salvata</span>
     </div>
-    <p class="note" id="salvaInfo">Si salva da sola nell'archivio: la materia e il titolo li sceglie l'AI, tu puoi cambiarli quando vuoi.</p>
+    <p class="note" id="salvaInfo">Si salva da sola nell'archivio. Materia e titolo sono facoltativi: se li lasci vuoti li sceglie l'AI.</p>
     <span id="materiaEco" hidden></span>
     <p class="note" id="salvaVuoto">Non c'è ancora testo da salvare: registra una lezione in <button type="button" class="link" id="vaiTrascrivi">Trascrivi</button>, carica un file in <button type="button" class="link" id="vaiFonte">Appunti</button> o apri una lezione dall'<button type="button" class="link" id="vaiArchivio">Archivio</button>.</p>
-    <label class="field"><span>Materia</span><input type="text" id="materia2" list="materieList" autocomplete="off" placeholder="La sceglie l'AI, oppure scrivila tu"></label>
+    <label class="field"><span>Materia</span><input type="text" id="materia2" list="materieList" autocomplete="off" placeholder="Facoltativa"></label>
     <div class="form">
-      <label class="field"><span>Titolo</span><input type="text" id="titolo" placeholder="Lo sceglie l'AI, oppure scrivilo tu"></label>
+      <label class="field"><span>Titolo</span><input type="text" id="titolo" placeholder="Facoltativo"></label>
       <label class="field"><span>Data</span><input type="date" id="dataLez"></label>
     </div>
     <label class="field"><span>Appunti della lezione</span>
@@ -942,10 +944,10 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Se si interrompe, riapri l'app: riprende da dove era rimasta e la registrazione non si perde.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.5.1<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.5.2<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="contesto priv" id="contesto" data-tab="studia appunti">
     <span id="contestoTxt"></span>
-    <button type="button" class="link" id="contestoBtn"></button>
+    <span class="row" style="gap:14px"><button type="button" class="link" id="contestoBtn"></button><button type="button" class="link rimuovi" id="contestoVia" hidden>Rimuovi</button></span>
   </div>
   <div class="segmenti" data-tab="studia" id="segStudia" role="tablist" aria-label="Strumenti di studio">
     <span class="seg-ind" aria-hidden="true"></span>
@@ -3095,14 +3097,31 @@ function aggiornaContesto(){
     const x = document.createElement('span'); x.textContent = 'Lezione: ';
     const y = document.createElement('b'); y.textContent = titolo || (currentId ? 'senza titolo' : 'non ancora salvata');
     t.append(x, y); if (materia) t.append(' · ' + materia);
-    b.textContent = currentId ? 'Cambia' : 'Salva'; b.dataset.dove = currentId ? 'lArch' : 'lSave';
+    b.textContent = 'Cambia'; b.dataset.dove = 'lArch';
+    $('contestoVia').hidden = false;
   } else {
     t.textContent = 'Nessuna lezione aperta.'; b.textContent = 'Apri dall’archivio'; b.dataset.dove = 'lArch';
+    $('contestoVia').hidden = true; disarmVia();
   }
   $('dopoTesto').hidden = testo.length < 200;
   $('salvaVuoto').hidden = testo.length > 0;
 }
 $('contestoBtn').addEventListener('click', e => $(e.currentTarget.dataset.dove)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+// Rimuovi: chiude la lezione aperta (resta salvata nell'archivio). Doppio tocco per confermare.
+let viaArm = null;
+function disarmVia(){ clearTimeout(viaArm); viaArm = null; $('contestoVia').textContent = 'Rimuovi'; $('contestoVia').classList.remove('armed'); }
+$('contestoVia').addEventListener('click', async () => {
+  if (running || segRec) { privStatus('Aspetta che finisca la trascrizione o la registrazione in corso.', 'warn'); return; }
+  if (!viaArm) { $('contestoVia').textContent = 'Tocca di nuovo per rimuovere'; $('contestoVia').classList.add('armed'); viaArm = setTimeout(disarmVia, 3000); return; }
+  disarmVia();
+  try { await autoSalva(); } catch (_) {}
+  const tit = $('titolo').value.trim();
+  privNewRun(); chunks = new Map(); $('out').value = ''; doneSec = 0;
+  try { localStorage.removeItem(LS); } catch (_) {}
+  $('aiRis').hidden = true; aiSt('');
+  aggiornaContesto(); fonteInfo(); loadList();
+  privStatus(tit ? `«${tit}» rimossa da qui: la trovi sempre nell’archivio.` : 'Lezione rimossa da qui: la trovi sempre nell’archivio.');
+});
 $('vaiAppunti').addEventListener('click', () => $('l4').scrollIntoView({ behavior: 'smooth', block: 'start' }));
 $('vaiTrascrivi').addEventListener('click', () => $('l1').scrollIntoView({ behavior: 'smooth', block: 'start' }));
 ['input', 'change'].forEach(ev => { $('out').addEventListener(ev, aggiornaContesto); $('titolo').addEventListener(ev, aggiornaContesto); $('materia').addEventListener(ev, aggiornaContesto); });
