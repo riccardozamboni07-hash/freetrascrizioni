@@ -127,7 +127,9 @@ select{font:inherit;padding:.55rem .8rem;border-radius:14px;border:1px solid var
 .ask-in{display:flex;gap:10px;align-items:flex-end}
 .ask-in textarea{min-height:56px;flex:1}
 header.top{position:relative;padding-right:104px}
-.topbar{position:absolute;top:0;right:0;display:flex;gap:8px;align-items:center}
+.topbar{position:fixed;z-index:30;top:max(12px,env(safe-area-inset-top));right:max(14px,calc((100vw - 760px) / 2),env(safe-area-inset-right));display:flex;gap:8px;align-items:center}
+.topbar .icon-btn,.topbar .avatar{box-shadow:0 2px 10px rgba(60,30,15,.16)}
+.topbar .icon-btn{background:var(--surface)}
 body.locked .topbar{display:none}
 .icon-btn{width:44px;height:44px;padding:0;justify-content:center;border-radius:50%}
 .avatar{width:44px;height:44px;padding:0;border-radius:50%;justify-content:center;overflow:hidden;background:var(--accent-soft);color:var(--accent);font-weight:800;border-color:var(--accent);font-size:.95rem}
@@ -143,6 +145,8 @@ body.locked .topbar{display:none}
 .menu-list button{width:100%;justify-content:flex-start;border-color:transparent;border-radius:16px;padding:.75rem 1rem;font-size:1rem}
 .menu-list button:hover{background:var(--accent-soft)}
 .menu-list span{width:1.6rem;text-align:center}
+.menu-sep{height:1px;background:var(--line);margin:8px 6px}
+.menu-gruppo{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 16px 2px}
 .prof-top{display:flex;flex-direction:column;align-items:center;gap:10px}
 .prof-sez{border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
 .auth{display:flex;flex-direction:column;gap:12px}
@@ -550,20 +554,26 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.8.1<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.8.2<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
 </main>
 <div class="overlay" id="overlay" hidden></div>
 <nav class="drawer" id="menu" aria-label="Menu" hidden>
   <div class="row between"><strong>Menu</strong><button type="button" class="icon-btn" data-chiudi aria-label="Chiudi">✕</button></div>
   <ul class="menu-list">
+    <li class="menu-gruppo">Trascrivi</li>
     <li><button type="button" data-vai="l1"><span>🎙️</span>Registra o carica</button></li>
     <li><button type="button" data-vai="l2"><span>⚡</span>Trascrizione</button></li>
     <li><button type="button" data-vai="l3"><span>📄</span>Testo</button></li>
+    <li class="menu-sep" role="separator"></li>
+    <li class="menu-gruppo">Studia con l'AI</li>
     <li><button type="button" data-vai="l4"><span>✍️</span>Appunti e correzione</button></li>
     <li><button type="button" data-vai="lFc"><span>🃏</span>Flashcard</button></li>
     <li><button type="button" data-vai="lAsk"><span>💬</span>Chiedi alle tue lezioni</button></li>
+    <li class="menu-sep" role="separator"></li>
+    <li class="menu-gruppo">Archivio</li>
     <li><button type="button" data-vai="lSave"><span>💾</span>Salva lezione</button></li>
     <li><button type="button" data-vai="lArch"><span>📚</span>Le tue lezioni</button></li>
+    <li class="menu-sep" role="separator"></li>
     <li><button type="button" data-vai="l5"><span>💡</span>Consigli</button></li>
     <li><button type="button" id="menuProf"><span>👤</span>Profilo</button></li>
   </ul>
