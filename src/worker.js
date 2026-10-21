@@ -7,7 +7,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { onRequest as trascrivi } from './trascrivi.js';
 import { generaFlashcard } from './flashcard.js';
-import { generaTesto, leggiLavagna, rispondi } from './ai.js';
+import { generaTesto, leggiLavagna, rispondi, estraiGlossario } from './ai.js';
 import { privacy, condizioni } from './legale.js';
 import { hashPassword, verificaPassword, sha, nuovoToken, nuovoId, leggiCookie, cookie, emailValida, googleInizio, googleFine } from './auth.js';
 
@@ -24,6 +24,10 @@ export class Store extends DurableObject {
     // versione 1.5: statistiche per flashcard e storico dei ripassi
     this.sql.exec(`CREATE TABLE IF NOT EXISTS fc_stat (chiave TEXT PRIMARY KEY, materia TEXT, giuste INTEGER NOT NULL DEFAULT 0, sbagliate INTEGER NOT NULL DEFAULT 0, ultima INTEGER)`);
     this.sql.exec(`CREATE TABLE IF NOT EXISTS profilo (k TEXT PRIMARY KEY, v TEXT)`);
+    // versione 1.9: glossario per materia, esami e ripassi delle lezioni
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS glossario (chiave TEXT PRIMARY KEY, materia TEXT, termine TEXT, definizione TEXT, lezione TEXT, lezione_titolo TEXT, lezione_data TEXT, creato INTEGER, aggiornato INTEGER)`);
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS esami (id TEXT PRIMARY KEY, materia TEXT, nome TEXT, data TEXT, creato INTEGER)`);
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS ripassi (lezione TEXT, quando INTEGER)`);
     // versione 1.7 (app pubblica): utenti e sessioni, usati solo dall'archivio "auth"
     this.sql.exec(`CREATE TABLE IF NOT EXISTS utenti (id TEXT PRIMARY KEY, email TEXT UNIQUE, nome TEXT, sale TEXT, hash TEXT, google TEXT, creato INTEGER, ultimo INTEGER)`);
     this.sql.exec(`CREATE TABLE IF NOT EXISTS sessioni (token TEXT PRIMARY KEY, utente TEXT, scade INTEGER)`);
@@ -83,6 +87,63 @@ export class Store extends DurableObject {
     const da = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
     return (this.sql.exec(`SELECT coalesce(sum(secondi), 0) AS s FROM uso WHERE chi = 'privato' AND giorno >= ? AND giorno <= '9999' AND giorno NOT LIKE 'ora:%'`, da).toArray()[0] || {}).s || 0;
   }
+  // ---------- glossario ----------
+  terminiMateria(materia) { return this.sql.exec('SELECT termine FROM glossario WHERE materia = ? ORDER BY termine', materia).toArray().map(r => r.termine); }
+  glossario(materia) {
+    return materia
+      ? this.sql.exec('SELECT * FROM glossario WHERE materia = ? ORDER BY termine COLLATE NOCASE', materia).toArray()
+      : this.sql.exec('SELECT materia, count(*) AS n, max(creato) AS ultimo FROM glossario GROUP BY materia ORDER BY materia').toArray();
+  }
+  salvaTermini(materia, lezione, termini) {
+    const now = Date.now(); let nuovi = 0, aggiornati = 0;
+    for (const t of termini) {
+      const chiave = materia + '|' + t.termine.toLowerCase();
+      const c = this.sql.exec('SELECT chiave FROM glossario WHERE chiave = ?', chiave).toArray()[0];
+      if (c) { this.sql.exec('UPDATE glossario SET definizione = ?, aggiornato = ? WHERE chiave = ?', t.definizione, now, chiave); aggiornati++; }
+      else {
+        this.sql.exec('INSERT INTO glossario (chiave, materia, termine, definizione, lezione, lezione_titolo, lezione_data, creato, aggiornato) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          chiave, materia, t.termine, t.definizione, lezione.id, lezione.titolo, lezione.data, now, now);
+        nuovi++;
+      }
+    }
+    return { nuovi, aggiornati };
+  }
+  eliminaTermine(chiave) { this.sql.exec('DELETE FROM glossario WHERE chiave = ?', chiave); return { ok: true }; }
+  // ---------- esami e piano di ripasso ----------
+  esami() { return this.sql.exec('SELECT * FROM esami ORDER BY data').toArray(); }
+  salvaEsame(e) {
+    const id = e.id || crypto.randomUUID();
+    this.sql.exec(`INSERT INTO esami (id, materia, nome, data, creato) VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT (id) DO UPDATE SET materia = excluded.materia, nome = excluded.nome, data = excluded.data`, id, e.materia, e.nome || '', e.data, Date.now());
+    return this.esami();
+  }
+  eliminaEsame(id) { this.sql.exec('DELETE FROM esami WHERE id = ?', id); return this.esami(); }
+  segnaRipasso(lezione) { this.sql.exec('INSERT INTO ripassi (lezione, quando) VALUES (?, ?)', lezione, Date.now()); return { ok: true }; }
+  // Piano a regole: ogni giorno una quota delle lezioni non ripassate di recente, le più vecchie prima;
+  // negli ultimi 2 giorni ripasso finale con le flashcard di tutta la materia.
+  oggi(oggiISO) {
+    const inizioOggi = new Date(oggiISO + 'T00:00:00Z').getTime() - 2 * 3600000; // circa mezzanotte italiana
+    const out = [];
+    for (const e of this.esami()) {
+      const giorni = Math.round((new Date(e.data + 'T12:00:00Z') - new Date(oggiISO + 'T12:00:00Z')) / 86400000);
+      if (giorni < 0) continue;
+      const lezioni = this.sql.exec(`SELECT l.id, l.titolo, l.data, length(l.flashcard) > 2 AS conFlashcard,
+          (SELECT max(quando) FROM ripassi r WHERE r.lezione = l.id) AS ultimo,
+          (SELECT max(quando) FROM fc_sessioni s WHERE s.lezione = l.id) AS ultimoQuiz
+        FROM lezioni l WHERE l.materia = ? ORDER BY l.data ASC, l.creata ASC`, e.materia).toArray()
+        .map(l => ({ ...l, ripassata: Math.max(l.ultimo || 0, l.ultimoQuiz || 0) }));
+      const fatteOggi = lezioni.filter(l => l.ripassata >= inizioOggi);
+      const recenti = Date.now() - 6 * 86400000;
+      const daFare = lezioni.filter(l => l.ripassata < recenti);
+      const finale = giorni <= 2;
+      const quota = finale ? 0 : Math.max(1, Math.ceil((daFare.length + fatteOggi.length) / Math.max(1, giorni - 2)));
+      const prossime = daFare.slice(0, Math.max(0, quota - fatteOggi.length));
+      const deboli = (this.sql.exec(`SELECT count(*) AS n FROM fc_stat WHERE materia = ? AND sbagliate > giuste`, e.materia).toArray()[0] || {}).n || 0;
+      out.push({ esame: e, giorni, finale, quota, lezioni: [...fatteOggi.map(l => ({ ...l, fatta: true })), ...prossime.map(l => ({ ...l, fatta: false }))],
+        totaleLezioni: lezioni.length, daRipassare: daFare.length, deboli });
+    }
+    return out;
+  }
   profilo() {
     let p = {}; try { p = JSON.parse((this.sql.exec(`SELECT v FROM profilo WHERE k = 'profilo'`).toArray()[0] || {}).v || '{}'); } catch (_) {}
     const st = this.sql.exec(`SELECT count(*) AS lezioni, coalesce(sum(durata), 0) AS secondi, count(DISTINCT materia) AS materie,
@@ -94,7 +155,7 @@ export class Store extends DurableObject {
     return this.profilo();
   }
   eliminaTutto() {
-    for (const t of ['lezioni', 'fc_stat', 'fc_sessioni', 'profilo']) this.sql.exec(`DELETE FROM ${t}`);
+    for (const t of ['lezioni', 'fc_stat', 'fc_sessioni', 'profilo', 'glossario', 'esami', 'ripassi']) this.sql.exec(`DELETE FROM ${t}`);
     return { ok: true };
   }
   flashcardMateria(materia) {
@@ -331,7 +392,7 @@ export default {
       if (!multi && !env.PASSWORD) return json(503, { error: 'Password non impostata.', code: 'no-password' });
       if (!entrato) return json(401, { error: multi ? 'Accedi di nuovo.' : 'Password errata.' });
       const azione = url.pathname.slice('/api/privato/'.length);
-      if (['ai', 'flashcard', 'lavagna', 'chiedi'].includes(azione)) { const l = await limiteAi(); if (l) return l; }
+      if (['ai', 'flashcard', 'lavagna', 'chiedi', 'glossario-estrai'].includes(azione)) { const l = await limiteAi(); if (l) return l; }
       if (azione === 'verifica') return json(200, {
         ok: true, uso: multi ? { ...(await auth().usoOggi()), flashcardToken: (await store().usoOggi()).flashcardToken } : await store().usoOggi(), limitePubblicoOre: null,
         limiteGroq: { orePerGiorno: 8, orePerOra: 2, tokenFlashcardGiorno: multi ? tokenGiorno : 500000, tokenFlashcardMinuto: 30000 },
@@ -366,6 +427,40 @@ export default {
         return json(r.status, r.body);
       }
       if (azione === 'esporta' && request.method === 'GET') return json(200, await store().esporta());
+      if (azione === 'glossario-estrai' && request.method === 'POST') {
+        const b = await request.json().catch(() => null);
+        const l = b && typeof b.id === 'string' ? await store().leggi(b.id.slice(0, 64)) : null;
+        if (!l) return json(404, { error: 'Salva prima la lezione.' });
+        const testo = (l.appunti && l.appunti.length > 500 ? l.appunti : l.testo) || '';
+        if (testo.length < 300) return json(400, { error: 'La lezione è troppo corta per un glossario.' });
+        const r = await estraiGlossario(env, { testo, materia: l.materia, esistenti: await store().terminiMateria(l.materia) });
+        if (r.token) await store().usaToken(r.token);
+        if (r.status !== 200) return json(r.status, r.body);
+        const esito = await store().salvaTermini(l.materia, l, r.body.termini);
+        return json(200, { ...esito, materia: l.materia, uso: await store().usoOggi() });
+      }
+      if (azione === 'glossario') {
+        if (request.method === 'GET') return json(200, await store().glossario((url.searchParams.get('materia') || '').trim().slice(0, 80)));
+        if (request.method === 'DELETE') return json(200, await store().eliminaTermine(String(url.searchParams.get('chiave') || '').slice(0, 300)));
+      }
+      if (azione === 'esami') {
+        if (request.method === 'GET') return json(200, await store().esami());
+        if (request.method === 'POST') {
+          const b = await request.json().catch(() => null);
+          if (!b || !/^\d{4}-\d{2}-\d{2}$/.test(b.data) || !String(b.materia || '').trim()) return json(400, { error: 'Servono materia e data.' });
+          return json(200, await store().salvaEsame({ id: typeof b.id === 'string' ? b.id.slice(0, 64) : undefined, materia: String(b.materia).trim().slice(0, 80), nome: String(b.nome || '').trim().slice(0, 80), data: b.data }));
+        }
+        if (request.method === 'DELETE') return json(200, await store().eliminaEsame(String(url.searchParams.get('id') || '').slice(0, 64)));
+      }
+      if (azione === 'oggi' && request.method === 'GET') {
+        const d = url.searchParams.get('data');
+        return json(200, await store().oggi(/^\d{4}-\d{2}-\d{2}$/.test(d || '') ? d : oggi()));
+      }
+      if (azione === 'ripassata' && request.method === 'POST') {
+        const b = await request.json().catch(() => null);
+        if (!b || typeof b.id !== 'string') return json(400, { error: 'Manca la lezione.' });
+        return json(200, await store().segnaRipasso(b.id.slice(0, 64)));
+      }
       if (azione.startsWith('admin/')) {
         if (!admin) return json(403, { error: 'Solo per l’amministratore.' });
         if (azione === 'admin/utenti' && request.method === 'GET') {

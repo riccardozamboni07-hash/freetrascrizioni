@@ -42,11 +42,12 @@ Restituisci solo il testo corretto, senza titoli, commenti o introduzioni.`;
 }
 
 // Chiamata a Groq con modelli di riserva: se uno è al limite o non esiste più, prova il successivo.
-async function chat(env, modelli, messages, { temperature = 0.3, maxOut = 8000 } = {}) {
+async function chat(env, modelli, messages, { temperature = 0.3, maxOut = 8000, json = false } = {}) {
   if (!env.GROQ_API_KEY) return { status: 503, body: { error: 'Manca la chiave Groq.', code: 'no-key' } };
   let attesa = 0, ultimoErrore = '';
   for (const modello of modelli) {
     const body = { model: modello, messages, temperature, max_completion_tokens: maxOut };
+    if (json) body.response_format = { type: 'json_object' };
     if (modello.startsWith('openai/')) body.reasoning_effort = 'low';
     let res;
     try {
@@ -107,4 +108,37 @@ ${fonti || '(nessun brano trovato)'}` }];
   for (const m of (storia || []).slice(-4)) messages.push({ role: m.ruolo === 'io' ? 'user' : 'assistant', content: String(m.testo || '').slice(0, 4000) });
   messages.push({ role: 'user', content: domanda });
   return chat(env, modelliTesto(env), messages, { temperature: 0.2, maxOut: 2500 });
+}
+
+// Se il testo è troppo lungo prende pezzi distribuiti su tutta la lezione
+function riduci(testo, max) {
+  const t = String(testo || '').replace(/\s+/g, ' ').trim();
+  if (t.length <= max) return t;
+  const pezzi = 6, lung = Math.floor(max / pezzi) - 10, passo = (t.length - lung) / (pezzi - 1);
+  const out = [];
+  for (let i = 0; i < pezzi; i++) out.push(t.slice(Math.round(i * passo), Math.round(i * passo) + lung));
+  return out.join(' […] ');
+}
+
+// Glossario: estrae i termini tecnici della lezione e arricchisce quelli già presenti nella materia
+export async function estraiGlossario(env, { testo, materia, esistenti }) {
+  const gia = (esistenti || []).slice(0, 300).join('; ');
+  const r = await chat(env, modelliTesto(env), [
+    { role: 'system', content: `Sei un docente universitario${materia ? ` di ${materia}` : ''}. Dal testo di una lezione estrai il GLOSSARIO: i termini tecnici, gli istituti, i concetti e le sigle che uno studente deve saper definire all'esame.
+Regole:
+- Da 5 a 25 termini, solo quelli davvero spiegati o usati in modo importante nella lezione; niente parole comuni.
+- "definizione": 1-3 frasi chiare, fedeli a come li spiega il professore, senza inventare.
+- Scrivi il termine come lo scriverebbe un manuale (iniziale maiuscola solo se nome proprio o sigla).
+- Termini già presenti nel glossario della materia: ${gia || '(nessuno)'}. Se uno di questi compare nella lezione con informazioni NUOVE, includilo con "aggiorna": true e una definizione completa che unisce il vecchio e il nuovo; se non aggiunge niente, non includerlo.
+- La trascrizione è automatica: correggi i termini evidentemente sbagliati.
+Rispondi SOLO con JSON: {"termini":[{"termine":"...","definizione":"...","aggiorna":false}]}` },
+    { role: 'user', content: 'Testo della lezione:\n\n' + riduci(testo, 40000) },
+  ], { temperature: 0.2, maxOut: 4000, json: true });
+  if (r.status !== 200) return r;
+  let d = null;
+  try { d = JSON.parse(r.body.testo); } catch (_) { const m = String(r.body.testo).match(/\{[\s\S]*\}/); if (m) try { d = JSON.parse(m[0]); } catch (_) {} }
+  const termini = (Array.isArray(d?.termini) ? d.termini : [])
+    .map(t => ({ termine: String(t.termine || '').trim().slice(0, 120), definizione: String(t.definizione || '').trim().slice(0, 1200) }))
+    .filter(t => t.termine && t.definizione);
+  return { status: 200, body: { termini }, token: r.token };
 }

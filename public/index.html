@@ -177,6 +177,29 @@ body.locked .topbar{display:none}
 .adm-bar{height:6px;border-radius:99px;background:var(--line);overflow:hidden}
 .adm-bar i{display:block;height:100%;background:var(--accent)}
 .adm-u .row input{width:90px;min-height:40px}
+.oggi-lista{display:flex;flex-direction:column;gap:12px}
+.esame{border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--bg)}
+.esame-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.esame-top strong{font-size:1.05rem}
+.conta{font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+.conta.vicino{color:var(--err)}
+.oggi-lez{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 10px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+.oggi-lez .t{flex:1 1 160px;min-width:0;font-weight:600}
+.oggi-lez .t small{display:block;font-weight:400;color:var(--muted)}
+.oggi-lez.fatta{opacity:.6}.oggi-lez.fatta .t{text-decoration:line-through}
+.oggi-lez button{min-height:36px;padding:.35rem .8rem;font-size:.85rem}
+.esami-box summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
+.esami-box[open]{display:flex;flex-direction:column;gap:10px}
+.esami-lista{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.esami-lista .row{justify-content:space-between;padding:6px 10px;border-radius:12px;background:var(--bg)}
+.glo-lista{display:flex;flex-direction:column;gap:8px;max-height:520px;overflow:auto}
+.termine{border:1px solid var(--line);border-radius:16px;padding:10px 14px;display:flex;flex-direction:column;gap:4px}
+.termine .tt{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.termine b{font-size:1rem}
+.termine p{margin:0}
+.termine small{color:var(--muted)}
+.badge{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--accent-fg);background:var(--accent);border-radius:99px;padding:.1rem .5rem}
+.termine .via{min-height:0;width:28px;height:28px;padding:0;justify-content:center;border:none;color:var(--muted);background:transparent}
 .banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px;border-radius:18px;border:1px solid var(--warn)}
 .banner p{margin:0;flex:1 1 240px}
 .live{font-size:.78rem;font-weight:600;color:var(--rec)}
@@ -295,6 +318,29 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <li><div><strong>Trascrivi</strong><span>Premi «Trascrivi»: il testo compare man mano.</span></div></li>
     <li><div><strong>Riassumi</strong><span>Correggi il testo o fanne appunti con Claude, oppure scaricalo.</span></div></li>
   </ol>
+
+  <section class="panel priv" aria-labelledby="lOggi" id="oggiPanel">
+    <div class="row between">
+      <span class="label" id="lOggi">Oggi</span>
+      <span class="chip" id="oggiData"></span>
+    </div>
+    <div id="oggiLista" class="oggi-lista"></div>
+    <p class="note" id="oggiVuoto">Aggiungi la data di un esame: ogni giorno l'app ti dice quali lezioni ripassare.</p>
+    <details class="esami-box" id="esamiBox">
+      <summary>Gestisci esami</summary>
+      <div class="esami-lista" id="esamiLista"></div>
+      <div class="form">
+        <label class="field"><span>Materia</span><input type="text" id="esMateria" list="materieList" placeholder="es. Diritto pubblico"></label>
+        <label class="field"><span>Data dell'esame</span><input type="date" id="esData"></label>
+        <label class="field"><span>Nome (facoltativo)</span><input type="text" id="esNome" placeholder="es. Scritto, Orale"></label>
+      </div>
+      <div class="row">
+        <button type="button" class="primary" id="esAggiungi">Aggiungi esame</button>
+        <button type="button" id="esIcs" hidden>📅 Aggiungi al calendario</button>
+      </div>
+    </details>
+    <div class="status" id="oggiStatus" role="status"></div>
+  </section>
 
   <section class="panel" aria-labelledby="l1">
     <div class="row between">
@@ -513,6 +559,25 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <div class="status" id="askStatus" role="status"></div>
   </section>
 
+  <section class="panel priv" aria-labelledby="lGlo" id="gloPanel">
+    <div class="row between">
+      <span class="label" id="lGlo">7 · Glossario</span>
+      <span class="chip" id="gloConta" hidden></span>
+    </div>
+    <p class="note">Si crea da solo quando salvi una lezione: i termini tecnici con la definizione del professore, divisi per materia.</p>
+    <div class="row">
+      <select id="gloMateria" aria-label="Materia del glossario"></select>
+      <input type="search" id="gloCerca" placeholder="Cerca un termine" aria-label="Cerca nel glossario" style="flex:1 1 180px;width:auto">
+    </div>
+    <div class="glo-lista" id="gloLista"></div>
+    <div class="row">
+      <button type="button" class="primary" id="gloQuiz" hidden>Flashcard dal glossario</button>
+      <button type="button" id="gloWord" hidden>Scarica Word</button>
+      <button type="button" id="gloAggiorna" hidden>Aggiorna dalla lezione aperta</button>
+    </div>
+    <div class="status" id="gloStatus" role="status"></div>
+  </section>
+
   <section class="panel priv" aria-labelledby="lSave" style="flex-direction:column">
     <div class="row between">
       <span class="label" id="lSave">Salva nell'archivio</span>
@@ -554,12 +619,15 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.8.2<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.9<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
 </main>
 <div class="overlay" id="overlay" hidden></div>
 <nav class="drawer" id="menu" aria-label="Menu" hidden>
   <div class="row between"><strong>Menu</strong><button type="button" class="icon-btn" data-chiudi aria-label="Chiudi">✕</button></div>
   <ul class="menu-list">
+    <li class="menu-gruppo">Oggi</li>
+    <li><button type="button" data-vai="lOggi"><span>📅</span>Oggi ed esami</button></li>
+    <li class="menu-sep" role="separator"></li>
     <li class="menu-gruppo">Trascrivi</li>
     <li><button type="button" data-vai="l1"><span>🎙️</span>Registra o carica</button></li>
     <li><button type="button" data-vai="l2"><span>⚡</span>Trascrizione</button></li>
@@ -569,6 +637,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <li><button type="button" data-vai="l4"><span>✍️</span>Appunti e correzione</button></li>
     <li><button type="button" data-vai="lFc"><span>🃏</span>Flashcard</button></li>
     <li><button type="button" data-vai="lAsk"><span>💬</span>Chiedi alle tue lezioni</button></li>
+    <li><button type="button" data-vai="lGlo"><span>📖</span>Glossario</button></li>
     <li class="menu-sep" role="separator"></li>
     <li class="menu-gruppo">Archivio</li>
     <li><button type="button" data-vai="lSave"><span>💾</span>Salva lezione</button></li>
@@ -2053,6 +2122,173 @@ $('delAccOk').addEventListener('click', async () => {
     lsSet(PW_KEY, null); location.reload();
   } catch (e) { $('profStatus').textContent = 'Non riesco a eliminare: ' + e.message; $('profStatus').className = 'status err'; $('delAccOk').disabled = false; }
 });
+
+/* ---------- Glossario per materia ---------- */
+let gloTermini = [], gloMaterie = [];
+function gloSt(t, kind){ const s = $('gloStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
+async function gloCaricaMaterie(scegli){
+  try {
+    gloMaterie = await privApi('glossario');
+    const sel = $('gloMateria'), prima = scegli || sel.value || materiaCorrente();
+    sel.textContent = '';
+    gloMaterie.forEach(m => { const o = document.createElement('option'); o.value = m.materia; o.textContent = `${m.materia} (${m.n})`; sel.append(o); });
+    if (!gloMaterie.length) { gloTermini = []; gloRender(); return; }
+    sel.value = gloMaterie.some(m => m.materia === prima) ? prima : gloMaterie[0].materia;
+    await gloCarica();
+  } catch (_) {}
+}
+async function gloCarica(){
+  const m = $('gloMateria').value; if (!m) return;
+  try { gloTermini = await privApi('glossario?materia=' + encodeURIComponent(m)); gloRender(); } catch (e) { gloSt('Non riesco a caricare il glossario: ' + e.message, 'err'); }
+}
+function gloRender(){
+  const box = $('gloLista'); box.textContent = '';
+  const q = $('gloCerca').value.trim().toLowerCase();
+  const lista = gloTermini.filter(t => !q || (t.termine + ' ' + t.definizione).toLowerCase().includes(q));
+  const settimana = Date.now() - 7 * 86400000;
+  for (const t of lista) {
+    const d = document.createElement('div'); d.className = 'termine';
+    const tt = document.createElement('div'); tt.className = 'tt';
+    const sx = document.createElement('div'); sx.style.display = 'flex'; sx.style.gap = '8px'; sx.style.alignItems = 'center';
+    const b = document.createElement('b'); b.textContent = t.termine; sx.append(b);
+    if (t.creato > settimana) { const n = document.createElement('span'); n.className = 'badge'; n.textContent = 'nuovo'; sx.append(n); }
+    const via = document.createElement('button'); via.type = 'button'; via.className = 'via'; via.textContent = '✕'; via.setAttribute('aria-label', 'Togli ' + t.termine);
+    via.addEventListener('click', async () => { try { await privApi('glossario?chiave=' + encodeURIComponent(t.chiave), { method: 'DELETE' }); gloTermini = gloTermini.filter(x => x !== t); gloRender(); gloCaricaMaterie($('gloMateria').value); } catch (_) {} });
+    tt.append(sx, via);
+    const p = document.createElement('p'); p.textContent = t.definizione;
+    const sm = document.createElement('small'); sm.textContent = `Dalla lezione: ${t.lezione_titolo} · ${fmtData(t.lezione_data)}` + (t.aggiornato > t.creato + 60000 ? ' · arricchito dopo' : '');
+    d.append(tt, p, sm); box.append(d);
+  }
+  if (!gloTermini.length) { const p = document.createElement('p'); p.className = 'note'; p.textContent = 'Il glossario è vuoto: salva una lezione e i termini compariranno qui.'; box.append(p); }
+  else if (!lista.length) { const p = document.createElement('p'); p.className = 'note'; p.textContent = 'Nessun termine trovato.'; box.append(p); }
+  $('gloConta').hidden = !gloTermini.length; $('gloConta').textContent = `${gloTermini.length} termini`;
+  $('gloQuiz').hidden = gloTermini.length < 4; $('gloWord').hidden = !gloTermini.length;
+  $('gloAggiorna').hidden = !currentId;
+}
+$('gloMateria').addEventListener('change', gloCarica);
+$('gloCerca').addEventListener('input', gloRender);
+async function gloEstrai(id, silenzioso){
+  if (!id) return;
+  if (!silenzioso) { $('gloAggiorna').disabled = true; gloSt('Aggiorno il glossario dalla lezione…'); }
+  try {
+    const r = await privApi('glossario-estrai', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id }) });
+    gloSt(r.nuovi || r.aggiornati ? `Glossario di ${r.materia}: ${r.nuovi} ${r.nuovi === 1 ? 'termine nuovo' : 'termini nuovi'}` + (r.aggiornati ? `, ${r.aggiornati} arricchiti.` : '.') : `Glossario di ${r.materia}: nessun termine nuovo.`);
+    if (r.uso && fcUso) { fcUso.uso = r.uso; fcLimiti(); }
+    gloCaricaMaterie(r.materia);
+  } catch (e) { if (!silenzioso || e.code === 'limite-ai') gloSt(e.code === 'limite-ai' ? 'Glossario non aggiornato: ' + e.message : 'Non riesco ad aggiornare il glossario: ' + e.message, 'warn'); }
+  finally { $('gloAggiorna').disabled = false; }
+}
+$('gloAggiorna').addEventListener('click', () => gloEstrai(currentId, false));
+$('gloQuiz').addEventListener('click', () => {
+  const pool = gloTermini.slice(), n = Math.min(Number($('fcQuante').value) || 15, pool.length);
+  const carte = fcMescola(pool).slice(0, n).map(t => {
+    const altre = fcMescola(pool.filter(x => x !== t)).slice(0, 3).map(x => x.definizione);
+    const opzioni = fcMescola([t.definizione, ...altre]);
+    return { domanda: `Cosa significa «${t.termine}»?`, opzioni, corretta: opzioni.indexOf(t.definizione), spiegazione: `Dalla lezione: ${t.lezione_titolo} · ${fmtData(t.lezione_data)}` };
+  });
+  fcInizia(carte, { tipo: 'glossario', materia: $('gloMateria').value });
+  fcSt(`Glossario di ${$('gloMateria').value}: ${n} termini.`);
+});
+$('gloWord').addEventListener('click', () => {
+  const m = $('gloMateria').value;
+  const md = `# Glossario · ${m}\n\n` + gloTermini.map(t => `**${t.termine}**: ${t.definizione}\n`).join('\n');
+  const doc = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Glossario ${m}</title>
+<style>body{font-family:Calibri,Arial,sans-serif;font-size:12pt;line-height:1.5}h1{font-size:20pt;color:#c9522a}p{margin:0 0 8pt}</style></head><body>${mdHtml(md)}</body></html>`;
+  saveFile(new Blob(['﻿', doc], { type: 'application/msword' }), 'Glossario_' + m.replace(/[^\p{L}\p{N}]+/gu, '_') + '.doc');
+});
+
+/* ---------- Oggi: esami e piano di ripasso ---------- */
+let esamiDati = [];
+function oggiSt(t, kind){ const s = $('oggiStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
+async function caricaOggi(){
+  const d = todayISO();
+  $('oggiData').textContent = new Date().toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' });
+  try {
+    const [piani, esami] = await Promise.all([privApi('oggi?data=' + d), privApi('esami')]);
+    esamiDati = esami; oggiRender(piani); esamiRender();
+  } catch (_) {}
+}
+function oggiRender(piani){
+  const box = $('oggiLista'); box.textContent = '';
+  $('oggiVuoto').hidden = !!piani.length;
+  if (!esamiDati.length) $('esamiBox').open = true;
+  for (const p of piani) {
+    const c = document.createElement('div'); c.className = 'esame';
+    const top = document.createElement('div'); top.className = 'esame-top';
+    const t = document.createElement('strong'); t.textContent = p.esame.materia + (p.esame.nome ? ' · ' + p.esame.nome : '');
+    const k = document.createElement('span'); k.className = 'conta' + (p.giorni <= 3 ? ' vicino' : '');
+    k.textContent = p.giorni === 0 ? 'Oggi!' : p.giorni === 1 ? 'Domani' : `tra ${p.giorni} giorni`;
+    top.append(t, k);
+    const info = document.createElement('p'); info.className = 'note';
+    info.textContent = `${fmtData(p.esame.data)} · ${p.totaleLezioni} ${p.totaleLezioni === 1 ? 'lezione' : 'lezioni'}, ${p.daRipassare} da ripassare` + (p.deboli ? ` · ${p.deboli} flashcard da rinforzare` : '');
+    c.append(top, info);
+    if (!p.totaleLezioni) { const n = document.createElement('p'); n.className = 'note'; n.textContent = 'Non ci sono ancora lezioni salvate di questa materia.'; c.append(n); }
+    else if (p.finale) {
+      const n = document.createElement('p'); n.textContent = p.giorni === 0 ? 'In bocca al lupo! Un ultimo giro veloce:' : 'Ultimi giorni: ripasso generale di tutta la materia.'; c.append(n);
+      const r = document.createElement('div'); r.className = 'row';
+      const b1 = document.createElement('button'); b1.type = 'button'; b1.className = 'primary'; b1.textContent = 'Flashcard di tutta la materia';
+      b1.addEventListener('click', () => { $('fcMateria').value = p.esame.materia; $('fcRipMat').click(); });
+      const b2 = document.createElement('button'); b2.type = 'button'; b2.textContent = 'Glossario';
+      b2.addEventListener('click', () => { gloCaricaMaterie(p.esame.materia); $('gloPanel').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+      r.append(b1, b2); c.append(r);
+    } else {
+      const fatte = p.lezioni.filter(l => l.fatta).length;
+      const h = document.createElement('p'); h.style.margin = '0'; h.style.fontWeight = '600';
+      h.textContent = fatte >= p.quota ? `Fatto per oggi ✓ (${fatte} ${fatte === 1 ? 'lezione' : 'lezioni'})` : `Da ripassare oggi: ${p.quota} ${p.quota === 1 ? 'lezione' : 'lezioni'}`;
+      c.append(h);
+      for (const l of p.lezioni) {
+        const r = document.createElement('div'); r.className = 'oggi-lez' + (l.fatta ? ' fatta' : '');
+        const tt = document.createElement('div'); tt.className = 't'; tt.textContent = l.titolo;
+        const sm = document.createElement('small'); sm.textContent = fmtData(l.data) + (l.ripassata ? ' · ultimo ripasso ' + new Date(l.ripassata).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) : ' · mai ripassata'); tt.append(sm);
+        r.append(tt);
+        if (!l.fatta) {
+          const ap = document.createElement('button'); ap.type = 'button'; ap.textContent = 'Apri'; ap.addEventListener('click', () => openLesson(l.id)); r.append(ap);
+          if (l.conFlashcard) { const fq = document.createElement('button'); fq.type = 'button'; fq.className = 'primary'; fq.textContent = 'Flashcard';
+            fq.addEventListener('click', async () => { await openLesson(l.id); if (fcCarte.length) fcInizia(fcCarte, { tipo: 'lezione' }); }); r.append(fq); }
+          const ok = document.createElement('button'); ok.type = 'button'; ok.textContent = 'Fatto ✓';
+          ok.addEventListener('click', async () => { try { await privApi('ripassata', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: l.id }) }); caricaOggi(); } catch (_) {} });
+          r.append(ok);
+        }
+        c.append(r);
+      }
+    }
+    box.append(c);
+  }
+}
+function esamiRender(){
+  const box = $('esamiLista'); box.textContent = '';
+  for (const e of esamiDati) {
+    const r = document.createElement('div'); r.className = 'row';
+    const t = document.createElement('span'); t.textContent = `${e.materia}${e.nome ? ' · ' + e.nome : ''} — ${fmtData(e.data)}`;
+    const x = document.createElement('button'); x.type = 'button'; x.className = 'danger'; x.textContent = 'Elimina'; x.style.minHeight = '36px';
+    x.addEventListener('click', async () => { try { esamiDati = await privApi('esami?id=' + encodeURIComponent(e.id), { method: 'DELETE' }); caricaOggi(); } catch (_) {} });
+    r.append(t, x); box.append(r);
+  }
+  $('esIcs').hidden = !esamiDati.length;
+}
+$('esAggiungi').addEventListener('click', async () => {
+  const materia = $('esMateria').value.trim(), data = $('esData').value;
+  if (!materia || !data) { oggiSt('Scrivi la materia e la data dell’esame.', 'warn'); return; }
+  if (data < todayISO()) { oggiSt('La data è già passata.', 'warn'); return; }
+  try {
+    await privApi('esami', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ materia, data, nome: $('esNome').value }) });
+    $('esMateria').value = $('esData').value = $('esNome').value = ''; oggiSt(`Esame di ${materia} aggiunto: il piano di ripasso è pronto.`);
+    $('esamiBox').open = false; caricaOggi();
+  } catch (e) { oggiSt('Non riesco a salvare: ' + e.message, 'err'); }
+});
+$('esIcs').addEventListener('click', () => {
+  const z = s => s.replace(/[\\,;]/g, m => '\\' + m);
+  const ev = esamiDati.map(e => {
+    const d = e.data.replace(/-/g, ''), fine = new Date(e.data + 'T12:00:00Z'); fine.setUTCDate(fine.getUTCDate() + 1);
+    return ['BEGIN:VEVENT', 'UID:' + e.id + '@freetrascrizioni', 'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z',
+      'DTSTART;VALUE=DATE:' + d, 'DTEND;VALUE=DATE:' + fine.toISOString().slice(0, 10).replace(/-/g, ''),
+      'SUMMARY:' + z('Esame: ' + e.materia + (e.nome ? ' (' + e.nome + ')' : '')), 'DESCRIPTION:' + z('Ripassa ogni giorno con Freetrascrizioni'),
+      'BEGIN:VALARM', 'TRIGGER:-P7D', 'ACTION:DISPLAY', 'DESCRIPTION:' + z('Tra una settimana: esame di ' + e.materia), 'END:VALARM',
+      'BEGIN:VALARM', 'TRIGGER:-P1D', 'ACTION:DISPLAY', 'DESCRIPTION:' + z('Domani: esame di ' + e.materia), 'END:VALARM', 'END:VEVENT'].join('\r\n');
+  });
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Freetrascrizioni//Esami//IT', 'CALSCALE:GREGORIAN', ...ev, 'END:VCALENDAR'].join('\r\n');
+  saveFile(new Blob([ics], { type: 'text/calendar' }), 'esami.ics');
+});
 /* ---------- Chiedi alle tue lezioni ---------- */
 let askStoria = [];
 function askSt(t, kind){ const s = $('askStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
@@ -2201,10 +2437,10 @@ async function fcRegistra(risultati){
   const ctx = fcCtx || {};
   const materia = ctx.tipo === 'materia' ? ctx.materia : materiaCorrente();
   const lezione = ctx.tipo === 'materia' ? '' : currentId;
-  if (ctx.ripetizione || !materia || (ctx.tipo !== 'materia' && !lezione)) return;
+  if (ctx.ripetizione || ctx.tipo === 'glossario' || !materia || (ctx.tipo !== 'materia' && !lezione)) return;
   try {
     const r = await privApi('quiz', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ materia, lezione, risultati }) });
-    const st = r.storico || [];
+    const st = r.storico || []; caricaOggi();
     if (st.length > 1) {
       const fmt = q => { const d = new Date(q.quando), oggi = new Date(); return d.toDateString() === oggi.toDateString() ? 'oggi' : d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }); };
       $('fcStorico').textContent = 'I tuoi ultimi risultati' + (ctx.tipo === 'materia' ? ` in ${materia}` : ' in questa lezione') + ': ' + st.map(q => `${fmt(q)} ${Math.round(q.giuste / q.totale * 100)}%`).join(' → ');
@@ -2270,7 +2506,7 @@ async function unlock(pw, silent){
     const v = await privApi('verifica');
     if (!MULTI) lsSet(PW_KEY, pw);
     document.body.classList.remove('locked');
-    showUsage(v); fcLimiti(v); mostraAccount(v); loadList(); caricaPrecedenti(); caricaProfilo();
+    showUsage(v); fcLimiti(v); mostraAccount(v); loadList(); caricaPrecedenti(); caricaProfilo(); caricaOggi(); gloCaricaMaterie();
     return true;
   } catch (e) {
     privPw = null;
@@ -2442,7 +2678,7 @@ async function openLesson(id){
     $('materia').value = l.materia; $('titolo').value = l.titolo; $('dataLez').value = l.data;
     setCurrent(l); doneSec = l.durata || 0; onMateria();
     let fc = []; try { fc = l.flashcard ? JSON.parse(l.flashcard) : []; } catch (_) {}
-    fcSet(fc, false); fcSt('');
+    fcSet(fc, false); fcSt(''); $('gloAggiorna').hidden = false;
     privStatus(`Aperta: ${l.titolo} (${l.materia}).`);
     loadList();
     $('l3').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -2461,6 +2697,7 @@ $('saveLesson').addEventListener('click', async () => {
     setCurrent(l); $('titolo').value = l.titolo;
     if (fcDaSalvare) await fcSalva();
     privStatus(`Salvata in «${l.materia}».`);
+    gloEstrai(l.id, true); caricaOggi();
     loadList(); caricaPrecedenti();
   } catch (e) { privStatus(e.status === 401 ? 'La password non è più valida: ricarica la pagina e reinseriscila.' : 'Non riesco a salvare: ' + e.message, 'err'); }
   finally { $('saveLesson').disabled = false; }
