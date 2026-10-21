@@ -10,13 +10,16 @@
   // i segreti GROQ_API_KEY e PASSWORD si impostano su Cloudflare e non vengono toccati dagli aggiornamenti
   "keep_vars": true,
   "observability": { "enabled": true },
+  // promemoria di ripasso: controlla ogni ora chi ha chiesto la notifica per quell'ora
+  "triggers": { "crons": ["0 * * * *"] },
   // App pubblica con registrazione (email/password e Google): si pubblica con "npx wrangler deploy --env pubblica".
   // Segreti da impostare su Cloudflare: GROQ_API_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, CODICE_INVITO (facoltativo).
   "env": {
     "pubblica": {
       "name": "freetrascrizioni-app",
       "vars": { "MULTIUTENTE": "si", "ORE_SETTIMANA_UTENTE": "10", "TOKEN_GIORNO_UTENTE": "150000" },
-      "durable_objects": { "bindings": [{ "name": "STORE", "class_name": "Store" }] }
+      "durable_objects": { "bindings": [{ "name": "STORE", "class_name": "Store" }] },
+      "triggers": { "crons": ["0 * * * *"] }
     }
   }
 }

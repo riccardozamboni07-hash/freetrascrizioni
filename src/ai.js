@@ -72,7 +72,7 @@ async function chat(env, modelli, messages, { temperature = 0.3, maxOut = 8000, 
 const modelliTesto = env => (env.GROQ_MODELLO_TESTO ? [env.GROQ_MODELLO_TESTO, ...MODELLI] : MODELLI);
 const MODELLI_VISTA = ['meta-llama/llama-4-scout-17b-16e-instruct', 'meta-llama/llama-4-maverick-17b-128e-instruct'];
 
-export async function generaTesto(env, { tipo, testo, materia, data, parte, totale, lavagna }) {
+export async function generaTesto(env, { tipo, testo, materia, data, parte, totale, lavagna, materiale }) {
   let system = tipo === 'aggiusta' ? istruzioniAggiusta(materia) : istruzioniAppunti(materia, data, parte, totale);
   if (tipo !== 'aggiusta' && lavagna) system += `
 
@@ -81,6 +81,13 @@ Qui sotto c'è il contenuto delle foto della lavagna di questa lezione, già tra
 <lavagna>
 ${lavagna}
 </lavagna>`;
+  if (tipo !== 'aggiusta' && materiale) system += `
+
+SLIDE E MATERIALE DEL PROFESSORE
+Qui sotto c'è il testo delle slide o dei PDF del professore per questa lezione. Usalo per completare gli appunti (definizioni esatte, schemi, numeri, articoli), integrandolo al punto giusto; la lezione detta resta la base. Usa solo la parte che riguarda il pezzo che stai scrivendo.
+<materiale>
+${materiale}
+</materiale>`;
   return chat(env, modelliTesto(env), [
     { role: 'system', content: system },
     { role: 'user', content: (tipo === 'aggiusta' ? 'Trascrizione da correggere:\n\n' : 'Trascrizione:\n\n') + testo },
@@ -141,4 +148,56 @@ Rispondi SOLO con JSON: {"termini":[{"termine":"...","definizione":"...","aggior
     .map(t => ({ termine: String(t.termine || '').trim().slice(0, 120), definizione: String(t.definizione || '').trim().slice(0, 1200) }))
     .filter(t => t.termine && t.definizione);
   return { status: 200, body: { termini }, token: r.token };
+}
+
+function leggiJsonAI(t) {
+  try { return JSON.parse(t); } catch (_) {}
+  const m = String(t || '').match(/\{[\s\S]*\}/);
+  if (m) { try { return JSON.parse(m[0]); } catch (_) {} }
+  return null;
+}
+
+// Simulazione dell'esame orale: una domanda alla volta sul materiale di una lezione della materia
+export async function domandaOrale(env, { materia, titolo, testo, gia }) {
+  const r = await chat(env, modelliTesto(env), [
+    { role: 'system', content: `Sei un professore universitario di ${materia || 'questa materia'} che interroga uno studente all'esame orale.
+Dal materiale della lezione qui sotto fai UNA domanda d'esame, come la farebbe un professore: chiara, su un concetto importante, che richieda una risposta di 1-2 minuti (definizione + spiegazione o esempio, oppure un confronto tra due istituti/concetti).
+Non fare domande già fatte: ${(gia || []).slice(-10).join(' | ') || '(nessuna)'}.
+Rispondi SOLO con JSON: {"domanda":"...","punti":["punto che una buona risposta deve toccare", "..."]} con 3-5 punti.` },
+    { role: 'user', content: `Lezione: ${titolo}\n\n` + riduci(testo, 24000) },
+  ], { temperature: 0.7, maxOut: 800, json: true });
+  if (r.status !== 200) return r;
+  const d = leggiJsonAI(r.body.testo);
+  if (!d?.domanda) return { status: 502, body: { error: 'Non riesco a preparare la domanda: riprova.' }, token: r.token };
+  return { status: 200, body: { domanda: String(d.domanda).slice(0, 600), punti: (Array.isArray(d.punti) ? d.punti : []).map(String).slice(0, 6) }, token: r.token };
+}
+
+export async function valutaOrale(env, { materia, titolo, testo, domanda, punti, risposta }) {
+  const r = await chat(env, modelliTesto(env), [
+    { role: 'system', content: `Sei un professore universitario di ${materia || 'questa materia'}, giusto ma esigente. Valuti la risposta orale di uno studente (trascritta automaticamente: ignora gli errori di trascrizione e le esitazioni).
+Basati sul materiale della lezione e sui punti attesi. Voto in trentesimi da 0 a 30 (30 e lode = 31), come all'università italiana; sotto 18 è insufficiente.
+Rispondi SOLO con JSON: {"voto":24,"giudizio":"una frase","bene":["cosa ha detto bene"],"mancava":["cosa mancava o era sbagliato"],"modello":"una risposta da 30 in 4-6 frasi, con la terminologia del professore"}` },
+    { role: 'user', content: `Lezione: ${titolo}\n\nMateriale:\n${riduci(testo, 16000)}\n\nDomanda: ${domanda}\nPunti attesi: ${(punti || []).join('; ')}\n\nRisposta dello studente:\n${String(risposta || '').slice(0, 6000) || '(nessuna risposta)'}` },
+  ], { temperature: 0.2, maxOut: 1500, json: true });
+  if (r.status !== 200) return r;
+  const d = leggiJsonAI(r.body.testo) || {};
+  const voto = Math.max(0, Math.min(31, Math.round(Number(d.voto) || 0)));
+  const lista = x => (Array.isArray(x) ? x : []).map(String).slice(0, 6);
+  return { status: 200, body: { voto, giudizio: String(d.giudizio || '').slice(0, 300), bene: lista(d.bene), mancava: lista(d.mancava), modello: String(d.modello || '').slice(0, 2000) }, token: r.token };
+}
+
+// Mappa concettuale della lezione: albero di concetti (massimo 3 livelli)
+export async function creaMappa(env, { materia, titolo, testo }) {
+  const r = await chat(env, modelliTesto(env), [
+    { role: 'system', content: `Crea la MAPPA CONCETTUALE di una lezione universitaria${materia ? ` di ${materia}` : ''} per il ripasso veloce.
+Regole: un concetto centrale; 3-7 rami principali; ogni ramo con 0-5 sotto-concetti; al massimo 3 livelli. Etichette brevi (max 6 parole). "nota": max 15 parole, facoltativa, solo dove aiuta (definizione lampo, esempio, collegamento). Usa la terminologia del professore, niente invenzioni.
+Rispondi SOLO con JSON: {"titolo":"concetto centrale","rami":[{"titolo":"...","nota":"...","rami":[{"titolo":"...","nota":"..."}]}]}` },
+    { role: 'user', content: `Lezione: ${titolo}\n\n` + riduci(testo, 30000) },
+  ], { temperature: 0.3, maxOut: 2500, json: true });
+  if (r.status !== 200) return r;
+  const d = leggiJsonAI(r.body.testo);
+  const pulisci = (n, liv) => ({ titolo: String(n?.titolo || '').slice(0, 80), nota: String(n?.nota || '').slice(0, 160),
+    rami: liv < 3 && Array.isArray(n?.rami) ? n.rami.slice(0, 8).map(x => pulisci(x, liv + 1)).filter(x => x.titolo) : [] });
+  if (!d?.titolo) return { status: 502, body: { error: 'Non riesco a creare la mappa: riprova.' }, token: r.token };
+  return { status: 200, body: { mappa: pulisci(d, 1) }, token: r.token };
 }

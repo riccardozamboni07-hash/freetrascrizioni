@@ -7,8 +7,9 @@
 import { DurableObject } from 'cloudflare:workers';
 import { onRequest as trascrivi } from './trascrivi.js';
 import { generaFlashcard } from './flashcard.js';
-import { generaTesto, leggiLavagna, rispondi, estraiGlossario } from './ai.js';
-import { privacy, condizioni } from './legale.js';
+import { generaTesto, leggiLavagna, rispondi, estraiGlossario, domandaOrale, valutaOrale, creaMappa } from './ai.js';
+import { creaChiaviVapid, inviaPush, chiaveValida } from './push.js';
+import { privacy, condizioni, paginaCondivisa } from './legale.js';
 import { hashPassword, verificaPassword, sha, nuovoToken, nuovoId, leggiCookie, cookie, emailValida, googleInizio, googleFine } from './auth.js';
 
 export class Store extends DurableObject {
@@ -28,6 +29,14 @@ export class Store extends DurableObject {
     this.sql.exec(`CREATE TABLE IF NOT EXISTS glossario (chiave TEXT PRIMARY KEY, materia TEXT, termine TEXT, definizione TEXT, lezione TEXT, lezione_titolo TEXT, lezione_data TEXT, creato INTEGER, aggiornato INTEGER)`);
     this.sql.exec(`CREATE TABLE IF NOT EXISTS esami (id TEXT PRIMARY KEY, materia TEXT, nome TEXT, data TEXT, creato INTEGER)`);
     this.sql.exec(`CREATE TABLE IF NOT EXISTS ripassi (lezione TEXT, quando INTEGER)`);
+    // versione 3.0: slide/PDF e mappa per lezione, orale, studio, promemoria, condivisione
+    for (const c of ["materiale TEXT NOT NULL DEFAULT ''", "mappa TEXT NOT NULL DEFAULT ''", "condiviso TEXT"]) { try { this.sql.exec(`ALTER TABLE lezioni ADD COLUMN ${c}`); } catch (_) {} }
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS orale (quando INTEGER, materia TEXT, voto INTEGER)`);
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS studio (quando INTEGER, minuti REAL, materia TEXT)`);
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS impostazioni (k TEXT PRIMARY KEY, v TEXT)`);
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS push (endpoint TEXT PRIMARY KEY, dati TEXT, ora INTEGER, creato INTEGER)`);
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS push_utenti (utente TEXT PRIMARY KEY, ora INTEGER)`);
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS condivisi (token TEXT PRIMARY KEY, utente TEXT, lezione TEXT, creato INTEGER)`);
     // versione 1.7 (app pubblica): utenti e sessioni, usati solo dall'archivio "auth"
     this.sql.exec(`CREATE TABLE IF NOT EXISTS utenti (id TEXT PRIMARY KEY, email TEXT UNIQUE, nome TEXT, sale TEXT, hash TEXT, google TEXT, creato INTEGER, ultimo INTEGER)`);
     this.sql.exec(`CREATE TABLE IF NOT EXISTS sessioni (token TEXT PRIMARY KEY, utente TEXT, scade INTEGER)`);
@@ -59,7 +68,7 @@ export class Store extends DurableObject {
     return { settimana: this.usoSettimana(), tokenOggi: this.usoOggi().flashcardToken, lezioni: l.n || 0, secondiLezioni: l.secondi || 0 };
   }
   esporta() {
-    return { profilo: this.profilo().profilo, lezioni: this.sql.exec('SELECT materia, titolo, data, durata, testo, appunti, flashcard, creata, aggiornata FROM lezioni ORDER BY data').toArray() };
+    return { profilo: this.profilo().profilo, lezioni: this.sql.exec('SELECT materia, titolo, data, durata, testo, appunti, flashcard, materiale, mappa, creata, aggiornata FROM lezioni ORDER BY data').toArray() };
   }
   utentePerId(id) { return this.sql.exec('SELECT * FROM utenti WHERE id = ?', id).toArray()[0] || null; }
   cambiaPassword(id, sale, hash) { this.sql.exec('UPDATE utenti SET sale = ?, hash = ? WHERE id = ?', sale, hash, id); }
@@ -144,6 +153,61 @@ export class Store extends DurableObject {
     }
     return out;
   }
+  // ---------- slide/PDF, mappa, orale, studio ----------
+  salvaMateriale(id, nome, testo) {
+    const l = this.leggi(id); if (!l) return null;
+    const nuovo = ((l.materiale || '') + `\n\n=== ${nome} ===\n` + testo).trim().slice(0, 400000);
+    this.sql.exec('UPDATE lezioni SET materiale = ?, aggiornata = ? WHERE id = ?', nuovo, Date.now(), id);
+    return { ok: true, caratteri: nuovo.length };
+  }
+  togliMateriale(id) { this.sql.exec(`UPDATE lezioni SET materiale = '' WHERE id = ?`, id); return { ok: true }; }
+  salvaMappa(id, mappa) { this.sql.exec('UPDATE lezioni SET mappa = ? WHERE id = ?', JSON.stringify(mappa), id); return { ok: true }; }
+  lezioneCasuale(materia) {
+    return this.sql.exec(`SELECT id, titolo, data, appunti, testo, materiale FROM lezioni WHERE materia = ? AND length(testo) > 300 ORDER BY random() LIMIT 1`, materia).toArray()[0] || null;
+  }
+  registraOrale(materia, voto) { this.sql.exec('INSERT INTO orale (quando, materia, voto) VALUES (?, ?, ?)', Date.now(), materia, voto); }
+  registraStudio(minuti, materia) { this.sql.exec('INSERT INTO studio (quando, minuti, materia) VALUES (?, ?, ?)', Date.now(), minuti, materia || ''); return { ok: true }; }
+  // giorni di studio di fila (ripassi, quiz, orale, timer), in ora italiana
+  serie() {
+    const giorno = t => new Date(t).toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' });
+    const tempi = [];
+    for (const q of ['SELECT quando FROM fc_sessioni', 'SELECT quando FROM ripassi', 'SELECT quando FROM orale', 'SELECT quando FROM studio WHERE minuti >= 10'])
+      for (const r of this.sql.exec(q).toArray()) tempi.push(r.quando);
+    const giorni = new Set(tempi.map(giorno));
+    const oggi = giorno(Date.now()), ieri = giorno(Date.now() - 86400000);
+    const conta = da => { let n = 0, d = new Date(da + 'T12:00:00Z'); while (giorni.has(d.toISOString().slice(0, 10))) { n++; d = new Date(d.getTime() - 86400000); } return n; };
+    const serie = giorni.has(oggi) ? conta(oggi) : giorni.has(ieri) ? conta(ieri) : 0;
+    let record = 0;
+    for (const g of giorni) { const prima = new Date(new Date(g + 'T12:00:00Z').getTime() - 86400000).toISOString().slice(0, 10); if (!giorni.has(prima)) record = Math.max(record, conta2(g)); }
+    function conta2(da) { let n = 0, d = new Date(da + 'T12:00:00Z'); while (giorni.has(d.toISOString().slice(0, 10))) { n++; d = new Date(d.getTime() + 86400000); } return n; }
+    const minutiOggi = this.sql.exec('SELECT quando, minuti FROM studio WHERE quando > ?', Date.now() - 2 * 86400000).toArray()
+      .filter(r => giorno(r.quando) === oggi).reduce((n, r) => n + r.minuti, 0);
+    const orali = this.sql.exec('SELECT quando, materia, voto FROM orale ORDER BY quando DESC LIMIT 10').toArray();
+    return { serie, record: Math.max(record, serie), oggiFatto: giorni.has(oggi), giorniTotali: giorni.size, minutiOggi, orali };
+  }
+  // ---------- impostazioni, promemoria, condivisione ----------
+  impostazione(k) { return (this.sql.exec('SELECT v FROM impostazioni WHERE k = ?', k).toArray()[0] || {}).v || null; }
+  setImpostazione(k, v) { this.sql.exec('INSERT INTO impostazioni (k, v) VALUES (?, ?) ON CONFLICT (k) DO UPDATE SET v = excluded.v', k, v); }
+  iscriviPush(sub, ora) {
+    this.sql.exec('INSERT INTO push (endpoint, dati, ora, creato) VALUES (?, ?, ?, ?) ON CONFLICT (endpoint) DO UPDATE SET dati = excluded.dati, ora = excluded.ora', sub.endpoint, JSON.stringify(sub), ora, Date.now());
+    return this.statoPush();
+  }
+  disiscriviPush(endpoint) { this.sql.exec('DELETE FROM push WHERE endpoint = ?', endpoint); return this.statoPush(); }
+  iscrizioni(ora) { return (ora == null ? this.sql.exec('SELECT dati FROM push') : this.sql.exec('SELECT dati FROM push WHERE ora = ?', ora)).toArray().map(r => JSON.parse(r.dati)); }
+  statoPush() { const r = this.sql.exec('SELECT count(*) AS n, min(ora) AS ora FROM push').toArray()[0] || {}; return { attive: r.n || 0, ora: r.ora }; }
+  segnaUtentePush(utente, ora) {
+    if (ora == null) this.sql.exec('DELETE FROM push_utenti WHERE utente = ?', utente);
+    else this.sql.exec('INSERT INTO push_utenti (utente, ora) VALUES (?, ?) ON CONFLICT (utente) DO UPDATE SET ora = excluded.ora', utente, ora);
+  }
+  utentiPush(ora) { return this.sql.exec('SELECT utente FROM push_utenti WHERE ora = ?', ora).toArray().map(r => r.utente); }
+  daRipassareOggi() {
+    const oggiISO = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' });
+    return this.oggi(oggiISO).reduce((n, p) => n + (p.finale ? 1 : p.lezioni.filter(l => !l.fatta).length), 0);
+  }
+  creaCondivisione(token, utente, lezione) { this.sql.exec('INSERT INTO condivisi (token, utente, lezione, creato) VALUES (?, ?, ?, ?)', token, utente, lezione, Date.now()); }
+  condivisione(token) { return this.sql.exec('SELECT * FROM condivisi WHERE token = ?', token).toArray()[0] || null; }
+  revocaCondivisione(token) { this.sql.exec('DELETE FROM condivisi WHERE token = ?', token); }
+  segnaCondiviso(id, token) { this.sql.exec('UPDATE lezioni SET condiviso = ? WHERE id = ?', token, id); }
   profilo() {
     let p = {}; try { p = JSON.parse((this.sql.exec(`SELECT v FROM profilo WHERE k = 'profilo'`).toArray()[0] || {}).v || '{}'); } catch (_) {}
     const st = this.sql.exec(`SELECT count(*) AS lezioni, coalesce(sum(durata), 0) AS secondi, count(DISTINCT materia) AS materie,
@@ -155,7 +219,7 @@ export class Store extends DurableObject {
     return this.profilo();
   }
   eliminaTutto() {
-    for (const t of ['lezioni', 'fc_stat', 'fc_sessioni', 'profilo', 'glossario', 'esami', 'ripassi']) this.sql.exec(`DELETE FROM ${t}`);
+    for (const t of ['lezioni', 'fc_stat', 'fc_sessioni', 'profilo', 'glossario', 'esami', 'ripassi', 'orale', 'studio', 'push']) this.sql.exec(`DELETE FROM ${t}`);
     return { ok: true };
   }
   flashcardMateria(materia) {
@@ -190,11 +254,11 @@ export class Store extends DurableObject {
   // Ricerca semplice per parole chiave: divide lezioni e appunti in brani e tiene i più pertinenti
   cerca(materia, parole, max = 16000) {
     const righe = materia
-      ? this.sql.exec('SELECT titolo, materia, data, testo, appunti FROM lezioni WHERE materia = ?', materia).toArray()
-      : this.sql.exec('SELECT titolo, materia, data, testo, appunti FROM lezioni').toArray();
+      ? this.sql.exec('SELECT titolo, materia, data, testo, appunti, materiale FROM lezioni WHERE materia = ?', materia).toArray()
+      : this.sql.exec('SELECT titolo, materia, data, testo, appunti, materiale FROM lezioni').toArray();
     const brani = [];
     for (const r of righe) {
-      for (const [tipo, testo, bonus] of [['appunti', r.appunti, 1.3], ['trascrizione', r.testo, 1]]) {
+      for (const [tipo, testo, bonus] of [['appunti', r.appunti, 1.3], ['slide', r.materiale, 1.15], ['trascrizione', r.testo, 1]]) {
         if (!testo) continue;
         const t = testo.replace(/\s+/g, ' ');
         for (let i = 0; i < t.length; i += 1300) {
@@ -369,6 +433,14 @@ export default {
     const limiteAi = async () => multi && (await store().usoOggi()).flashcardToken >= tokenGiorno
       ? json(429, { error: 'Hai usato tutta l’intelligenza artificiale di oggi: riprova domani.', code: 'limite-ai' }) : null;
 
+    // pagina pubblica, in sola lettura, degli appunti condivisi
+    if (url.pathname.startsWith('/c/')) {
+      const token = url.pathname.slice(3).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40);
+      const c = token ? await (multi ? auth() : env.STORE.get(env.STORE.idFromName('principale'))).condivisione(token) : null;
+      const l = c ? await env.STORE.get(env.STORE.idFromName(multi ? 'u:' + c.utente : 'principale')).leggi(c.lezione) : null;
+      const html = l && l.condiviso === token ? paginaCondivisa(l, multi ? url.origin : null) : paginaCondivisa(null, null);
+      return new Response(html, { status: l ? 200 : 404, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache', 'x-robots-tag': 'noindex' } });
+    }
     if (url.pathname === '/privacy' || url.pathname === '/condizioni') {
       return new Response(url.pathname === '/privacy' ? privacy(env) : condizioni(env), { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' } });
     }
@@ -392,7 +464,7 @@ export default {
       if (!multi && !env.PASSWORD) return json(503, { error: 'Password non impostata.', code: 'no-password' });
       if (!entrato) return json(401, { error: multi ? 'Accedi di nuovo.' : 'Password errata.' });
       const azione = url.pathname.slice('/api/privato/'.length);
-      if (['ai', 'flashcard', 'lavagna', 'chiedi', 'glossario-estrai'].includes(azione)) { const l = await limiteAi(); if (l) return l; }
+      if (['ai', 'flashcard', 'lavagna', 'chiedi', 'glossario-estrai', 'orale-domanda', 'orale-valuta', 'mappa'].includes(azione)) { const l = await limiteAi(); if (l) return l; }
       if (azione === 'verifica') return json(200, {
         ok: true, uso: multi ? { ...(await auth().usoOggi()), flashcardToken: (await store().usoOggi()).flashcardToken } : await store().usoOggi(), limitePubblicoOre: null,
         limiteGroq: { orePerGiorno: 8, orePerOra: 2, tokenFlashcardGiorno: multi ? tokenGiorno : 500000, tokenFlashcardMinuto: 30000 },
@@ -420,11 +492,105 @@ export default {
         const r = await generaTesto(env, {
           tipo: b.tipo === 'aggiusta' ? 'aggiusta' : 'appunti', testo: b.testo.slice(0, 40000),
           materia: String(b.materia || '').slice(0, 80), data: String(b.data || '').slice(0, 40),
-          parte: Number(b.parte) || 1, totale: Number(b.totale) || 1, lavagna: String(b.lavagna || '').slice(0, 8000),
+          parte: Number(b.parte) || 1, totale: Number(b.totale) || 1, lavagna: String(b.lavagna || '').slice(0, 8000), materiale: String(b.materiale || '').slice(0, 9000),
         });
         if (r.token) await store().usaToken(r.token);
         if (r.status === 200) r.body.uso = await store().usoOggi();
         return json(r.status, r.body);
+      }
+      // ---------- slide/PDF, mappa, orale, studio, serie ----------
+      const corpo = async () => request.json().catch(() => null);
+      const conToken = async (r) => { if (r.token) await store().usaToken(r.token); return r; };
+      if (azione === 'materiale') {
+        if (request.method === 'POST') {
+          const b = await corpo();
+          if (!b || typeof b.id !== 'string' || typeof b.testo !== 'string' || !b.testo.trim()) return json(400, { error: 'Nessun testo trovato nel file.' });
+          const r = await store().salvaMateriale(b.id.slice(0, 64), String(b.nome || 'Materiale').slice(0, 120), b.testo.slice(0, 300000));
+          return r ? json(200, r) : json(404, { error: 'Salva prima la lezione.' });
+        }
+        if (request.method === 'DELETE') return json(200, await store().togliMateriale(String(url.searchParams.get('id') || '').slice(0, 64)));
+      }
+      if (azione === 'mappa' && request.method === 'POST') {
+        const b = await corpo();
+        const l = b && typeof b.id === 'string' ? await store().leggi(b.id.slice(0, 64)) : null;
+        if (!l) return json(404, { error: 'Salva prima la lezione.' });
+        const testo = [(l.appunti && l.appunti.length > 500 ? l.appunti : l.testo), l.materiale ? '\n\nSlide del professore:\n' + l.materiale.slice(0, 12000) : ''].join('');
+        const r = await conToken(await creaMappa(env, { materia: l.materia, titolo: l.titolo, testo }));
+        if (r.status === 200) await store().salvaMappa(l.id, r.body.mappa);
+        return json(r.status, r.body);
+      }
+      if (azione === 'orale-domanda' && request.method === 'POST') {
+        const b = await corpo();
+        const materia = String(b?.materia || '').trim().slice(0, 80);
+        const l = materia ? await store().lezioneCasuale(materia) : null;
+        if (!l) return json(404, { error: 'Non ci sono lezioni salvate di questa materia.' });
+        const testo = [(l.appunti && l.appunti.length > 500 ? l.appunti : l.testo), l.materiale ? '\n\n' + l.materiale.slice(0, 8000) : ''].join('');
+        const r = await conToken(await domandaOrale(env, { materia, titolo: l.titolo, testo, gia: Array.isArray(b.gia) ? b.gia.map(String) : [] }));
+        if (r.status === 200) r.body.lezione = { id: l.id, titolo: l.titolo, data: l.data };
+        return json(r.status, r.body);
+      }
+      if (azione === 'orale-valuta' && request.method === 'POST') {
+        const b = await corpo();
+        const l = b && typeof b.lezione === 'string' ? await store().leggi(b.lezione.slice(0, 64)) : null;
+        if (!l) return json(404, { error: 'Lezione non trovata.' });
+        const testo = [(l.appunti && l.appunti.length > 500 ? l.appunti : l.testo), l.materiale ? '\n\n' + l.materiale.slice(0, 6000) : ''].join('');
+        const r = await conToken(await valutaOrale(env, { materia: l.materia, titolo: l.titolo, testo, domanda: String(b.domanda || '').slice(0, 600),
+          punti: Array.isArray(b.punti) ? b.punti.map(String).slice(0, 6) : [], risposta: String(b.risposta || '') }));
+        if (r.status === 200) await store().registraOrale(l.materia, r.body.voto);
+        return json(r.status, r.body);
+      }
+      if (azione === 'studio' && request.method === 'POST') {
+        const b = await corpo();
+        const minuti = Math.max(1, Math.min(180, Number(b?.minuti) || 0));
+        return json(200, await store().registraStudio(minuti, String(b?.materia || '').slice(0, 80)));
+      }
+      if (azione === 'serie' && request.method === 'GET') return json(200, await store().serie());
+      // ---------- promemoria (notifiche push) ----------
+      const globale = () => multi ? auth() : store();
+      const chiaviVapid = async () => {
+        let k = await globale().impostazione('vapid');
+        if (!k) { k = JSON.stringify(await creaChiaviVapid()); await globale().setImpostazione('vapid', k); }
+        return JSON.parse(k);
+      };
+      if (azione === 'push-chiave' && request.method === 'GET') return json(200, { chiave: (await chiaviVapid()).pubblica, stato: await store().statoPush() });
+      if (azione === 'push-iscrivi' && request.method === 'POST') {
+        const b = await corpo();
+        const sub = b?.iscrizione;
+        if (!sub || typeof sub.endpoint !== 'string' || !/^https:\/\//.test(sub.endpoint)) return json(400, { error: 'Iscrizione non valida.' });
+        const ora = Math.max(0, Math.min(23, Math.round(Number(b.ora) || 18)));
+        const st = await store().iscriviPush({ endpoint: sub.endpoint.slice(0, 1000), keys: sub.keys || {} }, ora);
+        if (multi) await auth().segnaUtentePush(utente.id, ora);
+        return json(200, st);
+      }
+      if (azione === 'push-disiscrivi' && request.method === 'POST') {
+        const b = await corpo();
+        const st = await store().disiscriviPush(String(b?.endpoint || '').slice(0, 1000));
+        if (multi && !st.attive) await auth().segnaUtentePush(utente.id, null);
+        return json(200, st);
+      }
+      if (azione === 'push-prova' && request.method === 'POST') {
+        const chiavi = await chiaviVapid(); let ok = 0;
+        for (const sub of await store().iscrizioni(null)) { const r = await inviaPush(sub, chiavi, env.CONTATTO_EMAIL && 'mailto:' + env.CONTATTO_EMAIL); if (r === 'ok') ok++; if (r === 'scaduta') await store().disiscriviPush(sub.endpoint); }
+        return json(200, { inviate: ok });
+      }
+      // ---------- condivisione degli appunti ----------
+      if (azione === 'condividi') {
+        if (request.method === 'POST') {
+          const b = await corpo();
+          const l = b && typeof b.id === 'string' ? await store().leggi(b.id.slice(0, 64)) : null;
+          if (!l) return json(404, { error: 'Salva prima la lezione.' });
+          if (l.condiviso) return json(200, { token: l.condiviso, url: url.origin + '/c/' + l.condiviso });
+          const token = nuovoToken().slice(0, 22);
+          await globale().creaCondivisione(token, utente ? utente.id : '', l.id);
+          await store().segnaCondiviso(l.id, token);
+          return json(200, { token, url: url.origin + '/c/' + token });
+        }
+        if (request.method === 'DELETE') {
+          const id = String(url.searchParams.get('id') || '').slice(0, 64);
+          const l = await store().leggi(id);
+          if (l?.condiviso) { await globale().revocaCondivisione(l.condiviso); await store().segnaCondiviso(id, null); }
+          return json(200, { ok: true });
+        }
       }
       if (azione === 'esporta' && request.method === 'GET') return json(200, await store().esporta());
       if (azione === 'glossario-estrai' && request.method === 'POST') {
@@ -566,5 +732,24 @@ export default {
 
     if (url.pathname === '/privato' || url.pathname === '/privato/') return Response.redirect(new URL('/', url), 302);
     return env.ASSETS.fetch(request);
+  },
+
+  // Ogni ora: manda il promemoria a chi l'ha chiesto per quest'ora e ha lezioni da ripassare oggi
+  async scheduled(event, env, ctx) {
+    const multi = env.MULTIUTENTE === 'si' || env.MULTIUTENTE === 'true';
+    const ora = Number(new Date().toLocaleString('en-GB', { timeZone: 'Europe/Rome', hour: '2-digit', hour12: false }));
+    const globale = env.STORE.get(env.STORE.idFromName(multi ? 'auth' : 'principale'));
+    const k = await globale.impostazione('vapid');
+    if (!k) return;
+    const chiavi = JSON.parse(k), contatto = env.CONTATTO_EMAIL ? 'mailto:' + env.CONTATTO_EMAIL : undefined;
+    const archivi = multi ? (await globale.utentiPush(ora)).map(u => 'u:' + u) : ['principale'];
+    for (const nome of archivi) {
+      const st = env.STORE.get(env.STORE.idFromName(nome));
+      const subs = await st.iscrizioni(ora);
+      if (!subs.length) continue;
+      const serie = await st.serie();
+      if (!(await st.daRipassareOggi()) && !(serie.serie >= 2 && !serie.oggiFatto)) continue;
+      for (const sub of subs) { if (await inviaPush(sub, chiavi, contatto) === 'scaduta') await st.disiscriviPush(sub.endpoint); }
+    }
   },
 };

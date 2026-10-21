@@ -6,11 +6,11 @@ const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 
 function pagina(titolo, corpo) {
   return `<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${titolo} · Freetrascrizioni</title>
+<title>${titolo} · Freetrascrizioni</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap">
 <style>
-:root{--bg:#fff7f0;--surface:#fff;--fg:#3b2418;--muted:#85604c;--line:#f2dccb;--accent:#c9522a}
-@media (prefers-color-scheme:dark){:root{--bg:#1c1512;--surface:#271d18;--fg:#f7ebe2;--muted:#c7a897;--line:#42322a;--accent:#ff9c73}}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 -apple-system,"Segoe UI",Roboto,sans-serif;padding:24px 16px}
+:root{--bg:#ffffff;--surface:#fff;--fg:#10201a;--muted:#5b6b63;--line:#e8ecea;--accent:#14573d}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1512;--surface:#16201b;--fg:#eaf3ee;--muted:#9db3a7;--line:#24332b;--accent:#6fd3a0}}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 "Plus Jakarta Sans",-apple-system,"Segoe UI",Roboto,sans-serif;padding:24px 16px}
 main{max-width:720px;margin:0 auto;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:22px}
 h1{color:var(--accent);margin:0 0 4px;font-size:1.6rem}h2{font-size:1.1rem;margin:1.6em 0 .4em}
 p,li{margin:.4em 0}.muted{color:var(--muted);font-size:.9rem}a{color:var(--accent)}
@@ -72,4 +72,27 @@ export function condizioni(env) {
 <p>Puoi eliminare l'account in qualsiasi momento dal profilo. Se la beta termina, riceverai un avviso con il tempo necessario per scaricare i tuoi dati.</p>
 <h2>Contatti</h2>
 <p>Per domande: <strong>${c}</strong>.</p>`);
+}
+
+// Pagina pubblica di una lezione condivisa (solo titolo, materia, data e appunti; mai l'audio)
+function mdHtml(md) {
+  const inl = x => esc(x).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  let html = '', lista = false;
+  for (const raw of String(md || '').split('\n')) {
+    const l = raw.trim();
+    if (/^[-•*]\s+/.test(l)) { if (!lista) { html += '<ul>'; lista = true; } html += '<li>' + inl(l.replace(/^[-•*]\s+/, '')) + '</li>'; continue; }
+    if (lista) { html += '</ul>'; lista = false; }
+    if (!l) continue;
+    const h = l.match(/^(#{1,4})\s+(.*)$/);
+    html += h ? `<h${Math.min(4, h[1].length + 1)}>${inl(h[2])}</h${Math.min(4, h[1].length + 1)}>` : '<p>' + inl(l) + '</p>';
+  }
+  return html + (lista ? '</ul>' : '');
+}
+export function paginaCondivisa(l, origineApp) {
+  if (!l) return pagina('Link non valido', '<h1>Link non valido</h1><p>Questi appunti non sono più condivisi, oppure il link è sbagliato.</p>');
+  const data = (() => { try { return new Date(l.data + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }); } catch (_) { return l.data; } })();
+  const corpo = l.appunti && l.appunti.trim() ? mdHtml(l.appunti) : '<p class="muted">Trascrizione della lezione:</p>' + String(l.testo || '').split(/\n{2,}/).map(p => '<p>' + esc(p) + '</p>').join('');
+  const invito = origineApp ? `<p><a href="${esc(origineApp)}">Prova Freetrascrizioni</a>: registra le lezioni e ottieni appunti, flashcard e ripasso.</p>` : '';
+  return pagina(esc(l.titolo), `<h1>${esc(l.titolo)}</h1><p class="muted">${esc(l.materia)} · ${esc(data)}</p>${corpo}
+<hr style="border:none;border-top:1px solid var(--line);margin:24px 0 12px"><p class="muted">Appunti creati con Freetrascrizioni.</p>${invito}`).replace('<p class="muted"><a href="/">← Torna all\'app</a></p>', '');
 }

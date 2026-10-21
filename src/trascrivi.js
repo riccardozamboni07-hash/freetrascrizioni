@@ -64,7 +64,9 @@ export async function onRequest({ request, env }) {
   if (audio.byteLength > MAX_BYTES) return json(413, { error: 'Pezzo di audio troppo grande.' });
 
   const type = request.headers.get('content-type') || 'audio/wav';
-  const name = type.includes('mpeg') ? 'pezzo.mp3' : 'pezzo.wav';
+  // estensione giusta per Groq (le risposte a voce dell'orale arrivano come m4a/webm/ogg)
+  const name = type.includes('mpeg') ? 'pezzo.mp3' : type.includes('mp4') || type.includes('m4a') || type.includes('aac') ? 'pezzo.m4a'
+    : type.includes('webm') ? 'pezzo.webm' : type.includes('ogg') ? 'pezzo.ogg' : 'pezzo.wav';
   const form = new FormData();
   form.append('file', new Blob([audio], { type }), name);
   form.append('model', MODEL);

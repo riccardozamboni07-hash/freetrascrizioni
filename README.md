@@ -11,6 +11,10 @@ La tua app personale per **trascrivere le lezioni**, anche di 2 ore, in pochi mi
 - **Ripasso per materia** con le flashcard di tutte le lezioni e lo storico dei risultati
 - **Glossario per materia** creato da solo a ogni lezione salvata, con flashcard e download in Word
 - **Esami e sezione Oggi**: conto alla rovescia, lezioni da ripassare ogni giorno, esportazione nel calendario
+- **Simulazione dell'orale**: domande a voce o per iscritto, voto in trentesimi e risposta da 30
+- **Mappe concettuali**, **slide e PDF del professore** usati dall'AI, **dispensa** della materia in Word o PDF
+- **Serie di giorni**, **timer di studio** e **promemoria** con notifiche (su iPhone dall'app sulla schermata Home)
+- **Condividi gli appunti** con un link in sola lettura
 - **Menu** per spostarsi tra le sezioni e **profilo** con foto, dati, uscita ed eliminazione dei dati
 - **Chiedi alle tue lezioni**: domande con risposte prese dalle tue lezioni, con le fonti
 - **Versione pubblica** con registrazione (email o Google) e archivio per ogni utente: vedi [PUBBLICA.md](PUBBLICA.md)

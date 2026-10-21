@@ -9,6 +9,9 @@
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0e1512" media="(prefers-color-scheme: dark)">
 <title>Freetrascrizioni</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="/icona-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
 <style>
@@ -299,6 +302,41 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 .anello .nome{font-size:.82rem;font-weight:600;line-height:1.25}
 .anello .nome small{display:block;font-weight:500;color:var(--muted);font-size:.74rem}
 @media (prefers-reduced-motion:reduce){.anello .pieno{transition:none}}
+.segmenti button{font-size:.86rem}
+.anelli{grid-template-columns:repeat(4,1fr)!important}
+.serie{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:12px}
+.serie-top{display:flex;align-items:center;gap:10px}
+.fiamma{font-size:1.8rem;line-height:1}
+.serie-top strong{display:block;font-size:1.1rem}
+.serie-top small{color:var(--muted);font-size:.82rem}
+.traguardi{display:flex;flex-wrap:wrap;gap:6px}
+.traguardi span{font-size:.78rem;font-weight:600;border-radius:999px;padding:.2rem .6rem;border:1px solid var(--line);color:var(--muted)}
+.traguardi span.ok{background:var(--accent-soft);border-color:transparent;color:var(--accent-text)}
+.timer-grande{font-size:3.2rem;font-weight:700;letter-spacing:-.02em;text-align:center;font-variant-numeric:tabular-nums;line-height:1.1}
+.timer-grande.attivo{color:var(--accent-text)}
+.mat-lista{display:flex;flex-direction:column;gap:6px}
+.mat-lista .row{justify-content:space-between;padding:6px 10px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.orale-esito{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:12px}
+.orale-esito p{margin:0}
+.orale-esito ul{margin:.2rem 0;padding-left:1.2rem}
+.orale-esito details summary{cursor:pointer;font-weight:600;color:var(--accent-text)}
+.voto{display:flex;align-items:baseline;gap:4px}
+.voto b{font-size:2.4rem;font-weight:700;line-height:1;color:var(--accent-text);font-variant-numeric:tabular-nums}
+.voto.grande b{font-size:3.4rem}
+.voto.basso b{color:var(--err)}
+.voto span{color:var(--muted);font-weight:600}
+.mappa{display:flex;flex-direction:column;gap:10px}
+.mappa .radice{align-self:center;background:var(--accent);color:var(--accent-fg);border-radius:999px;padding:.55rem 1.2rem;font-weight:700;text-align:center}
+.mappa .ramo{border:1px solid var(--line);border-left:4px solid var(--anello-2);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;background:var(--surface)}
+.mappa .ramo:nth-child(3n){border-left-color:var(--anello-1)}
+.mappa .ramo:nth-child(3n+1){border-left-color:var(--anello-3)}
+.mappa .ramo > b{font-size:1rem}
+.mappa .nota{color:var(--muted);font-size:.86rem}
+.mappa .figli{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.mappa .figlio{background:var(--accent-soft);border-radius:12px;padding:.3rem .65rem;font-size:.88rem;font-weight:600}
+.mappa .figlio small{display:block;font-weight:400;color:var(--muted);font-size:.78rem}
+.mappa .nipoti{font-weight:400;font-size:.8rem;color:var(--muted)}
+.cond-box{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
 .banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px;border-radius:18px;border:1px solid var(--warn)}
 .banner p{margin:0;flex:1 1 240px}
 .live{font-size:.78rem;font-weight:600;color:var(--rec)}
@@ -424,6 +462,10 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <span class="chip" id="usoNota">si azzera ogni notte</span>
     </div>
     <div class="anelli" id="anelli"></div>
+    <div class="serie" id="serieBox" hidden>
+      <div class="serie-top"><span class="fiamma" aria-hidden="true">🔥</span><div><strong id="serieN"></strong><small id="serieRec"></small></div></div>
+      <div class="traguardi" id="traguardi" aria-label="Traguardi"></div>
+    </div>
   </section>
 
   <section class="panel priv" aria-labelledby="lOggi" id="oggiPanel">
@@ -447,6 +489,41 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       </div>
     </details>
     <div class="status" id="oggiStatus" role="status"></div>
+  </section>
+
+  <section class="panel priv" aria-labelledby="lTimer" id="timerPanel">
+    <div class="row between">
+      <span class="label" id="lTimer">Sessione di studio</span>
+      <span class="chip" id="timerChip">Pomodoro</span>
+    </div>
+    <div class="timer-grande" id="timerTempo" aria-live="polite">25:00</div>
+    <p class="note" id="timerNota">Studia senza distrazioni: a fine sessione il tempo si aggiunge all'anello Studio.</p>
+    <div class="form">
+      <label class="field"><span>Durata</span><select id="timerDurata"><option value="25">25 minuti</option><option value="50">50 minuti</option><option value="15">15 minuti</option></select></label>
+      <label class="field"><span>Materia (facoltativa)</span><input type="text" id="timerMateria" list="materieList" placeholder="es. Diritto pubblico"></label>
+    </div>
+    <div class="row">
+      <button type="button" class="primary" id="timerAvvia">Avvia</button>
+      <button type="button" id="timerPausa" hidden>Pausa</button>
+      <button type="button" id="timerFine" hidden>Termina</button>
+    </div>
+  </section>
+
+  <section class="panel priv" aria-labelledby="lNotif" id="notifPanel">
+    <div class="row between">
+      <span class="label" id="lNotif">Promemoria</span>
+      <span class="chip" id="notifChip">spenti</span>
+    </div>
+    <p class="note" id="notifNota">Una notifica al giorno quando hai lezioni da ripassare o rischi di perdere la serie.</p>
+    <div class="row">
+      <label class="field" style="flex:0 0 auto"><span>Ora</span>
+        <select id="notifOra"><option value="8">8:00</option><option value="13">13:00</option><option value="17">17:00</option><option value="18" selected>18:00</option><option value="19">19:00</option><option value="20">20:00</option><option value="21">21:00</option></select>
+      </label>
+      <button type="button" class="primary" id="notifAttiva" style="align-self:flex-end">Attiva promemoria</button>
+      <button type="button" id="notifProva" style="align-self:flex-end" hidden>Prova</button>
+      <button type="button" class="danger" id="notifSpegni" style="align-self:flex-end" hidden>Spegni</button>
+    </div>
+    <div class="status" id="notifStatus" role="status"></div>
   </section>
 
   <section class="panel" aria-labelledby="l1">
@@ -558,6 +635,12 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
           <span class="note" id="lavNota">Facoltative: l'AI le usa per schemi, formule e numeri giusti negli appunti.</span>
         </div>
         <div class="thumbs" id="lavThumbs" hidden></div>
+        <div class="row">
+          <label class="btn" for="matIn">📎 Slide o PDF del professore</label>
+          <input type="file" id="matIn" accept=".pdf,.pptx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain">
+          <span class="note" id="matNota">Facoltativi: l'AI li usa per appunti, flashcard, orale e Chiedi.</span>
+        </div>
+        <div class="mat-lista" id="matLista" hidden></div>
       </div>
       <div class="row">
         <button type="button" class="primary" id="aiAppunti">Crea appunti</button>
@@ -649,6 +732,59 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <div class="status" id="fcStatus" role="status"></div>
   </section>
 
+  <section class="panel priv" aria-labelledby="lOrale" id="oralePanel">
+    <span class="label" id="lOrale">Simulazione dell'orale</span>
+    <div id="oraleStart" style="display:flex;flex-direction:column;gap:12px">
+      <p class="note">L'AI ti interroga sulle lezioni salvate di una materia. Rispondi a voce o per iscritto: ricevi un voto in trentesimi, cosa hai detto bene, cosa mancava e la risposta da 30.</p>
+      <div class="row">
+        <select id="oraleMateria" aria-label="Materia dell'orale"></select>
+        <select id="oraleN" aria-label="Numero di domande"><option value="3">3 domande</option><option value="5" selected>5 domande</option><option value="8">8 domande</option></select>
+      </div>
+      <button type="button" class="primary" id="oraleInizia">Inizia l'interrogazione</button>
+      <div id="oraleStorico" class="note" hidden></div>
+    </div>
+    <div id="oraleQ" hidden style="display:flex;flex-direction:column;gap:12px">
+      <div class="row between"><span class="note" id="oraleConta"></span><button type="button" id="oraleEsci">Esci</button></div>
+      <p class="fc-q" id="oraleDomanda"></p>
+      <small class="note" id="oraleFonte"></small>
+      <div class="row">
+        <button type="button" class="rec" id="oraleRec"><span class="dot"></span><span id="oraleRecTxt">Rispondi a voce</span></button>
+        <span class="timer" id="oraleTimer" hidden>00:00</span>
+      </div>
+      <textarea id="oraleRisposta" rows="5" placeholder="Oppure scrivi qui la risposta. Se rispondi a voce, la trascrizione compare qui e puoi correggerla."></textarea>
+      <button type="button" class="primary" id="oraleConsegna">Consegna la risposta</button>
+      <div class="orale-esito" id="oraleEsito" hidden>
+        <div class="voto"><b id="oraleVoto"></b><span>/30</span></div>
+        <p id="oraleGiudizio"></p>
+        <div id="oraleBene"></div>
+        <div id="oraleMancava"></div>
+        <details><summary>Risposta da 30</summary><p id="oraleModello"></p></details>
+        <button type="button" class="primary" id="oraleAvanti">Prossima domanda</button>
+      </div>
+    </div>
+    <div id="oraleFine" hidden style="display:flex;flex-direction:column;gap:12px">
+      <div class="voto grande"><b id="oraleMedia"></b><span>/30</span></div>
+      <p id="oraleCommento" style="margin:0;font-weight:600"></p>
+      <div id="oraleRiepilogo" class="fc-wrong"></div>
+      <div class="row"><button type="button" class="primary" id="oraleRifai">Nuova interrogazione</button></div>
+    </div>
+    <div class="status" id="oraleStatus" role="status"></div>
+  </section>
+
+  <section class="panel priv" aria-labelledby="lMappa" id="mappaPanel">
+    <div class="row between">
+      <span class="label" id="lMappa">Mappa concettuale</span>
+      <span class="chip" id="mappaLez" hidden></span>
+    </div>
+    <p class="note" id="mappaNota">Apri una lezione dall'archivio: l'AI disegna la mappa dei concetti e dei collegamenti, per il ripasso veloce.</p>
+    <div class="mappa" id="mappaBox"></div>
+    <div class="row">
+      <button type="button" class="primary" id="mappaCrea" disabled>Crea mappa</button>
+      <button type="button" id="mappaWord" hidden>Scarica Word</button>
+    </div>
+    <div class="status" id="mappaStatus" role="status"></div>
+  </section>
+
   <section class="panel priv" aria-labelledby="lAsk">
     <div class="row between">
       <span class="label" id="lAsk">Chiedi alle tue lezioni</span>
@@ -701,7 +837,13 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <div class="row">
       <button type="button" class="primary" id="saveLesson">Salva lezione</button>
       <button type="button" id="newLesson">Nuova lezione</button>
+      <button type="button" id="condBtn" hidden>🔗 Condividi appunti</button>
       <button type="button" id="delLesson" class="danger" hidden>Elimina</button>
+    </div>
+    <div class="cond-box" id="condBox" hidden>
+      <p class="note">Chi ha il link vede gli appunti di questa lezione in sola lettura (mai l'audio).</p>
+      <div class="row"><input type="text" id="condUrl" readonly aria-label="Link di condivisione" style="flex:1 1 220px;width:auto">
+        <button type="button" id="condCopia">Copia</button><button type="button" class="danger" id="condStop">Smetti di condividere</button></div>
     </div>
     <div class="status" id="saveStatus" role="status"></div>
   </section>
@@ -726,7 +868,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 2.7<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.0<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="segmenti" data-tab="trascrivi" id="segTrascrivi" role="tablist" aria-label="Trascrizione o appunti">
     <span class="seg-ind" aria-hidden="true"></span>
     <button type="button" data-sub-btn="trascrizione">Trascrizione</button>
@@ -735,6 +877,8 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
   <div class="segmenti" data-tab="studia" id="segStudia" role="tablist" aria-label="Strumenti di studio">
     <span class="seg-ind" aria-hidden="true"></span>
     <button type="button" data-sub-btn="flashcard">Flashcard</button>
+    <button type="button" data-sub-btn="orale">Orale</button>
+    <button type="button" data-sub-btn="mappa">Mappa</button>
     <button type="button" data-sub-btn="chiedi">Chiedi</button>
     <button type="button" data-sub-btn="glossario">Glossario</button>
   </div>
@@ -747,6 +891,8 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
   <ul class="menu-list">
     <li class="menu-gruppo">Oggi</li>
     <li><button type="button" data-vai="lOggi"><span>📅</span>Oggi ed esami</button></li>
+    <li><button type="button" data-vai="lTimer"><span>⏱️</span>Sessione di studio</button></li>
+    <li><button type="button" data-vai="lNotif"><span>🔔</span>Promemoria</button></li>
     <li class="menu-sep" role="separator"></li>
     <li class="menu-gruppo">Trascrivi</li>
     <li><button type="button" data-vai="l1"><span>🎙️</span>Registra o carica</button></li>
@@ -756,6 +902,8 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <li class="menu-sep" role="separator"></li>
     <li class="menu-gruppo">Studia con l'AI</li>
     <li><button type="button" data-vai="lFc"><span>🃏</span>Flashcard</button></li>
+    <li><button type="button" data-vai="lOrale"><span>🎓</span>Simulazione dell'orale</button></li>
+    <li><button type="button" data-vai="lMappa"><span>🧭</span>Mappa concettuale</button></li>
     <li><button type="button" data-vai="lAsk"><span>💬</span>Chiedi alle tue lezioni</button></li>
     <li><button type="button" data-vai="lGlo"><span>📖</span>Glossario</button></li>
     <li class="menu-sep" role="separator"></li>
@@ -1942,7 +2090,7 @@ async function aiRun(tipo){
     }
     for (let i = 0; i < parti.length && !aiStop; i++) {
       aiSt(`${tipo === 'aggiusta' ? 'Correggo' : 'Scrivo gli appunti'}: parte ${i + 1} di ${parti.length}…`);
-      const r = await aiChiama('ai', { tipo, testo: parti[i], materia, data, parte: i + 1, totale: parti.length, lavagna }, `parte ${i + 1} di ${parti.length}`);
+      const r = await aiChiama('ai', { tipo, testo: parti[i], materia, data, parte: i + 1, totale: parti.length, lavagna, materiale: tipo === 'appunti' ? riduciTesto(materialeTesto(), 9000) : '' }, `parte ${i + 1} di ${parti.length}`);
       if (!r) break;
       let [corpo, ver] = r.testo.split(AI_SEP);
       fatti.push(corpo.trim());
@@ -2245,11 +2393,11 @@ $('delAccOk').addEventListener('click', async () => {
 
 
 /* ---------- Navigazione a schede (con sotto-schede in Trascrivi e Studia) ---------- */
-const MAPPA_TAB = { lUso: ['oggi'], lOggi: ['oggi'], l1: ['trascrivi', 'trascrizione'], l2: ['trascrivi', 'trascrizione'], l3: ['trascrivi', 'trascrizione'], l4: ['trascrivi', 'appunti'],
+const MAPPA_TAB = { lUso: ['oggi'], lOggi: ['oggi'], lTimer: ['oggi'], lNotif: ['oggi'], lOrale: ['studia', 'orale'], lMappa: ['studia', 'mappa'], l1: ['trascrivi', 'trascrizione'], l2: ['trascrivi', 'trascrizione'], l3: ['trascrivi', 'trascrizione'], l4: ['trascrivi', 'appunti'],
   lFc: ['studia', 'flashcard'], lAsk: ['studia', 'chiedi'], lGlo: ['studia', 'glossario'], lSave: ['archivio'], lArch: ['archivio'], l5: ['archivio'] };
 const TITOLI_TAB = { oggi: 'Oggi', trascrivi: 'Trascrivi', studia: 'Studia', archivio: 'Archivio' };
 const ORDINE_TAB = ['oggi', 'trascrivi', 'studia', 'archivio'];
-const ORDINE_SUB = { trascrivi: ['trascrizione', 'appunti'], studia: ['flashcard', 'chiedi', 'glossario'] };
+const ORDINE_SUB = { trascrivi: ['trascrizione', 'appunti'], studia: ['flashcard', 'orale', 'mappa', 'chiedi', 'glossario'] };
 for (const [id, [t, sub]] of Object.entries(MAPPA_TAB)) { const sez = $(id)?.closest('section'); if (sez) { sez.dataset.tab = t; if (sub) sez.dataset.sub = sub; } }
 const passi = document.querySelector('.steps.pub'); if (passi) { passi.dataset.tab = 'trascrivi'; passi.dataset.sub = 'trascrizione'; }
 document.querySelector('header.top')?.after($('segTrascrivi'), $('segStudia'));
@@ -2309,7 +2457,7 @@ try {
 } catch (_) { attivaTab('trascrivi'); }
 
 /* ---------- Anelli dell'utilizzo (tipo app Fitness) ---------- */
-const anelliDati = { tr: null, ai: null, rip: null };
+const anelliDati = { tr: null, ai: null, rip: null, studio: null };
 const fmtOre = sec => { const h = sec / 3600; return (h >= 10 ? Math.round(h) : h.toFixed(1).replace('.', ',')) + ' h'; };
 function disegnaAnelli(){
   const box = $('anelli'); if (!box) return;
@@ -2320,6 +2468,8 @@ function disegnaAnelli(){
       valore: Math.min(100, Math.round(anelliDati.ai.usati / Math.max(1, anelliDati.ai.limite) * 100)) + '%', sotto: 'usata', nome: 'AI', quando: 'oggi' },
     { id: 'rip', colore: 'var(--anello-3)', pct: anelliDati.rip && anelliDati.rip.quota ? anelliDati.rip.fatte / anelliDati.rip.quota : 0,
       valore: anelliDati.rip && anelliDati.rip.quota ? `${anelliDati.rip.fatte}/${anelliDati.rip.quota}` : '–', sotto: anelliDati.rip && anelliDati.rip.quota ? 'lezioni' : 'nessun esame', nome: 'Ripasso', quando: 'oggi', obiettivo: true },
+    anelliDati.studio && { id: 'studio', colore: 'var(--anello-1)', pct: anelliDati.studio.minuti / anelliDati.studio.obiettivo,
+      valore: Math.round(anelliDati.studio.minuti) + "'", sotto: `di ${anelliDati.studio.obiettivo}'`, nome: 'Studio', quando: 'oggi', obiettivo: true },
   ].filter(Boolean);
   for (const v of voci) {
     let el = box.querySelector(`[data-anello="${v.id}"]`);
@@ -2522,6 +2672,358 @@ $('esIcs').addEventListener('click', () => {
   const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Freetrascrizioni//Esami//IT', 'CALSCALE:GREGORIAN', ...ev, 'END:VCALENDAR'].join('\r\n');
   saveFile(new Blob([ics], { type: 'text/calendar' }), 'esami.ics');
 });
+
+/* ---------- Slide e PDF del professore ---------- */
+let matLezione = '', matPending = [];
+function caricaScript(src){
+  return new Promise((ok, ko) => { if (document.querySelector(`script[src="${src}"]`)) return ok(); const sc = document.createElement('script'); sc.src = src; sc.onload = ok; sc.onerror = () => ko(new Error('connessione')); document.head.append(sc); });
+}
+async function estraiTesto(file){
+  const nome = file.name.toLowerCase();
+  if (nome.endsWith('.pdf') || file.type === 'application/pdf') {
+    await caricaScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const doc = await window.pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+    const pagine = [];
+    for (let i = 1; i <= Math.min(doc.numPages, 300); i++) {
+      const c = await (await doc.getPage(i)).getTextContent();
+      pagine.push(`[pagina ${i}] ` + c.items.map(x => x.str).join(' ').replace(/\s+/g, ' ').trim());
+    }
+    return { testo: pagine.join('\n'), info: `${doc.numPages} pagine` };
+  }
+  if (nome.endsWith('.pptx')) {
+    await caricaScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+    const zip = await window.JSZip.loadAsync(file);
+    const slides = Object.keys(zip.files).filter(n => /^ppt\/slides\/slide\d+\.xml$/.test(n)).sort((a, b) => parseInt(a.match(/\d+/)[0]) - parseInt(b.match(/\d+/)[0]));
+    const dec = t => t.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
+    const out = [];
+    for (const [i, n] of slides.entries()) {
+      const xml = await zip.file(n).async('string');
+      out.push(`[slide ${i + 1}] ` + [...xml.matchAll(/<a:t>([\s\S]*?)<\/a:t>/g)].map(m => dec(m[1])).join(' ').replace(/\s+/g, ' ').trim());
+    }
+    return { testo: out.join('\n'), info: `${slides.length} slide` };
+  }
+  return { testo: await file.text(), info: 'testo' };
+}
+function materialeTesto(){ return [matLezione, ...matPending.map(m => `=== ${m.nome} ===\n${m.testo}`)].filter(Boolean).join('\n\n'); }
+function riduciTesto(t, max){
+  t = String(t || '').replace(/\s+/g, ' ').trim(); if (t.length <= max) return t;
+  const n = 6, l = Math.floor(max / n) - 10, passo = (t.length - l) / (n - 1);
+  return Array.from({ length: n }, (_, i) => t.slice(Math.round(i * passo), Math.round(i * passo) + l)).join(' […] ');
+}
+function matRender(){
+  const box = $('matLista'); box.textContent = '';
+  const voci = [];
+  if (matLezione) voci.push({ t: `Slide e PDF salvati con la lezione · ${Math.round(matLezione.length / 1000)}k caratteri`, via: async () => { try { await privApi('materiale?id=' + encodeURIComponent(currentId), { method: 'DELETE' }); matLezione = ''; matRender(); } catch (_) {} } });
+  matPending.forEach((m, i) => voci.push({ t: `${m.nome} · ${m.info} · da salvare con la lezione`, via: () => { matPending.splice(i, 1); matRender(); } }));
+  for (const v of voci) {
+    const r = document.createElement('div'); r.className = 'row';
+    const sp = document.createElement('span'); sp.className = 'note'; sp.textContent = v.t;
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Togli'; b.style.minHeight = '36px'; b.addEventListener('click', v.via);
+    r.append(sp, b); box.append(r);
+  }
+  box.hidden = !voci.length;
+}
+$('matIn').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  aiSt(`Leggo «${f.name}»…`);
+  try {
+    const { testo, info } = await estraiTesto(f);
+    if (testo.replace(/\[(pagina|slide) \d+\]/g, '').trim().length < 50) { aiSt('Non trovo testo nel file: se il PDF è fatto di immagini scansionate, usa «Foto della lavagna».', 'warn'); return; }
+    if (currentId) {
+      await privApi('materiale', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: currentId, nome: f.name, testo }) });
+      matLezione = (matLezione + `\n\n=== ${f.name} ===\n` + testo).trim(); aiSt(`«${f.name}» aggiunto alla lezione (${info}).`);
+    } else { matPending.push({ nome: f.name, testo, info }); aiSt(`«${f.name}» pronto (${info}): verrà salvato con la lezione.`); }
+    matRender();
+  } catch (err) { aiSt(err.message === 'connessione' ? 'Serve la connessione per leggere il file.' : 'Non riesco a leggere il file: ' + err.message, 'err'); }
+});
+async function salvaMatPending(id){
+  for (const m of matPending.splice(0)) {
+    try { await privApi('materiale', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, nome: m.nome, testo: m.testo }) }); matLezione = (matLezione + `\n\n=== ${m.nome} ===\n` + m.testo).trim(); } catch (_) {}
+  }
+  matRender();
+}
+
+/* ---------- Simulazione dell'orale ---------- */
+let oraleStato = null, mr = null, mrPezzi = [], mrInizio = 0, mrTimer = null, mrStream = null;
+function oraleSt(t, kind){ const s = $('oraleStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
+function oraleVista(v){ for (const [id, k] of [['oraleStart', 'start'], ['oraleQ', 'q'], ['oraleFine', 'fine']]) { $(id).hidden = v !== k; $(id).style.display = v === k ? 'flex' : 'none'; } }
+const votoTesto = v => v >= 31 ? '30L' : String(v);
+async function oraleProssima(){
+  const st = oraleStato;
+  $('oraleEsito').hidden = true; $('oraleRisposta').value = ''; $('oraleConsegna').disabled = false; $('oraleConsegna').hidden = false; $('oraleRec').disabled = false;
+  $('oraleConta').textContent = `Domanda ${st.risultati.length + 1} di ${st.n}`;
+  $('oraleDomanda').textContent = 'Il professore sta preparando la domanda…'; $('oraleFonte').textContent = '';
+  try {
+    const d = await privApi('orale-domanda', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ materia: st.materia, gia: st.risultati.map(r => r.domanda) }) });
+    st.cur = d; $('oraleDomanda').textContent = d.domanda; $('oraleFonte').textContent = `Dalla lezione: ${d.lezione.titolo} · ${fmtData(d.lezione.data)}`;
+  } catch (e) { $('oraleDomanda').textContent = ''; oraleSt(e.code === 'limite-ai' ? e.message : 'Non riesco a preparare la domanda: ' + e.message, 'err'); }
+}
+$('oraleInizia').addEventListener('click', () => {
+  const materia = $('oraleMateria').value;
+  if (!materia) { oraleSt('Salva almeno una lezione per avere una materia su cui essere interrogato.', 'warn'); return; }
+  oraleStato = { materia, n: Number($('oraleN').value) || 5, risultati: [], cur: null }; oraleSt(''); oraleVista('q'); oraleProssima();
+});
+$('oraleEsci').addEventListener('click', () => { if (mr) mr.stop(); oraleVista('start'); oraleSt(''); });
+$('oraleRec').addEventListener('click', async () => {
+  if (mr) { mr.stop(); return; }
+  try { mrStream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+  catch (_) { oraleSt('Non ho il permesso di usare il microfono: puoi scrivere la risposta.', 'warn'); return; }
+  const tipo = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg'].find(t => window.MediaRecorder?.isTypeSupported?.(t)) || '';
+  try { mr = new MediaRecorder(mrStream, tipo ? { mimeType: tipo, audioBitsPerSecond: 32000 } : undefined); }
+  catch (_) { mr = new MediaRecorder(mrStream); }
+  mrPezzi = [];
+  mr.ondataavailable = e => { if (e.data && e.data.size) mrPezzi.push(e.data); };
+  mr.onstop = async () => {
+    const tipoReale = (mr.mimeType || tipo || 'audio/mp4').split(';')[0];
+    mrStream.getTracks().forEach(t => t.stop()); clearInterval(mrTimer); mr = null;
+    $('oraleRec').classList.remove('on'); $('oraleRecTxt').textContent = 'Rispondi a voce'; $('oraleTimer').hidden = true;
+    const blob = new Blob(mrPezzi, { type: tipoReale });
+    if (blob.size < 2000) { oraleSt('Registrazione troppo corta: riprova.', 'warn'); return; }
+    $('oraleRec').disabled = true; oraleSt('Trascrivo la tua risposta…');
+    try {
+      const res = await fetch('/api/trascrivi?lang=it', { method: 'POST', headers: { 'content-type': tipoReale, 'x-chiave': privPw || '' }, body: blob });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || 'errore ' + res.status);
+      $('oraleRisposta').value = (($('oraleRisposta').value.trim() + ' ') + (d.text || '')).trim(); oraleSt('Controlla la trascrizione e poi consegna la risposta.');
+    } catch (e) { oraleSt('Non riesco a trascrivere la risposta: ' + e.message + '. Puoi scriverla.', 'err'); }
+    finally { $('oraleRec').disabled = false; }
+  };
+  mr.start(1000); mrInizio = Date.now();
+  $('oraleRec').classList.add('on'); $('oraleRecTxt').textContent = 'Ferma e trascrivi'; $('oraleTimer').hidden = false; oraleSt('Ti ascolto… (massimo 3 minuti)');
+  mrTimer = setInterval(() => { const s = Math.floor((Date.now() - mrInizio) / 1000); $('oraleTimer').textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; if (s >= 180 && mr) mr.stop(); }, 500);
+});
+$('oraleConsegna').addEventListener('click', async () => {
+  const st = oraleStato; if (!st?.cur) return;
+  const risposta = $('oraleRisposta').value.trim();
+  if (risposta.length < 10) { oraleSt('Rispondi a voce o scrivi almeno una frase.', 'warn'); return; }
+  $('oraleConsegna').disabled = true; oraleSt('Il professore sta valutando…');
+  try {
+    const v = await privApi('orale-valuta', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ lezione: st.cur.lezione.id, domanda: st.cur.domanda, punti: st.cur.punti, risposta }) });
+    st.risultati.push({ domanda: st.cur.domanda, voto: v.voto, lezione: st.cur.lezione.titolo });
+    $('oraleVoto').textContent = votoTesto(v.voto); $('oraleVoto').parentElement.classList.toggle('basso', v.voto < 18);
+    $('oraleGiudizio').textContent = v.giudizio;
+    const lista = (id, titolo, voci) => { const box = $(id); box.textContent = ''; if (!voci.length) return; const b = document.createElement('strong'); b.textContent = titolo; const ul = document.createElement('ul'); voci.forEach(x => { const li = document.createElement('li'); li.textContent = x; ul.append(li); }); box.append(b, ul); };
+    lista('oraleBene', 'Bene', v.bene); lista('oraleMancava', 'Mancava', v.mancava);
+    $('oraleModello').textContent = v.modello;
+    $('oraleAvanti').textContent = st.risultati.length >= st.n ? 'Vedi il risultato' : 'Prossima domanda';
+    $('oraleEsito').hidden = false; $('oraleConsegna').hidden = true; oraleSt(''); caricaSerie();
+  } catch (e) { $('oraleConsegna').disabled = false; oraleSt(e.code === 'limite-ai' ? e.message : 'Non riesco a valutare: ' + e.message, 'err'); }
+});
+$('oraleAvanti').addEventListener('click', () => {
+  const st = oraleStato;
+  if (st.risultati.length < st.n) { oraleProssima(); return; }
+  const media = st.risultati.reduce((n, r) => n + Math.min(30, r.voto), 0) / st.risultati.length;
+  $('oraleMedia').textContent = media >= 29.5 && st.risultati.every(r => r.voto >= 30) ? '30L' : Math.round(media);
+  $('oraleMedia').parentElement.classList.toggle('basso', media < 18);
+  $('oraleCommento').textContent = media >= 28 ? 'Eccellente: sei pronto per l’esame.' : media >= 24 ? 'Buona preparazione: rivedi i punti mancanti.' : media >= 18 ? 'Sufficiente: ripassa le lezioni con i voti più bassi.' : 'Non ancora sufficiente: ripassa e riprova.';
+  const box = $('oraleRiepilogo'); box.textContent = '';
+  st.risultati.forEach((r, i) => { const d = document.createElement('div'); d.className = 'fc-item'; const p1 = document.createElement('p'); p1.textContent = `${i + 1}. ${r.domanda}`; const p2 = document.createElement('p'); p2.className = r.voto < 18 ? 'tua' : 'giusta'; p2.textContent = `Voto: ${votoTesto(r.voto)}/30 · ${r.lezione}`; d.append(p1, p2); box.append(d); });
+  oraleVista('fine');
+});
+$('oraleRifai').addEventListener('click', () => { oraleVista('start'); caricaSerie(); });
+
+/* ---------- Mappa concettuale ---------- */
+let mappaDati = null;
+function mappaSt(t, kind){ const s = $('mappaStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
+function mappaDa(l){
+  mappaDati = null; try { mappaDati = l && l.mappa ? JSON.parse(l.mappa) : null; } catch (_) {}
+  $('mappaCrea').disabled = !l; $('mappaCrea').textContent = mappaDati ? 'Rigenera mappa' : 'Crea mappa';
+  $('mappaLez').hidden = !l; $('mappaLez').textContent = l ? l.titolo : '';
+  $('mappaNota').hidden = !!mappaDati;
+  $('mappaNota').textContent = l ? 'Crea la mappa dei concetti e dei collegamenti di questa lezione, per il ripasso veloce.' : 'Apri una lezione dall’archivio: l’AI disegna la mappa dei concetti e dei collegamenti, per il ripasso veloce.';
+  mappaRender();
+}
+function mappaRender(){
+  const box = $('mappaBox'); box.textContent = ''; $('mappaWord').hidden = !mappaDati; if (!mappaDati) return;
+  const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+  box.append(el('div', 'radice', mappaDati.titolo));
+  for (const r of mappaDati.rami || []) {
+    const d = el('div', 'ramo'); d.append(el('b', null, r.titolo)); if (r.nota) d.append(el('span', 'nota', r.nota));
+    if (r.rami?.length) {
+      const f = el('div', 'figli');
+      for (const c of r.rami) { const x = el('div', 'figlio', c.titolo); if (c.nota) x.append(el('small', null, c.nota)); if (c.rami?.length) x.append(el('small', 'nipoti', '→ ' + c.rami.map(n => n.titolo).join(' · '))); f.append(x); }
+      d.append(f);
+    }
+    box.append(d);
+  }
+}
+$('mappaCrea').addEventListener('click', async () => {
+  if (!currentId) return;
+  $('mappaCrea').disabled = true; mappaSt('Disegno la mappa…');
+  try { const r = await privApi('mappa', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: currentId }) }); mappaDati = r.mappa; $('mappaNota').hidden = true; $('mappaCrea').textContent = 'Rigenera mappa'; mappaRender(); mappaSt(''); }
+  catch (e) { mappaSt(e.code === 'limite-ai' ? e.message : 'Non riesco a creare la mappa: ' + e.message, 'err'); }
+  finally { $('mappaCrea').disabled = false; }
+});
+$('mappaWord').addEventListener('click', () => {
+  if (!mappaDati) return;
+  const md = `# ${mappaDati.titolo}\n\n` + (mappaDati.rami || []).map(r => `## ${r.titolo}\n${r.nota ? r.nota + '\n' : ''}` + (r.rami || []).map(c => `- **${c.titolo}**${c.nota ? ': ' + c.nota : ''}${c.rami?.length ? ' (' + c.rami.map(n => n.titolo).join(', ') + ')' : ''}`).join('\n')).join('\n\n');
+  scaricaWord(md, 'Mappa_' + ($('mappaLez').textContent || 'lezione'));
+});
+function scaricaWord(md, nome){
+  const doc = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>${nome}</title>
+<style>body{font-family:Calibri,Arial,sans-serif;font-size:12pt;line-height:1.5}h1{font-size:20pt;color:#14573d}h2{font-size:15pt;color:#14573d;margin-top:16pt}</style></head><body>${mdHtml(md)}</body></html>`;
+  saveFile(new Blob(['﻿', doc], { type: 'application/msword' }), nome.replace(/[^\p{L}\p{N}]+/gu, '_').slice(0, 60) + '.doc');
+}
+
+/* ---------- Dispensa della materia (Word o PDF) ---------- */
+async function dispensa(materia, formato, btn){
+  const st = $('archStatus'); st.className = 'status'; st.textContent = 'Preparo la dispensa…';
+  const finestra = formato === 'pdf' ? window.open('', '_blank') : null;
+  btn.disabled = true;
+  try {
+    const [items, glo] = await Promise.all([privApi('appunti?materia=' + encodeURIComponent(materia)), privApi('glossario?materia=' + encodeURIComponent(materia)).catch(() => [])]);
+    if (!items.length) { st.textContent = `Nessuna lezione di ${materia} ha ancora appunti: creali in Trascrivi → Appunti e salva la lezione.`; st.className = 'status warn'; finestra?.close(); return; }
+    const esc = x => String(x).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    const senzaTitolo = a => a.trim().replace(/^#\s+.*\n(.*·.*\n)?/, '');
+    let corpo = `<div class="copertina"><h1>${esc(materia)}</h1><p>Dispensa · ${items.length} ${items.length === 1 ? 'lezione' : 'lezioni'}${glo.length ? ' · glossario di ' + glo.length + ' termini' : ''}</p><p>Aggiornata al ${esc(fmtData(todayISO()))}</p></div>`;
+    corpo += `<h2>Indice</h2><ol>${items.map(i => `<li>${esc(i.titolo)} <span class="data">${esc(fmtData(i.data))}</span></li>`).join('')}${glo.length ? '<li>Glossario</li>' : ''}</ol>`;
+    for (const i of items) corpo += `<section class="lezione"><h1>${esc(i.titolo)}</h1><p class="data">${esc(fmtData(i.data))}</p>${mdHtml(senzaTitolo(i.appunti))}</section>`;
+    if (glo.length) corpo += `<section class="lezione"><h1>Glossario</h1>${glo.map(t => `<p><b>${esc(t.termine)}</b>: ${esc(t.definizione)}</p>`).join('')}</section>`;
+    const stile = `body{font-family:"Plus Jakarta Sans",Calibri,Arial,sans-serif;font-size:12pt;line-height:1.55;color:#10201a;max-width:720px;margin:0 auto;padding:24px}
+h1{font-size:20pt;color:#14573d;margin:0 0 4pt}h2{font-size:14pt;color:#14573d;margin-top:14pt}h3{font-size:12.5pt}.data{color:#5b6b63;font-size:10pt}
+.copertina{padding:120px 0 60px}.copertina h1{font-size:30pt}.lezione{page-break-before:always;break-before:page;padding-top:8px}
+@media print{body{padding:0}@page{margin:18mm}}`;
+    const nome = 'Dispensa_' + materia.replace(/[^\p{L}\p{N}]+/gu, '_');
+    if (formato === 'word') {
+      const doc = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>${esc(nome)}</title><style>${stile}</style></head><body>${corpo}</body></html>`;
+      await saveFile(new Blob(['﻿', doc], { type: 'application/msword' }), nome + '.doc');
+      st.textContent = `Dispensa di ${materia} pronta (${items.length} lezioni).`;
+    } else {
+      finestra.document.write(`<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(nome)}</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap"><style>${stile}</style></head><body>${corpo}<script>setTimeout(()=>print(),700)<\/script></body></html>`);
+      finestra.document.close();
+      st.textContent = 'Si è aperta la dispensa: scegli «Salva come PDF» (su iPhone: Condividi → Stampa → Salva su File).';
+    }
+  } catch (e) { finestra?.close(); st.textContent = 'Non riesco a preparare la dispensa: ' + e.message; st.className = 'status err'; }
+  finally { btn.disabled = false; }
+}
+
+/* ---------- Serie di giorni e anello Studio ---------- */
+const TRAGUARDI = [3, 7, 14, 30, 60, 100], OBIETTIVO_STUDIO = 60;
+let serieDati = null;
+async function caricaSerie(){
+  try {
+    serieDati = await privApi('serie');
+    const s = serieDati;
+    $('serieBox').hidden = false;
+    $('serieN').textContent = s.serie ? `${s.serie} ${s.serie === 1 ? 'giorno' : 'giorni'} di fila` : 'Inizia una serie oggi';
+    $('serieRec').textContent = (s.oggiFatto ? 'Oggi fatto ✓' : s.serie ? 'Studia oggi per non perderla' : 'Ripassa, fai un quiz, un orale o una sessione di studio') + (s.record > 1 ? ` · record ${s.record}` : '');
+    const box = $('traguardi'); box.textContent = '';
+    TRAGUARDI.forEach(t => { const sp = document.createElement('span'); sp.textContent = `${t} giorni`; if (s.record >= t) sp.className = 'ok'; box.append(sp); });
+    anelliDati.studio = { minuti: s.minutiOggi || 0, obiettivo: OBIETTIVO_STUDIO }; disegnaAnelli();
+    if (s.orali?.length) { $('oraleStorico').hidden = false; $('oraleStorico').textContent = 'Ultimi voti: ' + s.orali.slice(0, 6).map(o => `${o.materia} ${votoTesto(o.voto)}`).join(' · '); }
+  } catch (_) {}
+}
+
+/* ---------- Timer di studio (Pomodoro) ---------- */
+const TIMER_KEY = 'ft:timer';
+let timerInt = null;
+function timerLeggi(){ try { return JSON.parse(localStorage.getItem(TIMER_KEY) || 'null'); } catch (_) { return null; } }
+function timerScrivi(t){ try { t ? localStorage.setItem(TIMER_KEY, JSON.stringify(t)) : localStorage.removeItem(TIMER_KEY); } catch (_) {} }
+function timerRender(){
+  const t = timerLeggi();
+  const resto = t ? (t.pausa != null ? t.pausa : Math.max(0, t.fine - Date.now())) : Number($('timerDurata').value) * 60000;
+  const s = Math.ceil(resto / 1000);
+  $('timerTempo').textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  $('timerTempo').classList.toggle('attivo', !!t && t.pausa == null);
+  $('timerAvvia').hidden = !!t && t.pausa == null; $('timerAvvia').textContent = t && t.pausa != null ? 'Riprendi' : 'Avvia';
+  $('timerPausa').hidden = !t || t.pausa != null; $('timerFine').hidden = !t;
+  $('timerDurata').disabled = !!t;
+  if (t && t.pausa == null && Date.now() >= t.fine) timerCompleta(t.durata, t.materia, true);
+}
+async function timerCompleta(minuti, materia, intera){
+  timerScrivi(null); clearInterval(timerInt); timerInt = null; timerRender();
+  if (minuti >= 1) {
+    try { await privApi('studio', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ minuti: Math.round(minuti), materia }) }); } catch (_) {}
+    caricaSerie();
+  }
+  $('timerNota').textContent = intera ? `Sessione completata: +${Math.round(minuti)} minuti di studio. Fai 5 minuti di pausa!` : `Sessione chiusa: +${Math.round(minuti)} minuti.`;
+  if (intera) {
+    try { navigator.vibrate?.([200, 100, 200]); } catch (_) {}
+    try { if (Notification?.permission === 'granted') (await navigator.serviceWorker?.getRegistration())?.showNotification('Sessione completata ⏱️', { body: `+${Math.round(minuti)} minuti di studio. Fai una pausa!`, icon: '/icona-192.png', tag: 'timer' }); } catch (_) {}
+  }
+}
+function timerTick(){ clearInterval(timerInt); timerInt = setInterval(timerRender, 1000); timerRender(); }
+$('timerAvvia').addEventListener('click', () => {
+  const t = timerLeggi();
+  if (t && t.pausa != null) { t.fine = Date.now() + t.pausa; t.pausa = null; timerScrivi(t); }
+  else { const d = Number($('timerDurata').value) || 25; timerScrivi({ inizio: Date.now(), fine: Date.now() + d * 60000, durata: d, materia: $('timerMateria').value.trim(), pausa: null }); }
+  $('timerNota').textContent = 'Concentrati: puoi chiudere l’app, il timer continua.'; timerTick();
+});
+$('timerPausa').addEventListener('click', () => { const t = timerLeggi(); if (!t) return; t.pausa = Math.max(0, t.fine - Date.now()); timerScrivi(t); timerRender(); });
+$('timerFine').addEventListener('click', () => {
+  const t = timerLeggi(); if (!t) return;
+  const fatti = t.durata - (t.pausa != null ? t.pausa : Math.max(0, t.fine - Date.now())) / 60000;
+  timerCompleta(fatti >= 5 ? fatti : 0, t.materia, false);
+  if (fatti < 5) $('timerNota').textContent = 'Sessione annullata (meno di 5 minuti).';
+});
+$('timerDurata').addEventListener('change', timerRender);
+if (timerLeggi()) timerTick(); else timerRender();
+
+/* ---------- Promemoria (notifiche) ---------- */
+const swPronto = 'serviceWorker' in navigator ? navigator.serviceWorker.register('/sw.js').catch(() => null) : Promise.resolve(null);
+function notifSt(t, kind){ const s = $('notifStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
+const suIos = /iPhone|iPad|iPod/.test(navigator.userAgent);
+const daHome = () => window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true;
+function b64aU8(b){ const s = atob(b.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((b.length + 3) % 4)); return Uint8Array.from(s, c => c.charCodeAt(0)); }
+async function notifStato(){
+  const reg = await swPronto;
+  const supportate = !!(reg && 'PushManager' in window && 'Notification' in window);
+  if (!supportate) {
+    $('notifAttiva').disabled = true;
+    $('notifNota').textContent = suIos && !daHome() ? 'Su iPhone i promemoria funzionano dall’app sulla schermata Home: tocca Condividi → «Aggiungi alla schermata Home», poi aprila da lì.' : 'Questo browser non supporta le notifiche.';
+    return;
+  }
+  const sub = await reg.pushManager.getSubscription().catch(() => null);
+  let ora = null;
+  try { const r = await privApi('push-chiave'); ora = r.stato?.ora; } catch (_) {}
+  const attivi = !!sub && Notification.permission === 'granted';
+  $('notifChip').textContent = attivi ? `alle ${ora ?? $('notifOra').value}:00` : 'spenti'; $('notifChip').classList.toggle('ok', attivi);
+  if (attivi && ora != null) $('notifOra').value = String(ora);
+  $('notifAttiva').hidden = attivi; $('notifProva').hidden = !attivi; $('notifSpegni').hidden = !attivi;
+}
+async function notifIscrivi(){
+  const reg = await swPronto; if (!reg) return;
+  const perm = await Notification.requestPermission();
+  if (perm !== 'granted') { notifSt('Hai negato le notifiche: puoi riattivarle dalle impostazioni del telefono.', 'warn'); return; }
+  const { chiave } = await privApi('push-chiave');
+  let sub = await reg.pushManager.getSubscription();
+  if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64aU8(chiave) });
+  await privApi('push-iscrivi', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ iscrizione: sub.toJSON(), ora: Number($('notifOra').value) }) });
+}
+$('notifAttiva').addEventListener('click', async () => {
+  $('notifAttiva').disabled = true;
+  try { await notifIscrivi(); notifSt(`Promemoria attivi: ogni giorno alle ${$('notifOra').value}:00, solo quando c’è qualcosa da ripassare.`); }
+  catch (e) { notifSt('Non riesco ad attivare i promemoria: ' + e.message, 'err'); }
+  finally { $('notifAttiva').disabled = false; notifStato(); }
+});
+$('notifOra').addEventListener('change', async () => { const reg = await swPronto; if (await reg?.pushManager.getSubscription()) { try { await notifIscrivi(); notifSt(`Ora cambiata: alle ${$('notifOra').value}:00.`); } catch (_) {} notifStato(); } });
+$('notifProva').addEventListener('click', async () => { try { const r = await privApi('push-prova', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }); notifSt(r.inviate ? 'Notifica di prova inviata: arriva in pochi secondi.' : 'Non riesco a inviarla: prova a spegnere e riattivare i promemoria.', r.inviate ? '' : 'warn'); } catch (e) { notifSt('Errore: ' + e.message, 'err'); } });
+$('notifSpegni').addEventListener('click', async () => {
+  try { const reg = await swPronto; const sub = await reg?.pushManager.getSubscription(); if (sub) { await privApi('push-disiscrivi', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ endpoint: sub.endpoint }) }); await sub.unsubscribe(); } notifSt('Promemoria spenti.'); }
+  catch (e) { notifSt('Errore: ' + e.message, 'err'); }
+  notifStato();
+});
+
+/* ---------- Condividi gli appunti ---------- */
+function condDa(l){
+  $('condBtn').hidden = !l; $('condBox').hidden = !(l && l.condiviso);
+  if (l && l.condiviso) $('condUrl').value = location.origin + '/c/' + l.condiviso;
+}
+$('condBtn').addEventListener('click', async () => {
+  if (!currentId) return;
+  try {
+    const r = await privApi('condividi', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: currentId }) });
+    $('condUrl').value = r.url; $('condBox').hidden = false;
+    if (isMobile && navigator.share) { try { await navigator.share({ title: $('titolo').value || 'Appunti', text: 'Ecco gli appunti della lezione', url: r.url }); } catch (_) {} }
+    else privStatus('Link pronto: copialo e mandalo ai compagni.');
+  } catch (e) { privStatus('Non riesco a creare il link: ' + e.message, 'err'); }
+});
+$('condCopia').addEventListener('click', () => copy($('condUrl').value, $('condCopia'), 'Copia'));
+$('condStop').addEventListener('click', async () => {
+  try { await privApi('condividi?id=' + encodeURIComponent(currentId), { method: 'DELETE' }); $('condBox').hidden = true; privStatus('Il link non funziona più.'); } catch (e) { privStatus('Errore: ' + e.message, 'err'); }
+});
+oraleVista('start'); matRender(); mappaDa(null);
 /* ---------- Chiedi alle tue lezioni ---------- */
 let askStoria = [];
 function askSt(t, kind){ const s = $('askStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
@@ -2600,7 +3102,7 @@ $('fcCrea').addEventListener('click', async () => {
   $('fcCrea').disabled = true; fcSt('Creo le flashcard… di solito ci vogliono 10-40 secondi.');
   try {
     const r = await privApi('flashcard', { method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ testo, materia: materiaCorrente(), quante: Number($('fcQuante').value) }) });
+      body: JSON.stringify({ testo: materialeTesto() ? testo + '\n\nSLIDE DEL PROFESSORE:\n' + riduciTesto(materialeTesto(), 20000) : testo, materia: materiaCorrente(), quante: Number($('fcQuante').value) }) });
     fcSet(r.carte, true);
     if (r.uso && fcUso) { fcUso.uso = r.uso; fcLimiti(); }
     const salvate = await fcSalva();
@@ -2683,6 +3185,9 @@ async function fcRegistra(risultati){
   } catch (_) {}
 }
 function aggiornaSelezioni(items){
+  const om = $('oraleMateria'), primaO = om.value || materiaCorrente();
+  om.textContent = ''; [...new Set(items.map(i => i.materia))].sort((a, b) => a.localeCompare(b, 'it')).forEach(m => { const o = document.createElement('option'); o.value = o.textContent = m; om.append(o); });
+  if ([...om.options].some(o => o.value === primaO)) om.value = primaO;
   const conFc = [...new Set(items.filter(i => i.conFlashcard).map(i => i.materia))].sort((a, b) => a.localeCompare(b, 'it'));
   const sel = $('fcMateria'), prima = sel.value || materiaCorrente();
   sel.textContent = ''; conFc.forEach(m => { const o = document.createElement('option'); o.value = o.textContent = m; sel.append(o); });
@@ -2741,7 +3246,7 @@ async function unlock(pw, silent){
     const v = await privApi('verifica');
     if (!MULTI) lsSet(PW_KEY, pw);
     document.body.classList.remove('locked'); attivaTab(tabAttiva || 'trascrivi');
-    showUsage(v); fcLimiti(v); mostraAccount(v); loadList(); caricaPrecedenti(); caricaProfilo(); caricaOggi(); gloCaricaMaterie();
+    showUsage(v); fcLimiti(v); mostraAccount(v); loadList(); caricaPrecedenti(); caricaProfilo(); caricaOggi(); gloCaricaMaterie(); caricaSerie(); notifStato();
     return true;
   } catch (e) {
     privPw = null;
@@ -2850,10 +3355,12 @@ function renderList(items){
     });
     const body = el('div', 'subject-body');
     const tools = el('div', 'subject-tools');
-    const dl = el('button', null, 'Scarica appunti'); dl.type = 'button';
+    const dl = el('button', null, 'Appunti .txt'); dl.type = 'button';
     dl.title = `Scarica in un unico file tutti gli appunti di ${materia}, in ordine di data`;
     dl.addEventListener('click', () => scaricaAppunti(materia, dl));
-    tools.append(dl);
+    const dw = el('button', null, 'Dispensa Word'); dw.type = 'button'; dw.addEventListener('click', () => dispensa(materia, 'word', dw));
+    const dp = el('button', null, 'Dispensa PDF'); dp.type = 'button'; dp.addEventListener('click', () => dispensa(materia, 'pdf', dp));
+    tools.append(dw, dp, dl);
     const ul = el('ul');
     for (const it of list) {
       const li = el('li'); const b = el('button', 'lez'); b.type = 'button';
@@ -2902,7 +3409,7 @@ function setCurrent(l){
   $('currentChip').textContent = l ? 'Lezione salvata' : 'Nuova lezione';
   $('currentChip').classList.toggle('ok', !!l);
   $('delLesson').hidden = !l;
-  disarmDel();
+  disarmDel(); condDa(l);
 }
 async function openLesson(id){
   if (running || segRec) { privStatus('Aspetta che finisca la trascrizione o la registrazione in corso.', 'warn'); return; }
@@ -2914,6 +3421,7 @@ async function openLesson(id){
     setCurrent(l); doneSec = l.durata || 0; onMateria();
     let fc = []; try { fc = l.flashcard ? JSON.parse(l.flashcard) : []; } catch (_) {}
     fcSet(fc, false); fcSt(''); $('gloAggiorna').hidden = false;
+    matLezione = l.materiale || ''; matPending = []; matRender(); mappaDa(l);
     privStatus(`Aperta: ${l.titolo} (${l.materia}).`);
     loadList();
     $('l3').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -2932,7 +3440,7 @@ $('saveLesson').addEventListener('click', async () => {
     setCurrent(l); $('titolo').value = l.titolo;
     if (fcDaSalvare) await fcSalva();
     privStatus(`Salvata in «${l.materia}».`);
-    gloEstrai(l.id, true); caricaOggi();
+    gloEstrai(l.id, true); caricaOggi(); salvaMatPending(l.id); mappaDa(l);
     loadList(); caricaPrecedenti();
   } catch (e) { privStatus(e.status === 401 ? 'La password non è più valida: ricarica la pagina e reinseriscila.' : 'Non riesco a salvare: ' + e.message, 'err'); }
   finally { $('saveLesson').disabled = false; }
@@ -2940,7 +3448,7 @@ $('saveLesson').addEventListener('click', async () => {
 function privNewRun(){
   setCurrent(null);
   $('appunti').value = ''; $('titolo').value = ''; $('dataLez').value = todayISO();
-  privStatus(''); fcSet([], false); fcSt(''); lavFoto = []; lavRender();
+  privStatus(''); fcSet([], false); fcSt(''); lavFoto = []; lavRender(); matLezione = ''; matPending = []; matRender(); mappaDa(null);
 }
 $('newLesson').addEventListener('click', () => {
   if (running || segRec) { privStatus('Aspetta che finisca la trascrizione o la registrazione in corso.', 'warn'); return; }
