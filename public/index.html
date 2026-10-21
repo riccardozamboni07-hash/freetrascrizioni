@@ -17,6 +17,7 @@
 :root{
   --bg:#f3f5f9; --surface:#ffffff; --fg:#17223b; --muted:#647089; --line:#e2e6ee;
   --accent:#2d4fd8; --accent-fg:#ffffff; --accent-soft:#e9eefe; --mark:#ffe45c; --mark-fg:#17223b;
+  --vetro:rgba(250,250,247,.95); --vetro-bordo:rgba(23,34,59,.08);
   --rec:#d13a4a; --warn:#946200; --err:#c62f2f; --good:#1d7f52;
   --sans:"Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
@@ -25,10 +26,12 @@
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#0f1524; --surface:#182037; --fg:#eef1f8; --muted:#9aa5c0; --line:#2a3452;
   --accent:#8fa8ff; --accent-fg:#0f1524; --accent-soft:#1f2a4a; --mark:#ffd93d; --mark-fg:#0f1524;
+  --vetro:rgba(28,28,30,.92); --vetro-bordo:rgba(255,255,255,.08);
   --rec:#ff8a94; --warn:#e8b955; --err:#ff8a80; --good:#6fd3a0; color-scheme:dark; } }
 :root[data-theme="dark"]{
   --bg:#0f1524; --surface:#182037; --fg:#eef1f8; --muted:#9aa5c0; --line:#2a3452;
   --accent:#8fa8ff; --accent-fg:#0f1524; --accent-soft:#1f2a4a; --mark:#ffd93d; --mark-fg:#0f1524;
+  --vetro:rgba(28,28,30,.92); --vetro-bordo:rgba(255,255,255,.08);
   --rec:#ff8a94; --warn:#e8b955; --err:#ff8a80; --good:#6fd3a0; color-scheme:dark; }
 
 *{box-sizing:border-box}
@@ -206,15 +209,19 @@ body.locked .topbar{display:none}
 .termine .via{min-height:0;width:28px;height:28px;padding:0;justify-content:center;border:none;color:var(--muted);background:transparent}
 
 /* ---------- App: schede in basso, una schermata alla volta ---------- */
-body.app{padding-bottom:calc(96px + env(safe-area-inset-bottom, 0px))}
+body.app{padding-bottom:calc(90px + env(safe-area-inset-bottom, 0px))}
 body.app header.top > p{display:none}
 body.app main > [data-tab]:not(.vis){display:none!important}
 .tabbar{display:none}
 body.app:not(.locked) .tabbar{display:flex}
-.tabbar{position:fixed;z-index:30;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom, 0px));
-  width:min(560px,calc(100vw - 24px));background:var(--surface);border-radius:26px;padding:6px;gap:4px;
-  box-shadow:0 10px 30px rgba(23,34,59,.14),0 0 0 1px var(--line)}
-.tabbar button{flex:1;flex-direction:column;gap:2px;border:none;background:transparent;border-radius:20px;padding:6px 4px;min-height:56px;font-size:.78rem;font-weight:600;color:var(--muted);position:relative}
+.tabbar{position:fixed;z-index:30;left:0;right:0;bottom:0;justify-content:center;gap:4px;
+  padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px,env(safe-area-inset-left,0px));
+  background:var(--surface);border-top:1px solid var(--vetro-bordo)}
+/* effetto vetro: il contenuto sotto si intravede solo come colore sfocato, il testo non si legge */
+@supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
+  .tabbar{background:var(--vetro);-webkit-backdrop-filter:saturate(180%) blur(30px);backdrop-filter:saturate(180%) blur(30px)}
+}
+.tabbar button{flex:1;max-width:150px;flex-direction:column;gap:2px;border:none;background:transparent;border-radius:20px;padding:6px 4px;min-height:56px;font-size:.78rem;font-weight:600;color:var(--muted);position:relative}
 .tabbar svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .tabbar button[aria-current="page"]{color:var(--fg)}
 .tabbar button svg,.tabbar button span{position:relative;z-index:1}
@@ -656,7 +663,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 2.2<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 2.3<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="segmenti" data-tab="trascrivi" id="segTrascrivi" role="tablist" aria-label="Trascrizione o appunti">
     <span class="seg-ind" aria-hidden="true"></span>
     <button type="button" data-sub-btn="trascrizione">Trascrizione</button>
