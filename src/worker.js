@@ -85,7 +85,10 @@ export class Store extends DurableObject {
     return r;
   }
   chiudiSessione(token) { this.sql.exec('DELETE FROM sessioni WHERE token = ?', token); }
-  eliminaUtente(id) { this.sql.exec('DELETE FROM sessioni WHERE utente = ?', id); this.sql.exec('DELETE FROM utenti WHERE id = ?', id); return { ok: true }; }
+  eliminaUtente(id) {
+    for (const q of ['DELETE FROM sessioni WHERE utente = ?', 'DELETE FROM condivisi WHERE utente = ?', 'DELETE FROM push_utenti WHERE utente = ?', 'DELETE FROM utenti WHERE id = ?']) this.sql.exec(q, id);
+    return { ok: true };
+  }
   // massimo 10 tentativi sbagliati ogni 15 minuti per email
   troppiTentativi(email) {
     this.sql.exec('DELETE FROM tentativi WHERE quando < ?', Date.now() - 15 * 60000);
@@ -638,6 +641,17 @@ export default {
             totali: { utenti: utenti.length, attivi7: utenti.filter(u => u.ultimo > settimana).length, oggi: await auth().usoOggi() },
             predefinito: def,
           });
+        }
+        if (azione === 'admin/elimina' && request.method === 'POST') {
+          const b = await request.json().catch(() => null);
+          const u = b && typeof b.id === 'string' ? await auth().utentePerId(b.id.slice(0, 64)) : null;
+          if (!u) return json(404, { error: 'Utente non trovato.' });
+          if (u.id === utente.id) return json(400, { error: 'Per eliminare il tuo account usa «Elimina account» nel profilo.' });
+          if (String(b.conferma || '').trim().toLowerCase() !== u.email) return json(400, { error: 'Per confermare scrivi l’email esatta dell’utente.' });
+          // cancella prima tutti i suoi dati (lezioni, flashcard, profilo, promemoria…), poi l'account e le sessioni
+          await env.STORE.get(env.STORE.idFromName('u:' + u.id)).eliminaTutto();
+          await auth().eliminaUtente(u.id);
+          return json(200, { ok: true });
         }
         if (azione === 'admin/aggiorna' && request.method === 'POST') {
           const b = await request.json().catch(() => null);

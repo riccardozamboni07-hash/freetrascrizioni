@@ -220,6 +220,8 @@ body.locked .topbar{display:none}
 .adm-bar{height:6px;border-radius:99px;background:var(--line);overflow:hidden}
 .adm-bar i{display:block;height:100%;background:var(--accent)}
 .adm-u .row input{width:90px;min-height:40px}
+.adm-conf{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:10px}
+.adm-conf[hidden]{display:none}
 .oggi-lista{display:flex;flex-direction:column;gap:12px}
 .esame{border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--bg)}
 .esame-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
@@ -868,7 +870,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.0<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.0.1<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="segmenti" data-tab="trascrivi" id="segTrascrivi" role="tablist" aria-label="Trascrizione o appunti">
     <span class="seg-ind" aria-hidden="true"></span>
     <button type="button" data-sub-btn="trascrizione">Trascrizione</button>
@@ -2291,8 +2293,23 @@ function admRender(){
     };
     salva.addEventListener('click', () => invia({}, `Limite di ${u.email} aggiornato.`));
     blocca.addEventListener('click', () => invia({ bloccato: !u.bloccato }, u.bloccato ? `${u.email} riattivato.` : `${u.email} sospeso: è stato disconnesso.`));
-    row.append(lb, salva, blocca);
-    d.append(chi, meta, lab, bar, row); box.append(d);
+    const elimina = document.createElement('button'); elimina.type = 'button'; elimina.className = 'danger'; elimina.textContent = 'Elimina';
+    const conf = document.createElement('div'); conf.className = 'adm-conf'; conf.hidden = true;
+    const avv = document.createElement('p'); avv.className = 'meta';
+    avv.textContent = `Verranno cancellati per sempre l'account di ${u.email} e tutti i suoi dati (lezioni, appunti, flashcard, link condivisi). Scrivi la sua email per confermare.`;
+    const ci = document.createElement('input'); ci.type = 'email'; ci.placeholder = u.email; ci.autocomplete = 'off'; ci.setAttribute('aria-label', 'Email da confermare');
+    const ok = document.createElement('button'); ok.type = 'button'; ok.className = 'danger'; ok.textContent = 'Elimina per sempre'; ok.disabled = true;
+    ci.addEventListener('input', () => { ok.disabled = ci.value.trim().toLowerCase() !== u.email; });
+    ok.addEventListener('click', async () => {
+      ok.disabled = true;
+      try { await privApi('admin/elimina', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: u.id, conferma: ci.value }) }); admSt(`Account di ${u.email} eliminato.`); admCarica(); }
+      catch (err) { admSt('Errore: ' + err.message, 'err'); ok.disabled = false; }
+    });
+    conf.append(avv, ci, ok);
+    elimina.addEventListener('click', () => { conf.hidden = !conf.hidden; if (!conf.hidden) ci.focus(); });
+    if (utenteInfo && u.email === utenteInfo.email) elimina.hidden = true;
+    row.append(lb, salva, blocca, elimina);
+    d.append(chi, meta, lab, bar, row, conf); box.append(d);
   }
   if (!box.children.length) { const p = document.createElement('p'); p.className = 'note'; p.textContent = 'Nessun utente.'; box.append(p); }
 }
