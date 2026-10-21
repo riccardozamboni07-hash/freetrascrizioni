@@ -46,6 +46,9 @@
   --tab-attiva-fg:#14573d; /* icona e scritta della scheda attiva */
   --ombra:rgba(20,33,27,.12); --velo:rgba(14,21,18,.42);
 
+  /* Anelli dell'utilizzo (tipo app Fitness) */
+  --anello-1:#14573d; --anello-2:#2f7d5b; --anello-3:#6aa886; --anello-traccia:#e3f0e9; --anello-pieno:#c62f2f;
+
   --sans:var(--font); --mono:var(--font);
   color-scheme:light;
 }
@@ -54,12 +57,14 @@
   --accent:#4cc38a; --accent-fg:#0e1512; --accent-soft:#173226; --accent-text:#6fd3a0; --mark:#1f4a35; --mark-fg:#bfeed5;
   --rec:#ff8a94; --warn:#e8b955; --err:#ff8a80; --good:#6fd3a0;
   --vetro:rgba(22,32,27,.93); --vetro-pieno:#16201b; --vetro-bordo:rgba(255,255,255,.08); --tab-attiva:#1f4a35; --tab-attiva-fg:#bfeed5;
+  --anello-1:#4cc38a; --anello-2:#7fd6a9; --anello-3:#b5ebcd; --anello-traccia:#1f3a2c; --anello-pieno:#ff8a80;
   --ombra:rgba(0,0,0,.35); --velo:rgba(0,0,0,.55); color-scheme:dark; } }
 :root[data-theme="dark"]{
   --bg:#0e1512; --surface:#16201b; --fg:#eaf3ee; --muted:#9db3a7; --line:#24332b; --tenue:#121b17;
   --accent:#4cc38a; --accent-fg:#0e1512; --accent-soft:#173226; --accent-text:#6fd3a0; --mark:#1f4a35; --mark-fg:#bfeed5;
   --rec:#ff8a94; --warn:#e8b955; --err:#ff8a80; --good:#6fd3a0;
   --vetro:rgba(22,32,27,.93); --vetro-pieno:#16201b; --vetro-bordo:rgba(255,255,255,.08); --tab-attiva:#1f4a35; --tab-attiva-fg:#bfeed5;
+  --anello-1:#4cc38a; --anello-2:#7fd6a9; --anello-3:#b5ebcd; --anello-traccia:#1f3a2c; --anello-pieno:#ff8a80;
   --ombra:rgba(0,0,0,.35); --velo:rgba(0,0,0,.55); color-scheme:dark; }
 
 *{box-sizing:border-box}
@@ -281,6 +286,19 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 .esami-box[open] > .form{margin-top:4px}
 .esami-box[open] > .row{margin-top:16px}
 #lSave ~ .form,.panel .form + .field{margin-top:2px}
+.anelli{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.anello{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;min-width:0}
+.anello .cerchio{position:relative;width:min(100%,104px);aspect-ratio:1}
+.anello svg{width:100%;height:100%;display:block;transform:rotate(-90deg)}
+.anello circle{fill:none;stroke-width:10;stroke-linecap:round}
+.anello .traccia{stroke:var(--anello-traccia)}
+.anello .pieno{transition:stroke-dashoffset 1.1s cubic-bezier(.25,.9,.3,1),stroke .3s}
+.anello .dentro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+.anello .dentro b{font-size:1.05rem;font-weight:700;font-variant-numeric:tabular-nums}
+.anello .dentro small{font-size:.7rem;color:var(--muted)}
+.anello .nome{font-size:.82rem;font-weight:600;line-height:1.25}
+.anello .nome small{display:block;font-weight:500;color:var(--muted);font-size:.74rem}
+@media (prefers-reduced-motion:reduce){.anello .pieno{transition:none}}
 .banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px;border-radius:18px;border:1px solid var(--warn)}
 .banner p{margin:0;flex:1 1 240px}
 .live{font-size:.78rem;font-weight:600;color:var(--rec)}
@@ -399,6 +417,14 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <li><div><strong>Trascrivi</strong><span>Premi «Trascrivi»: il testo compare man mano.</span></div></li>
     <li><div><strong>Riassumi</strong><span>Correggi il testo o fanne appunti con Claude, oppure scaricalo.</span></div></li>
   </ol>
+
+  <section class="panel priv" aria-labelledby="lUso" id="usoPanel">
+    <div class="row between">
+      <span class="label" id="lUso">Il tuo utilizzo</span>
+      <span class="chip" id="usoNota">si azzera ogni notte</span>
+    </div>
+    <div class="anelli" id="anelli"></div>
+  </section>
 
   <section class="panel priv" aria-labelledby="lOggi" id="oggiPanel">
     <div class="row between">
@@ -700,7 +726,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 2.6<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 2.7<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="segmenti" data-tab="trascrivi" id="segTrascrivi" role="tablist" aria-label="Trascrizione o appunti">
     <span class="seg-ind" aria-hidden="true"></span>
     <button type="button" data-sub-btn="trascrizione">Trascrizione</button>
@@ -2219,7 +2245,7 @@ $('delAccOk').addEventListener('click', async () => {
 
 
 /* ---------- Navigazione a schede (con sotto-schede in Trascrivi e Studia) ---------- */
-const MAPPA_TAB = { lOggi: ['oggi'], l1: ['trascrivi', 'trascrizione'], l2: ['trascrivi', 'trascrizione'], l3: ['trascrivi', 'trascrizione'], l4: ['trascrivi', 'appunti'],
+const MAPPA_TAB = { lUso: ['oggi'], lOggi: ['oggi'], l1: ['trascrivi', 'trascrizione'], l2: ['trascrivi', 'trascrizione'], l3: ['trascrivi', 'trascrizione'], l4: ['trascrivi', 'appunti'],
   lFc: ['studia', 'flashcard'], lAsk: ['studia', 'chiedi'], lGlo: ['studia', 'glossario'], lSave: ['archivio'], lArch: ['archivio'], l5: ['archivio'] };
 const TITOLI_TAB = { oggi: 'Oggi', trascrivi: 'Trascrivi', studia: 'Studia', archivio: 'Archivio' };
 const ORDINE_TAB = ['oggi', 'trascrivi', 'studia', 'archivio'];
@@ -2267,7 +2293,7 @@ function attivaTab(tab, sub){
   try { sessionStorage.setItem('ft:tab', tab); sessionStorage.setItem('ft:subs', JSON.stringify(subAttive)); } catch (_) {}
   return cambia;
 }
-document.querySelectorAll('[data-tab-btn]').forEach(b => b.addEventListener('click', () => { tabScelta = true; attivaTab(b.dataset.tabBtn); window.scrollTo({ top: 0 }); }));
+document.querySelectorAll('[data-tab-btn]').forEach(b => b.addEventListener('click', () => { tabScelta = true; attivaTab(b.dataset.tabBtn); window.scrollTo({ top: 0 }); if (b.dataset.tabBtn === 'oggi' && !document.body.classList.contains('locked')) { aggiornaUso(); caricaOggi(); } }));
 document.querySelectorAll('[data-sub-btn]').forEach(b => b.addEventListener('click', () => { tabScelta = true; attivaTab(b.dataset.perTab, b.dataset.subBtn); window.scrollTo({ top: 0 }); }));
 // Quando un'azione porta a una sezione (es. "Apri" una lezione, inizia un quiz), apre prima la scheda giusta
 const _scrollIntoView = Element.prototype.scrollIntoView;
@@ -2281,6 +2307,49 @@ try {
   const t = sessionStorage.getItem('ft:tab');
   if (t) { tabScelta = true; attivaTab(t); } else attivaTab('trascrivi');
 } catch (_) { attivaTab('trascrivi'); }
+
+/* ---------- Anelli dell'utilizzo (tipo app Fitness) ---------- */
+const anelliDati = { tr: null, ai: null, rip: null };
+const fmtOre = sec => { const h = sec / 3600; return (h >= 10 ? Math.round(h) : h.toFixed(1).replace('.', ',')) + ' h'; };
+function disegnaAnelli(){
+  const box = $('anelli'); if (!box) return;
+  const voci = [
+    anelliDati.tr && { id: 'tr', colore: 'var(--anello-1)', pct: anelliDati.tr.usate / Math.max(1, anelliDati.tr.limite),
+      valore: fmtOre(anelliDati.tr.usate), sotto: 'di ' + fmtOre(anelliDati.tr.limite), nome: 'Trascrizione', quando: anelliDati.tr.settimana ? 'questa settimana' : 'oggi' },
+    anelliDati.ai && { id: 'ai', colore: 'var(--anello-2)', pct: anelliDati.ai.usati / Math.max(1, anelliDati.ai.limite),
+      valore: Math.min(100, Math.round(anelliDati.ai.usati / Math.max(1, anelliDati.ai.limite) * 100)) + '%', sotto: 'usata', nome: 'AI', quando: 'oggi' },
+    { id: 'rip', colore: 'var(--anello-3)', pct: anelliDati.rip && anelliDati.rip.quota ? anelliDati.rip.fatte / anelliDati.rip.quota : 0,
+      valore: anelliDati.rip && anelliDati.rip.quota ? `${anelliDati.rip.fatte}/${anelliDati.rip.quota}` : '–', sotto: anelliDati.rip && anelliDati.rip.quota ? 'lezioni' : 'nessun esame', nome: 'Ripasso', quando: 'oggi', obiettivo: true },
+  ].filter(Boolean);
+  for (const v of voci) {
+    let el = box.querySelector(`[data-anello="${v.id}"]`);
+    if (!el) {
+      el = document.createElement('div'); el.className = 'anello'; el.dataset.anello = v.id;
+      el.innerHTML = '<div class="cerchio"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="traccia" cx="50" cy="50" r="42"/><circle class="pieno" cx="50" cy="50" r="42" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/></svg><div class="dentro"><b></b><small></small></div></div><div class="nome"></div>';
+      box.append(el);
+    }
+    const p = Math.max(0, Math.min(1, v.pct || 0));
+    const pieno = el.querySelector('.pieno');
+    // limiti: rosso quando sono quasi finiti; ripasso: è un obiettivo, resta verde anche quando è completo
+    pieno.style.stroke = !v.obiettivo && p >= 0.9 ? 'var(--anello-pieno)' : v.colore;
+    requestAnimationFrame(() => { pieno.style.strokeDashoffset = String(100 - p * 100); });
+    el.querySelector('.dentro b').textContent = v.valore;
+    el.querySelector('.dentro small').textContent = v.sotto;
+    const nome = el.querySelector('.nome'); nome.textContent = v.nome; const q = document.createElement('small'); q.textContent = v.quando; nome.append(q);
+    el.setAttribute('aria-label', `${v.nome} ${v.quando}: ${v.valore} ${v.sotto}`);
+  }
+}
+function anelliDaUso(v){
+  if (!v || !v.uso) return;
+  const lim = v.limiteGroq || {};
+  anelliDati.tr = v.settimana ? { usate: v.settimana.usate || 0, limite: v.settimana.limite || 36000, settimana: true }
+    : { usate: (v.uso.privato || 0) + (v.uso.pubblico || 0), limite: (lim.orePerGiorno || 8) * 3600, settimana: false };
+  anelliDati.ai = { usati: v.uso.flashcardToken || 0, limite: lim.tokenFlashcardGiorno || 500000 };
+  disegnaAnelli();
+}
+async function aggiornaUso(){
+  try { const v = await privApi('verifica'); fcUso = v; showUsage(v); fcLimiti(v); } catch (_) {}
+}
 /* ---------- Glossario per materia ---------- */
 let gloTermini = [], gloMaterie = [];
 function gloSt(t, kind){ const s = $('gloStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
@@ -2365,6 +2434,9 @@ async function caricaOggi(){
     const [piani, esami] = await Promise.all([privApi('oggi?data=' + d), privApi('esami')]);
     esamiDati = esami; oggiRender(piani); esamiRender();
     const daFare = piani.reduce((n, p) => n + (p.finale ? 0 : p.lezioni.filter(l => !l.fatta).length), 0);
+    const attivi = piani.filter(p => !p.finale && p.totaleLezioni);
+    anelliDati.rip = attivi.length ? { fatte: attivi.reduce((n, p) => n + p.lezioni.filter(l => l.fatta).length, 0), quota: attivi.reduce((n, p) => n + p.quota, 0) } : null;
+    disegnaAnelli();
     $('oggiDot').hidden = !daFare;
     if (!tabScelta && esami.length) { tabScelta = true; attivaTab('oggi'); }
   } catch (_) {}
@@ -2488,6 +2560,7 @@ let fcUso = null;
 function fcLimiti(v){
   if (v) fcUso = v;
   if (!fcUso || !fcUso.uso) return;
+  if (anelliDati.ai) { anelliDati.ai.usati = fcUso.uso.flashcardToken || 0; disegnaAnelli(); }
   const lim = fcUso.limiteGroq || {}, gg = lim.tokenFlashcardGiorno || 500000;
   const usati = fcUso.uso.flashcardToken || 0, resta = Math.max(0, gg - usati);
   const n = x => Math.round(x).toLocaleString('it-IT');
@@ -2651,6 +2724,7 @@ async function privApi(path, opts = {}){
 }
 function showUsage(v){
   if (!v || !v.uso) return;
+  anelliDaUso(v);
   const h = sec => (sec / 3600).toFixed(1).replace('.', ',') + ' h';
   const lim = v.limiteGroq || { orePerGiorno: 8, orePerOra: 2 };
   const tot = (v.uso.privato || 0) + (v.uso.pubblico || 0);
