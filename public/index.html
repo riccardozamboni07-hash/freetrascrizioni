@@ -6,29 +6,30 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Freetrascrizioni">
-<meta name="theme-color" content="#c9522a">
+<meta name="theme-color" content="#f3f5f9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1524" media="(prefers-color-scheme: dark)">
 <title>Freetrascrizioni</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-/* Stile "Pesca": colori caldi, font tondo (Nunito), angoli e pulsanti arrotondati.
-   Layout: una colonna stretta, quattro blocchi in sequenza: audio → trascrizione → testo → riassunto */
+/* Stile "Quaderno": carta fredda, inchiostro blu, evidenziatore giallo (il segno distintivo: titoli ed elementi attivi
+   sono "evidenziati" come su un libro). Font: Bricolage Grotesque. Layout da app: titolo in alto, schede in basso. */
 :root{
-  --bg:#fff7f0; --surface:#ffffff; --fg:#3b2418; --muted:#85604c; --line:#f2dccb;
-  --accent:#c9522a; --accent-fg:#ffffff; --accent-soft:#ffe6d6;
-  --rec:#b8323f; --warn:#8f6200; --err:#b3261e; --good:#1f7a4d;
-  --sans:"Nunito", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --bg:#f3f5f9; --surface:#ffffff; --fg:#17223b; --muted:#647089; --line:#e2e6ee;
+  --accent:#2d4fd8; --accent-fg:#ffffff; --accent-soft:#e9eefe; --mark:#ffe45c; --mark-fg:#17223b;
+  --rec:#d13a4a; --warn:#946200; --err:#c62f2f; --good:#1d7f52;
+  --sans:"Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
-  --bg:#1c1512; --surface:#271d18; --fg:#f7ebe2; --muted:#c7a897; --line:#42322a;
-  --accent:#ff9c73; --accent-fg:#2a130a; --accent-soft:#3b2419;
-  --rec:#ff8a8f; --warn:#e8b955; --err:#ff8a80; --good:#7fd6a4; color-scheme:dark; } }
+  --bg:#0f1524; --surface:#182037; --fg:#eef1f8; --muted:#9aa5c0; --line:#2a3452;
+  --accent:#8fa8ff; --accent-fg:#0f1524; --accent-soft:#1f2a4a; --mark:#ffd93d; --mark-fg:#0f1524;
+  --rec:#ff8a94; --warn:#e8b955; --err:#ff8a80; --good:#6fd3a0; color-scheme:dark; } }
 :root[data-theme="dark"]{
-  --bg:#1c1512; --surface:#271d18; --fg:#f7ebe2; --muted:#c7a897; --line:#42322a;
-  --accent:#ff9c73; --accent-fg:#2a130a; --accent-soft:#3b2419;
-  --rec:#ff8a8f; --warn:#e8b955; --err:#ff8a80; --good:#7fd6a4; color-scheme:dark; }
+  --bg:#0f1524; --surface:#182037; --fg:#eef1f8; --muted:#9aa5c0; --line:#2a3452;
+  --accent:#8fa8ff; --accent-fg:#0f1524; --accent-soft:#1f2a4a; --mark:#ffd93d; --mark-fg:#0f1524;
+  --rec:#ff8a94; --warn:#e8b955; --err:#ff8a80; --good:#6fd3a0; color-scheme:dark; }
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -38,10 +39,13 @@ body{background:var(--bg);color:var(--fg);font:16px/1.55 var(--sans);
   padding-inline:max(16px, env(safe-area-inset-left, 0px));
   padding-block:calc(24px + env(safe-area-inset-top, 0px)) calc(48px + env(safe-area-inset-bottom, 0px))}
 main{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
-header h1{font-size:1.8rem;font-weight:800;line-height:1.2;margin:0;color:var(--accent);text-wrap:balance}
+header h1{font-size:2.1rem;font-weight:800;line-height:1.1;letter-spacing:-.02em;margin:0;color:var(--fg);text-wrap:balance}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) header h1 .ev{background:linear-gradient(transparent 82%,var(--mark) 82%,var(--mark) 96%,transparent 96%)!important} }
+:root[data-theme="dark"] header h1 .ev{background:linear-gradient(transparent 82%,var(--mark) 82%,var(--mark) 96%,transparent 96%)!important}
+header h1 .ev{background:linear-gradient(transparent 58%,var(--mark) 58%,var(--mark) 90%,transparent 90%);padding:0 .08em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 header p{margin:.35rem 0 0;color:var(--muted);max-width:62ch}
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
-.label{font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.panel{background:var(--surface);border:1px solid transparent;border-radius:24px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.label{font-size:1.15rem;font-weight:750;letter-spacing:-.01em;color:var(--fg)}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .between{justify-content:space-between}
 .sources{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -198,8 +202,27 @@ body.locked .topbar{display:none}
 .termine b{font-size:1rem}
 .termine p{margin:0}
 .termine small{color:var(--muted)}
-.badge{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--accent-fg);background:var(--accent);border-radius:99px;padding:.1rem .5rem}
+.badge{font-size:.75rem;font-weight:700;color:var(--mark-fg);background:var(--mark);border-radius:6px;padding:.05rem .45rem}
 .termine .via{min-height:0;width:28px;height:28px;padding:0;justify-content:center;border:none;color:var(--muted);background:transparent}
+
+/* ---------- App: schede in basso, una schermata alla volta ---------- */
+body.app{padding-bottom:calc(96px + env(safe-area-inset-bottom, 0px))}
+body.app header.top > p{display:none}
+body.app main > [data-tab]:not(.vis){display:none!important}
+.tabbar{display:none}
+body.app:not(.locked) .tabbar{display:flex}
+.tabbar{position:fixed;z-index:30;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom, 0px));
+  width:min(560px,calc(100vw - 24px));background:var(--surface);border-radius:26px;padding:6px;gap:4px;
+  box-shadow:0 10px 30px rgba(23,34,59,.14),0 0 0 1px var(--line)}
+.tabbar button{flex:1;flex-direction:column;gap:2px;border:none;background:transparent;border-radius:20px;padding:6px 4px;min-height:56px;font-size:.78rem;font-weight:600;color:var(--muted);position:relative}
+.tabbar svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabbar button[aria-current="page"]{color:var(--fg)}
+.tabbar button[aria-current="page"] svg{color:var(--mark-fg);background:var(--mark);border-radius:10px;padding:2px 10px;width:44px;box-sizing:content-box;margin:-2px 0}
+.tabbar .dot{position:absolute;top:8px;left:calc(50% + 12px);width:9px;height:9px;border-radius:50%;background:var(--rec);box-shadow:0 0 0 2px var(--surface)}
+.segmenti{display:flex;gap:6px;background:var(--surface);padding:5px;border-radius:999px;overflow-x:auto;scrollbar-width:none}
+.segmenti::-webkit-scrollbar{display:none}
+.segmenti button{flex:1 1 0;min-width:0;justify-content:center;border:none;background:transparent;min-height:40px;padding:.4rem .4rem;font-size:.9rem;white-space:nowrap;color:var(--muted)}
+.segmenti button[aria-selected="true"]{background:var(--fg);color:var(--bg)}
 .banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px;border-radius:18px;border:1px solid var(--warn)}
 .banner p{margin:0;flex:1 1 240px}
 .live{font-size:.78rem;font-weight:600;color:var(--rec)}
@@ -321,7 +344,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
 
   <section class="panel priv" aria-labelledby="lOggi" id="oggiPanel">
     <div class="row between">
-      <span class="label" id="lOggi">Oggi</span>
+      <span class="label" id="lOggi">Piano di ripasso</span>
       <span class="chip" id="oggiData"></span>
     </div>
     <div id="oggiLista" class="oggi-lista"></div>
@@ -344,7 +367,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
 
   <section class="panel" aria-labelledby="l1">
     <div class="row between">
-      <span class="label" id="l1">1 · Audio</span>
+      <span class="label" id="l1">1. Audio</span>
       <span class="chip" id="gpuChip">Controllo dispositivo…</span>
     </div>
     <div class="banner" id="resume" hidden>
@@ -389,7 +412,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
   </section>
 
   <section class="panel" aria-labelledby="l2">
-    <span class="label" id="l2">2 · Trascrizione</span>
+    <span class="label" id="l2">2. Trascrizione</span>
     <label class="field"><span>Materia della lezione</span>
       <input type="text" id="materia" list="materieList" autocomplete="off" placeholder="Scegli o scrivi, es. Diritto pubblico">
     </label>
@@ -429,7 +452,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
 
   <section class="panel" aria-labelledby="l3">
     <div class="row between">
-      <span class="label" id="l3">3 · Testo</span>
+      <span class="label" id="l3">3. Testo</span>
       <div class="row">
         <button type="button" id="copyBtn">Copia</button>
         <button type="button" id="shareBtn" hidden>Condividi</button>
@@ -440,7 +463,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
   </section>
 
   <section class="panel" aria-labelledby="l4">
-    <span class="label" id="l4">4 · Appunti e correzione</span>
+    <span class="label" id="l4">Appunti e correzione</span>
     <div class="aicard">
       <h3>Crea qui nell'app</h3>
       <p class="note">L'intelligenza artificiale scrive gli <strong>appunti</strong> della lezione o <strong>corregge la trascrizione</strong> direttamente qui. Poi li salvi nella lezione o li scarichi come file Word. Una lezione di 2 ore richiede 1-3 minuti.</p>
@@ -495,7 +518,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
 
   <section class="panel priv" aria-labelledby="lFc" id="fcPanel">
     <div class="row between">
-      <span class="label" id="lFc">5 · Flashcard</span>
+      <span class="label" id="lFc">Flashcard</span>
       <span class="chip" id="fcChip" hidden></span>
     </div>
     <div id="fcStart" class="fc-start" style="display:flex;flex-direction:column;gap:12px">
@@ -544,7 +567,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
 
   <section class="panel priv" aria-labelledby="lAsk">
     <div class="row between">
-      <span class="label" id="lAsk">6 · Chiedi alle tue lezioni</span>
+      <span class="label" id="lAsk">Chiedi alle tue lezioni</span>
       <button type="button" id="askNuova" hidden>Nuova chat</button>
     </div>
     <p class="note">Fai una domanda: l'AI cerca nelle lezioni e negli appunti salvati e risponde indicando da quale lezione viene ogni informazione.</p>
@@ -561,7 +584,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
 
   <section class="panel priv" aria-labelledby="lGlo" id="gloPanel">
     <div class="row between">
-      <span class="label" id="lGlo">7 · Glossario</span>
+      <span class="label" id="lGlo">Glossario</span>
       <span class="chip" id="gloConta" hidden></span>
     </div>
     <p class="note">Si crea da solo quando salvi una lezione: i termini tecnici con la definizione del professore, divisi per materia.</p>
@@ -619,8 +642,16 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.9<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 2.0<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <div class="segmenti" data-tab="studia" id="segStudia" role="tablist" aria-label="Strumenti di studio">
+    <button type="button" data-sub-btn="appunti">Appunti</button>
+    <button type="button" data-sub-btn="flashcard">Flashcard</button>
+    <button type="button" data-sub-btn="chiedi">Chiedi</button>
+    <button type="button" data-sub-btn="glossario">Glossario</button>
+  </div>
 </main>
+<nav class="tabbar" id="tabbar" aria-label="Sezioni dell'app"><button type="button" data-tab-btn="oggi" aria-label="Oggi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M8.5 14.5l2.2 2 4.8-4.5"/></svg><span>Oggi</span><i class="dot" id="oggiDot" hidden></i></button><button type="button" data-tab-btn="trascrivi" aria-label="Trascrivi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg><span>Trascrivi</span></button><button type="button" data-tab-btn="studia" aria-label="Studia"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5M9 8h7M9 11.5h5"/></svg><span>Studia</span></button><button type="button" data-tab-btn="archivio" aria-label="Archivio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v9.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V9M10 13h4"/></svg><span>Archivio</span></button></nav>
+
 <div class="overlay" id="overlay" hidden></div>
 <nav class="drawer" id="menu" aria-label="Menu" hidden>
   <div class="row between"><strong>Menu</strong><button type="button" class="icon-btn" data-chiudi aria-label="Chiudi">✕</button></div>
@@ -2123,6 +2154,39 @@ $('delAccOk').addEventListener('click', async () => {
   } catch (e) { $('profStatus').textContent = 'Non riesco a eliminare: ' + e.message; $('profStatus').className = 'status err'; $('delAccOk').disabled = false; }
 });
 
+
+/* ---------- Navigazione a schede ---------- */
+const MAPPA_TAB = { lOggi: ['oggi'], l1: ['trascrivi'], l2: ['trascrivi'], l3: ['trascrivi'], l4: ['studia', 'appunti'], lFc: ['studia', 'flashcard'],
+  lAsk: ['studia', 'chiedi'], lGlo: ['studia', 'glossario'], lSave: ['archivio'], lArch: ['archivio'], l5: ['archivio'] };
+const TITOLI_TAB = { oggi: 'Oggi', trascrivi: 'Trascrivi', studia: 'Studia', archivio: 'Archivio' };
+for (const [id, [t, sub]] of Object.entries(MAPPA_TAB)) { const sez = $(id)?.closest('section'); if (sez) { sez.dataset.tab = t; if (sub) sez.dataset.sub = sub; } }
+document.querySelector('.steps.pub')?.setAttribute('data-tab', 'trascrivi');
+document.querySelector('header.top')?.after($('segStudia'));
+const notaVersione = [...document.querySelectorAll('main > p.note')].pop(); if (notaVersione) notaVersione.dataset.tab = 'archivio';
+let tabAttiva = null, subAttiva = 'appunti', tabScelta = false;
+function attivaTab(tab, sub){
+  if (sub) subAttiva = sub;
+  const cambia = tab !== tabAttiva;
+  tabAttiva = tab;
+  document.body.classList.add('app');
+  document.querySelectorAll('main > [data-tab]').forEach(el => el.classList.toggle('vis', el.dataset.tab === tab && (!el.dataset.sub || el.dataset.sub === subAttiva)));
+  document.querySelectorAll('[data-tab-btn]').forEach(b => { if (b.dataset.tabBtn === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+  document.querySelectorAll('[data-sub-btn]').forEach(b => b.setAttribute('aria-selected', b.dataset.subBtn === subAttiva));
+  const h = document.querySelector('header.top h1');
+  if (h && document.body.classList.contains('privato') && !document.body.classList.contains('locked')) { h.textContent = ''; const ev = document.createElement('span'); ev.className = 'ev'; ev.textContent = TITOLI_TAB[tab]; h.append(ev); }
+  try { sessionStorage.setItem('ft:tab', tab); sessionStorage.setItem('ft:sub', subAttiva); } catch (_) {}
+  return cambia;
+}
+document.querySelectorAll('[data-tab-btn]').forEach(b => b.addEventListener('click', () => { tabScelta = true; attivaTab(b.dataset.tabBtn); window.scrollTo({ top: 0 }); }));
+document.querySelectorAll('[data-sub-btn]').forEach(b => b.addEventListener('click', () => { tabScelta = true; attivaTab('studia', b.dataset.subBtn); window.scrollTo({ top: 0 }); }));
+// Quando un'azione porta a una sezione (es. "Apri" una lezione, inizia un quiz), apre prima la scheda giusta
+const _scrollIntoView = Element.prototype.scrollIntoView;
+Element.prototype.scrollIntoView = function(o){
+  const sez = this.closest && this.closest('main > [data-tab]');
+  if (sez && !sez.classList.contains('vis')) { tabScelta = true; attivaTab(sez.dataset.tab, sez.dataset.sub); }
+  return _scrollIntoView.call(this, o);
+};
+try { const t = sessionStorage.getItem('ft:tab'); if (t) { tabScelta = true; attivaTab(t, sessionStorage.getItem('ft:sub') || 'appunti'); } else attivaTab('trascrivi'); } catch (_) { attivaTab('trascrivi'); }
 /* ---------- Glossario per materia ---------- */
 let gloTermini = [], gloMaterie = [];
 function gloSt(t, kind){ const s = $('gloStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
@@ -2206,6 +2270,9 @@ async function caricaOggi(){
   try {
     const [piani, esami] = await Promise.all([privApi('oggi?data=' + d), privApi('esami')]);
     esamiDati = esami; oggiRender(piani); esamiRender();
+    const daFare = piani.reduce((n, p) => n + (p.finale ? 0 : p.lezioni.filter(l => !l.fatta).length), 0);
+    $('oggiDot').hidden = !daFare;
+    if (!tabScelta && esami.length) { tabScelta = true; attivaTab('oggi'); }
   } catch (_) {}
 }
 function oggiRender(piani){
@@ -2505,7 +2572,7 @@ async function unlock(pw, silent){
   try {
     const v = await privApi('verifica');
     if (!MULTI) lsSet(PW_KEY, pw);
-    document.body.classList.remove('locked');
+    document.body.classList.remove('locked'); attivaTab(tabAttiva || 'trascrivi');
     showUsage(v); fcLimiti(v); mostraAccount(v); loadList(); caricaPrecedenti(); caricaProfilo(); caricaOggi(); gloCaricaMaterie();
     return true;
   } catch (e) {
