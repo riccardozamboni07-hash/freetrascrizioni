@@ -14,7 +14,7 @@
 <style>
 /* =====================================================================
    STILE DELL'APP — tutti i colori e il font sono qui: per cambiarli basta modificare queste variabili.
-   Tema chiaro bianco e verde; il tema scuro (modalità scura del telefono) usa le stesse tinte verdi.
+   Tema chiaro bianco e verde scuro; il tema scuro (modalità scura del telefono) usa le stesse tinte verdi.
    ===================================================================== */
 :root{
   /* Font */
@@ -23,27 +23,27 @@
   /* Colori di base */
   --bg:#ffffff;            /* sfondo della pagina */
   --surface:#ffffff;       /* sfondo dei riquadri */
-  --fg:#14211b;            /* testo principale */
+  --fg:#10201a;            /* testo principale */
   --muted:#5b6b63;         /* testo secondario (contrasto 5,6:1 sul bianco) */
   --line:#e8ecea;          /* bordi grigio chiarissimo */
   --tenue:#f3f6f4;         /* fondo leggero di selettori e campi secondari */
 
   /* Verde */
-  --accent:#1f8a5b;        /* bottoni primari, scheda attiva, icona attiva */
+  --accent:#14573d;        /* verde scuro: bottoni primari, scheda attiva, icona attiva */
   --accent-fg:#ffffff;     /* testo sopra il verde */
-  --accent-soft:#e8f5ee;   /* evidenziazioni e sfondi leggeri */
-  --accent-text:#17704a;   /* verde per scritte su bianco o verde chiaro (contrasto oltre 5:1) */
-  --mark:#e8f5ee;          /* evidenziatore sotto i titoli */
-  --mark-fg:#17704a;       /* testo sopra l'evidenziatore (etichetta "nuovo") */
+  --accent-soft:#e3f0e9;   /* evidenziazioni e sfondi leggeri */
+  --accent-text:#14573d;   /* verde per scritte su bianco o verde chiaro (contrasto 8,5:1) */
+  --mark:#e3f0e9;          /* evidenziatore sotto i titoli */
+  --mark-fg:#14573d;       /* testo sopra l'evidenziatore (etichetta "nuovo") */
 
   /* Stati */
   --rec:#d13a4a;           /* registrazione: resta rossa */
-  --warn:#8a5a00; --err:#c62f2f; --good:#17704a;
+  --warn:#8a5a00; --err:#c62f2f; --good:#14573d;
 
   /* Barra in basso (vetro) e ombre */
   --vetro:rgba(255,255,255,.94); --vetro-pieno:#ffffff; --vetro-bordo:#e8ecea;
-  --tab-attiva:#e8f5ee;    /* pillola della scheda attiva */
-  --tab-attiva-fg:#1f8a5b; /* icona e scritta della scheda attiva */
+  --tab-attiva:#e3f0e9;    /* pillola della scheda attiva */
+  --tab-attiva-fg:#14573d; /* icona e scritta della scheda attiva */
   --ombra:rgba(20,33,27,.12); --velo:rgba(14,21,18,.42);
 
   --sans:var(--font); --mono:var(--font);
@@ -700,7 +700,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 2.5<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 2.6<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="segmenti" data-tab="trascrivi" id="segTrascrivi" role="tablist" aria-label="Trascrizione o appunti">
     <span class="seg-ind" aria-hidden="true"></span>
     <button type="button" data-sub-btn="trascrizione">Trascrizione</button>
@@ -1980,7 +1980,7 @@ function mdHtml(md){
 }
 $('aiWord').addEventListener('click', () => {
   const doc = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>${aiNome()}</title>
-<style>body{font-family:Calibri,Arial,sans-serif;font-size:12pt;line-height:1.5}h1{font-size:20pt;color:#1f8a5b}h2{font-size:15pt;color:#1f8a5b;margin-top:16pt}h3{font-size:13pt}</style></head><body>${mdHtml($('aiOut').value)}</body></html>`;
+<style>body{font-family:Calibri,Arial,sans-serif;font-size:12pt;line-height:1.5}h1{font-size:20pt;color:#14573d}h2{font-size:15pt;color:#14573d;margin-top:16pt}h3{font-size:13pt}</style></head><body>${mdHtml($('aiOut').value)}</body></html>`;
   saveFile(new Blob(['﻿', doc], { type: 'application/msword' }), aiNome() + '.doc');
 });
 $('aiTxt').addEventListener('click', () => saveFile(new Blob([$('aiOut').value.replace(/\*\*(.+?)\*\*/g, '$1')], { type: 'text/plain;charset=utf-8' }), aiNome() + '.txt'));
@@ -2351,7 +2351,7 @@ $('gloWord').addEventListener('click', () => {
   const m = $('gloMateria').value;
   const md = `# Glossario · ${m}\n\n` + gloTermini.map(t => `**${t.termine}**: ${t.definizione}\n`).join('\n');
   const doc = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Glossario ${m}</title>
-<style>body{font-family:Calibri,Arial,sans-serif;font-size:12pt;line-height:1.5}h1{font-size:20pt;color:#1f8a5b}p{margin:0 0 8pt}</style></head><body>${mdHtml(md)}</body></html>`;
+<style>body{font-family:Calibri,Arial,sans-serif;font-size:12pt;line-height:1.5}h1{font-size:20pt;color:#14573d}p{margin:0 0 8pt}</style></head><body>${mdHtml(md)}</body></html>`;
   saveFile(new Blob(['﻿', doc], { type: 'application/msword' }), 'Glossario_' + m.replace(/[^\p{L}\p{N}]+/gu, '_') + '.doc');
 });
 
