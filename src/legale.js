@@ -18,7 +18,7 @@ p,li{margin:.4em 0}.muted{color:var(--muted);font-size:.9rem}a{color:var(--accen
 }
 
 const contatto = env => esc(String(env.CONTATTO_EMAIL || String(env.ADMIN_EMAIL || '').split(/[,\s]+/)[0] || 'il contatto indicato dal titolare'));
-const aggiornata = '19 ottobre 2026';
+const aggiornata = '22 ottobre 2026';
 
 export function privacy(env) {
   const c = contatto(env);
@@ -33,6 +33,8 @@ export function privacy(env) {
 <li><strong>Contenuti</strong>: le trascrizioni, gli appunti, le flashcard, i risultati dei ripassi e le domande che fai all'app.</li>
 <li><strong>Audio e foto della lavagna</strong>: vengono inviati al servizio di intelligenza artificiale solo per essere trascritti o letti. L'app <strong>non conserva</strong> l'audio né le foto.</li>
 <li><strong>Dati di utilizzo</strong>: ore trascritte e uso dell'intelligenza artificiale, per applicare i limiti del servizio; data di iscrizione e dell'ultimo accesso.</li>
+<li><strong>Dati tecnici</strong>: quante volte vengono usate le funzioni dell'app (solo conteggi) e, se qualcosa si rompe, il messaggio d'errore con versione dell'app e tipo di dispositivo. Mai i contenuti delle lezioni. Servono solo a migliorare l'app.</li>
+<li><strong>Segnalazioni</strong>: i messaggi che invii con «Segnala un problema o un'idea».</li>
 </ul>
 <h2>Perché li trattiamo</h2>
 <p>Solo per fornirti il servizio che hai chiesto registrandoti (base giuridica: esecuzione del contratto, art. 6.1.b GDPR) e per proteggerlo da abusi (legittimo interesse, art. 6.1.f). Non vendiamo i tuoi dati, non li usiamo per pubblicità e non facciamo profilazione.</p>
@@ -43,6 +45,8 @@ export function privacy(env) {
 <li><strong>Google</strong>: solo se scegli «Continua con Google», per verificare la tua identità.</li>
 </ul>
 <p>Questi fornitori trattano i dati per nostro conto. Alcuni si trovano fuori dall'Unione europea: il trasferimento avviene con le garanzie previste dal GDPR (ad esempio clausole contrattuali standard o EU-US Data Privacy Framework).</p>
+<h2>Copia sul tuo dispositivo</h2>
+<p>Per farti consultare le lezioni anche senza connessione, l'app ne tiene una copia nella memoria del browser del tuo dispositivo. Quando esci dall'account la copia viene cancellata.</p>
 <h2>Per quanto tempo</h2>
 <p>Finché il tuo account è attivo. Con <strong>Profilo → Elimina account</strong> cancelli subito e per sempre account e contenuti.</p>
 <h2>I tuoi diritti</h2>

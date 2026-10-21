@@ -50,7 +50,28 @@ export class Store extends DurableObject {
     this.sql.exec(`CREATE TABLE IF NOT EXISTS notifiche (hash TEXT PRIMARY KEY, titolo TEXT, testo TEXT, url TEXT, quando INTEGER)`);
     this.sql.exec(`CREATE TABLE IF NOT EXISTS orari_utenti (utente TEXT, giorno INTEGER, ora INTEGER)`);
     this.sql.exec(`CREATE TABLE IF NOT EXISTS esami_scritti (quando INTEGER, materia TEXT, giuste INTEGER, totale INTEGER, voto INTEGER)`);
+    // versione 3.7: errori dell'app (raggruppati per messaggio)
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS errori (chiave TEXT PRIMARY KEY, messaggio TEXT, sorgente TEXT, stack TEXT, versione TEXT, dove TEXT, dispositivo TEXT, primo INTEGER, ultimo INTEGER, volte INTEGER NOT NULL DEFAULT 0, utenti TEXT NOT NULL DEFAULT '[]')`);
   }
+  registraErrore(e, utente) {
+    const chiave = (e.messaggio + '|' + e.sorgente).slice(0, 300);
+    const r = this.sql.exec('SELECT utenti, volte FROM errori WHERE chiave = ?', chiave).toArray()[0];
+    const ora = Date.now();
+    if (r) {
+      const u = JSON.parse(r.utenti || '[]'); if (utente && !u.includes(utente) && u.length < 50) u.push(utente);
+      this.sql.exec('UPDATE errori SET ultimo = ?, volte = volte + 1, utenti = ?, versione = ?, dove = ?, dispositivo = ?, stack = ? WHERE chiave = ?', ora, JSON.stringify(u), e.versione, e.dove, e.dispositivo, e.stack, chiave);
+    } else {
+      this.sql.exec('INSERT INTO errori (chiave, messaggio, sorgente, stack, versione, dove, dispositivo, primo, ultimo, volte, utenti) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)',
+        chiave, e.messaggio, e.sorgente, e.stack, e.versione, e.dove, e.dispositivo, ora, ora, JSON.stringify(utente ? [utente] : []));
+      const n = (this.sql.exec('SELECT count(*) AS n FROM errori').toArray()[0] || {}).n || 0;
+      if (n > 300) this.sql.exec('DELETE FROM errori WHERE chiave IN (SELECT chiave FROM errori ORDER BY ultimo ASC LIMIT ?)', n - 300);
+    }
+    return { ok: true };
+  }
+  elencoErrori() {
+    return this.sql.exec('SELECT * FROM errori ORDER BY ultimo DESC LIMIT 100').toArray().map(r => ({ ...r, persone: JSON.parse(r.utenti || '[]').length, utenti: undefined }));
+  }
+  eliminaErrore(chiave) { if (chiave === '*') this.sql.exec('DELETE FROM errori'); else this.sql.exec('DELETE FROM errori WHERE chiave = ?', chiave); return { ok: true }; }
   // ---------- statistiche, segnalazioni, notifiche (archivio "auth", o "principale" per la copia personale) ----------
   evento(azione, utente) {
     const g = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' });
@@ -504,8 +525,21 @@ async function gestisciAuth(request, env, url, auth, utente) {
   return json(404, { error: 'Richiesta sconosciuta.' });
 }
 
-export default {
-  async fetch(request, env) {
+const app = {
+  // Se qualcosa va storto nel server, l'errore finisce nel pannello amministratore (senza contenuti dell'utente)
+  async fetch(request, env, ctx) {
+    try { return await app.gestisci(request, env, ctx); }
+    catch (e) {
+      console.log('Errore server', String(e && e.stack || e));
+      try {
+        const multi = env.MULTIUTENTE === 'si' || env.MULTIUTENTE === 'true';
+        const p = new URL(request.url).pathname.replace(/[?#].*$/, '').slice(0, 80);
+        await env.STORE.get(env.STORE.idFromName(multi ? 'auth' : 'principale')).registraErrore({ messaggio: String(e && e.message || e).slice(0, 300), sorgente: 'server ' + request.method + ' ' + p, stack: String(e && e.stack || '').slice(0, 1500), versione: '', dove: 'server', dispositivo: '' }, '');
+      } catch (_) {}
+      return json(500, { error: 'Errore interno: riprova tra poco. L’errore è stato segnalato.' });
+    }
+  },
+  async gestisci(request, env) {
     const url = new URL(request.url);
     const multi = env.MULTIUTENTE === 'si' || env.MULTIUTENTE === 'true';
     const auth = () => env.STORE.get(env.STORE.idFromName('auth'));
@@ -652,6 +686,14 @@ export default {
         await store().salvaOrario(voci);
         if (multi) await auth().salvaOrariUtente(utente.id, voci);
         return json(200, voci);
+      }
+      // ---------- errori dell'app (inviati in automatico) ----------
+      if (azione === 'errore' && request.method === 'POST') {
+        const b = await corpo();
+        const t = (x, n) => String(x || '').slice(0, n);
+        if (!b || !b.messaggio) return json(400, { error: 'Errore vuoto.' });
+        await globale().registraErrore({ messaggio: t(b.messaggio, 300), sorgente: t(b.sorgente, 200), stack: t(b.stack, 1500), versione: t(b.versione, 20), dove: t(b.dove, 60), dispositivo: t(b.dispositivo, 60) }, utente ? utente.id : 'io');
+        return json(200, { ok: true });
       }
       // ---------- segnalazioni (problemi e idee) ----------
       if (azione === 'feedback' && request.method === 'POST') {
@@ -807,11 +849,13 @@ export default {
           const def = Number(env.ORE_SETTIMANA_UTENTE) || 10, settimana = Date.now() - 7 * 86400000;
           return json(200, {
             utenti: utenti.map((u, i) => ({ ...u, ...dettagli[i], limite: u.oreLimite != null ? u.oreLimite : def })),
-            totali: { utenti: utenti.length, attivi7: utenti.filter(u => u.ultimo > settimana).length, oggi: await auth().usoOggi(), segnalazioni: await auth().feedbackNuovi() },
+            totali: { utenti: utenti.length, attivi7: utenti.filter(u => u.ultimo > settimana).length, oggi: await auth().usoOggi(), segnalazioni: await auth().feedbackNuovi(), errori: (await auth().elencoErrori()).length },
             predefinito: def,
           });
         }
         if (azione === 'admin/statistiche' && request.method === 'GET') return json(200, await auth().statistiche());
+        if (azione === 'admin/errori' && request.method === 'GET') return json(200, await auth().elencoErrori());
+        if (azione === 'admin/errori' && request.method === 'POST') { const b = await corpo(); return json(200, await auth().eliminaErrore(String(b?.chiave || '').slice(0, 300))); }
         if (azione === 'admin/feedback' && request.method === 'GET') return json(200, await auth().elencoFeedback());
         if (azione === 'admin/feedback' && request.method === 'POST') {
           const b = await corpo();
@@ -967,3 +1011,4 @@ export default {
     }
   },
 };
+export default app;

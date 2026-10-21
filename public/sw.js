@@ -1,8 +1,49 @@
-// Service worker di Freetrascrizioni: serve per i promemoria (notifiche) e il timer di studio.
-// La notifica push arriva vuota: il testo lo chiediamo al server con un'impronta (hash) dell'iscrizione.
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+// Service worker di Freetrascrizioni:
+// - promemoria (notifiche) e timer di studio;
+// - app e archivio usabili anche offline: prima prova la rete, se non c'è usa l'ultima copia salvata.
+const APP = 'ft-app-v1', DATI = 'ft-dati-v1';
+self.addEventListener('install', e => {
+  self.skipWaiting();
+  e.waitUntil(caches.open(APP).then(c => c.addAll(['/', '/manifest.webmanifest', '/icona-192.png', '/apple-touch-icon.png'])).catch(() => {}));
+});
+self.addEventListener('activate', e => e.waitUntil((async () => {
+  for (const k of await caches.keys()) if (![APP, DATI].includes(k)) await caches.delete(k);
+  await self.clients.claim();
+})()));
 
+// Dati che ha senso rileggere offline (mai pannello admin, mai notifiche)
+const DA_SALVARE = /^\/api\/(stato$|privato\/(verifica|lezioni|serie|orario|oggi|esami|glossario|profilo|flashcard-materia|scheda|appunti)\b)/;
+
+async function retePoiCache(req, nome){
+  const cache = await caches.open(nome);
+  try {
+    const res = await fetch(req);
+    if (res.ok) cache.put(req, res.clone()).catch(() => {});
+    return res;
+  } catch (err) {
+    const vecchia = await cache.match(req, { ignoreVary: true });
+    if (!vecchia) throw err;
+    // segnala all'app che la risposta arriva dalla copia offline
+    const h = new Headers(vecchia.headers); h.set('x-offline', '1');
+    return new Response(await vecchia.blob(), { status: vecchia.status, headers: h });
+  }
+}
+
+self.addEventListener('fetch', e => {
+  const req = e.request, url = new URL(req.url);
+  if (req.method !== 'GET' || url.origin !== self.location.origin) return;
+  if (req.mode === 'navigate') { if (url.pathname === '/') e.respondWith(retePoiCache(new Request('/'), APP).catch(() => Response.error())); return; }
+  if (DA_SALVARE.test(url.pathname)) { e.respondWith(retePoiCache(req, DATI)); return; }
+  if (/\.(png|webmanifest)$/.test(url.pathname)) e.respondWith(retePoiCache(req, APP));
+});
+
+// All'uscita dall'account l'app chiede di cancellare la copia offline dei dati
+self.addEventListener('message', e => {
+  if (e.data && e.data.tipo === 'svuota') e.waitUntil(caches.delete(DATI));
+});
+
+// ---------- Notifiche ----------
+// La notifica push arriva vuota: il testo lo chiediamo al server con un'impronta (hash) dell'iscrizione.
 const b64u = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 const PREDEFINITA = { titolo: 'È ora di ripassare 📚', testo: 'Hai delle lezioni da ripassare oggi. Tocca per vedere il piano.', url: '/?tab=oggi' };
 

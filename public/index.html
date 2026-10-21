@@ -445,6 +445,17 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 .fb.nuovo{border-color:var(--accent);background:var(--accent-soft)}
 .fb p{margin:0;white-space:pre-wrap}
 .fb .meta{font-size:.78rem;color:var(--muted)}
+.offline-bar{position:fixed;z-index:60;top:calc(8px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:min(560px,calc(100% - 32px));background:#2b2b2b;color:#fff;border-radius:16px;padding:10px 14px;font-size:.84rem;line-height:1.35;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.offline-bar[hidden]{display:none}
+.lettore{position:fixed;z-index:35;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:min(560px,calc(100% - 24px));background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;box-shadow:0 14px 40px rgba(0,0,0,.18);animation:pop .35s cubic-bezier(.3,1.4,.5,1)}
+.lettore[hidden]{display:none}
+.lt-info{display:flex;justify-content:space-between;gap:10px;font-size:.84rem}
+.lt-info strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lt-info span{color:var(--muted);white-space:nowrap}
+.lt-bar{height:4px;border-radius:9px;background:var(--tenue);overflow:hidden}
+.lt-bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.lt-tasti{display:flex;gap:8px;justify-content:center}
+.lt-tasti button{min-height:40px;min-width:46px;padding:.3rem .6rem}
 .fonti{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .fonti button{flex-direction:column;gap:4px;min-height:72px;padding:10px 4px;border-radius:16px;font-size:1.3rem;border:1.5px solid var(--line);background:var(--surface)}
 .fonti button span{font-size:.8rem;font-weight:600}
@@ -835,6 +846,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
           <button type="button" id="aiWord">Scarica Word</button>
           <button type="button" id="aiTxt">Scarica .txt</button>
           <button type="button" id="aiCopia">Copia</button>
+          <button type="button" id="aiAscolta">🔊 Ascolta</button>
           <button type="button" id="aiMod">Modifica</button>
         </div>
       </div>
@@ -864,6 +876,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
         <button type="button" class="primary" id="schCrea">Crea la scheda</button>
         <button type="button" id="schPdf" hidden>Scarica PDF</button>
         <button type="button" id="schCopia" hidden>Copia</button>
+        <button type="button" id="schAscolta" hidden>🔊 Ascolta</button>
       </div>
       <p class="note" id="schInfo" hidden></p>
       <div class="aiview" id="schView" hidden></div>
@@ -1035,6 +1048,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <label class="field"><span>Appunti della lezione</span>
       <textarea id="appunti" spellcheck="true" placeholder="Appunti, riassunto, domande d'esame…"></textarea>
     </label>
+    <button type="button" id="lezAscolta" hidden style="align-self:flex-start">🔊 Ascolta gli appunti</button>
     <div class="row">
       <button type="button" class="primary" id="saveLesson" hidden>Salva lezione</button>
       <button type="button" id="newLesson">Nuova lezione</button>
@@ -1067,7 +1081,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Se si interrompe, riapri l'app: riprende da dove era rimasta e la registrazione non si perde.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.6<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.7<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="contesto priv" id="contesto" data-tab="studia appunti">
     <span id="contestoTxt"></span>
     <span class="row" style="gap:14px"><button type="button" class="link" id="contestoBtn"></button><button type="button" class="link rimuovi" id="contestoVia" hidden>Rimuovi</button></span>
@@ -1108,6 +1122,11 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <div class="adm-giorni" id="admGiorni"></div>
     <div class="adm-stat" id="admStat"></div>
   </details>
+  <details class="adm-sez" id="admErrBox">
+    <summary id="admErrTit">🐞 Errori dell'app</summary>
+    <p class="note">Arrivano da soli quando qualcosa si rompe sul telefono di qualcuno o nel server. Quando l'hai sistemato, tocca «Risolto».</p>
+    <div class="adm-fb" id="admErr"></div>
+  </details>
   <details class="adm-sez" id="admFbBox">
     <summary id="admFbTit">💬 Segnalazioni</summary>
     <div class="adm-fb" id="admFb"></div>
@@ -1128,6 +1147,18 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
   <button type="button" class="primary" id="segInvia">Invia</button>
   <div class="status" id="segStatus" role="status"></div>
 </aside>
+<div class="offline-bar" id="offlineBar" hidden role="status">📴 Sei offline: vedi le lezioni salvate su questo dispositivo. Le modifiche si salvano quando torna la rete.</div>
+<div class="lettore" id="lettore" hidden role="region" aria-label="Lettura ad alta voce">
+  <div class="lt-info"><strong id="ltTitolo">Ascolta</strong><span id="ltStato"></span></div>
+  <div class="lt-bar"><i id="ltBar"></i></div>
+  <div class="lt-tasti">
+    <button type="button" id="ltIndietro" aria-label="Indietro di una frase">⏮</button>
+    <button type="button" class="primary" id="ltPlay" aria-label="Pausa">⏸</button>
+    <button type="button" id="ltAvanti" aria-label="Avanti di una frase">⏭</button>
+    <button type="button" id="ltVel" aria-label="Velocità">1×</button>
+    <button type="button" id="ltChiudi" aria-label="Chiudi">✕</button>
+  </div>
+</div>
 <div class="benvenuto" id="benvenuto" hidden role="dialog" aria-modal="true" aria-labelledby="benT">
   <div class="ben-card">
     <div class="ben-slide" data-ben="0">
@@ -1200,6 +1231,29 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
 
 
 <script type="module">
+/* ---------- Errori dell'app: arrivano da soli al pannello amministratore ---------- */
+const ERR_CODA = [], ERR_VISTI = new Set(); let errInviati = 0;
+function registraErr(messaggio, sorgente, stack){
+  messaggio = String(messaggio || '').replace(/\s+/g, ' ').trim().slice(0, 300);
+  if (!messaggio || /ResizeObserver loop|^Script error\.?$|Failed to fetch|NetworkError|Load failed|sei offline|AbortError|aborted|NotAllowedError|play\(\) request was interrupted/i.test(messaggio)) return;
+  const k = messaggio + '|' + sorgente;
+  if (ERR_VISTI.has(k) || ERR_VISTI.size >= 20) return;
+  ERR_VISTI.add(k);
+  ERR_CODA.push({ messaggio, sorgente: String(sorgente || '').slice(0, 200), stack: String(stack || '').slice(0, 1500) });
+  setTimeout(inviaErrori, 500);
+}
+window.addEventListener('error', ev => registraErr(ev.message, `${String(ev.filename || '').split('/').pop() || 'pagina'}:${ev.lineno || 0}:${ev.colno || 0}`, ev.error && ev.error.stack));
+window.addEventListener('unhandledrejection', ev => { const r = ev.reason; registraErr(r && r.message || String(r), 'promise', r && r.stack); });
+async function inviaErrori(){
+  if (!document.body.classList.contains('privato') || document.body.classList.contains('locked') || !navigator.onLine) return;
+  const versione = (([...document.querySelectorAll('#profilo p.note')].pop() || {}).textContent || '').match(/versione [\d.]+/)?.[0] || '';
+  const disp = /iPhone|iPad/.test(navigator.userAgent) ? 'iPhone/iPad' : /Android/.test(navigator.userAgent) ? 'Android' : /Mac/.test(navigator.userAgent) ? 'Mac' : /Windows/.test(navigator.userAgent) ? 'Windows' : 'altro';
+  const browser = /CriOS|Chrome/.test(navigator.userAgent) ? 'Chrome' : /Firefox|FxiOS/.test(navigator.userAgent) ? 'Firefox' : /Safari/.test(navigator.userAgent) ? 'Safari' : '';
+  while (ERR_CODA.length && errInviati < 10) {
+    const e = ERR_CODA.shift(); errInviati++;
+    try { await privApi('errore', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...e, versione, dove: (typeof tabAttiva === 'string' ? tabAttiva : ''), dispositivo: `${disp} ${browser}`.trim() + (matchMedia('(display-mode: standalone)').matches ? ' · app Home' : '') }) }); } catch (_) {}
+  }
+}
 const $ = id => document.getElementById(id);
 const SR = 16000;          // Whisper lavora a 16 kHz mono
 const CHUNK_S = 30;        // finestra di Whisper
@@ -2488,6 +2542,7 @@ $('logoutBtn').addEventListener('click', async () => {
   if (MULTI) { try { await fetch('/api/auth/esci', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }); } catch (_) {} }
   lsSet(PW_KEY, null); privPw = null;
   try { localStorage.removeItem(LS); } catch (_) {}
+  try { await caches.delete('ft-dati-v1'); } catch (_) {}
   location.reload();
 });
 $('delAccBtn').addEventListener('click', () => { const b = $('delAccBox'); b.hidden = !b.hidden; b.style.display = b.hidden ? 'none' : 'flex'; $('delAccIn').value = ''; $('delAccOk').disabled = true; });
@@ -2497,7 +2552,7 @@ $('delAccOk').addEventListener('click', async () => {
   try {
     await privApi('elimina-tutto', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ conferma: 'ELIMINA' }) });
     try { localStorage.removeItem(LS); } catch (_) {}
-    lsSet(PW_KEY, null); location.reload();
+    lsSet(PW_KEY, null); try { await caches.delete('ft-dati-v1'); } catch (_) {} location.reload();
   } catch (e) { $('profStatus').textContent = 'Non riesco a eliminare: ' + e.message; $('profStatus').className = 'status err'; $('delAccOk').disabled = false; }
 });
 
@@ -3283,6 +3338,7 @@ function aggiornaContesto(){
     $('contestoVia').hidden = true; disarmVia();
   }
   $('dopoTesto').hidden = testo.length < 200;
+  $('lezAscolta').hidden = !PARLA || $('appunti').value.trim().length < 40;
   $('salvaVuoto').hidden = testo.length > 0;
 }
 $('contestoBtn').addEventListener('click', e => $(e.currentTarget.dataset.dove)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
@@ -3463,7 +3519,7 @@ async function esEsito(giuste, tot){
 }
 async function caricaScheda(){
   const m = $('simMateria').value; schedaTesto = '';
-  $('schView').hidden = $('schInfo').hidden = $('schPdf').hidden = $('schCopia').hidden = true; $('schCrea').textContent = 'Crea la scheda';
+  $('schView').hidden = $('schInfo').hidden = $('schPdf').hidden = $('schCopia').hidden = $('schAscolta').hidden = true; $('schCrea').textContent = 'Crea la scheda';
   if (!m) return;
   try { const r = await privApi('scheda?materia=' + encodeURIComponent(m)); if ($('simMateria').value === m && r.testo) mostraScheda(r); } catch (_) {}
 }
@@ -3472,7 +3528,7 @@ function mostraScheda(r){
   $('schView').innerHTML = mdHtml(r.testo); $('schView').hidden = false;
   const ora = archivioItems.filter(i => i.materia === $('simMateria').value).length;
   $('schInfo').textContent = `Creata il ${new Date(r.quando).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })} da ${r.lezioni} ${r.lezioni === 1 ? 'lezione' : 'lezioni'}` + (ora > r.lezioni ? (ora - r.lezioni === 1 ? ' · c’è una lezione nuova: rigenerala.' : ` · ci sono ${ora - r.lezioni} lezioni nuove: rigenerala.`) : '.');
-  $('schInfo').hidden = $('schPdf').hidden = $('schCopia').hidden = false; $('schCrea').textContent = 'Rigenera';
+  $('schInfo').hidden = $('schPdf').hidden = $('schCopia').hidden = false; $('schAscolta').hidden = !PARLA; $('schCrea').textContent = 'Rigenera';
 }
 $('schCrea').addEventListener('click', async () => {
   const materia = $('simMateria').value; if (!materia) return;
@@ -3628,6 +3684,7 @@ $('segInvia').addEventListener('click', async () => {
 
 /* ---------- Dopo l'accesso ---------- */
 function dopoAccesso(v){
+  setTimeout(inviaErrori, 1500);
   $('menuSegnala').parentElement.hidden = !(v && v.utente);
   if (urlInAttesa) { const u = urlInAttesa; urlInAttesa = null; setTimeout(() => apriDaUrl(u), 300); }
   else if (!lsGet(BEN_KEY)) setTimeout(benMostra, 700);
@@ -3637,7 +3694,8 @@ function dopoAccesso(v){
 const NOMI_EVENTI = { lezione: 'Lezioni nuove', appunti: 'Appunti con l’AI', flashcard: 'Flashcard create', quiz: 'Quiz completati', foto: 'Foto lette', chiedi: 'Domande a Chiedi', mappa: 'Mappe', orale: 'Risposte all’orale', timer: 'Sessioni di studio', simulazione: 'Simulazioni scritto', scheda: 'Schede di ripasso', esercizi: 'Esercizi', condividi: 'Condivisioni', slide: 'Slide caricate', segnalazione: 'Segnalazioni', promemoria: 'Promemoria attivati', orario: 'Orari salvati' };
 async function admExtra(){
   try {
-    const [st, fb] = await Promise.all([privApi('admin/statistiche'), privApi('admin/feedback')]);
+    const [st, fb, er] = await Promise.all([privApi('admin/statistiche'), privApi('admin/feedback'), privApi('admin/errori').catch(() => [])]);
+    admErrRender(er);
     // utenti attivi negli ultimi 14 giorni
     const gg = $('admGiorni'); gg.textContent = '';
     const max = Math.max(1, ...st.giorni.map(g => g.attivi));
@@ -3684,6 +3742,112 @@ function admFbRender(lista){
     row.append(letto, via); d.append(m, t, i, row); box.append(d);
   });
   if (!lista.length) { const p = document.createElement('p'); p.className = 'note'; p.textContent = 'Nessuna segnalazione per ora.'; box.append(p); }
+}
+
+
+/* ---------- Offline: copia dell'archivio sul dispositivo ---------- */
+let offlineOra = false, offlinePronto = false;
+function segnaOffline(si){
+  if (si === offlineOra) return;
+  offlineOra = si; $('offlineBar').hidden = !si;
+  if (!si) { if (autoTimer || (currentId === null && $('out').value.trim().length > 50) || firmaLezione() !== ultimoSalvato) programmaSalva(800); setTimeout(inviaErrori, 1000); }
+}
+window.addEventListener('offline', () => segnaOffline(true));
+window.addEventListener('online', () => { segnaOffline(false); if (!document.body.classList.contains('locked')) { loadList(); caricaOggi(); } });
+// scarica in sottofondo le lezioni più recenti, così si aprono anche senza rete (una volta per sessione)
+async function preparaOffline(items){
+  if (offlinePronto || offlineOra || !navigator.onLine || !('caches' in window) || !navigator.serviceWorker?.controller) return;
+  offlinePronto = true;
+  for (const it of items.slice().sort((a, b) => b.data.localeCompare(a.data)).slice(0, 40)) {
+    if (offlineOra) return;
+    try { await privApi('lezioni?id=' + encodeURIComponent(it.id)); } catch (_) { return; }
+    await sleep(250);
+  }
+}
+
+/* ---------- 🔊 Ascolta: appunti letti ad alta voce ---------- */
+const PARLA = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+const lettore = { parti: [], i: 0, attivo: false, vel: 1, u: null };
+const VELOCITA = [1, 1.25, 1.5, 0.85];
+function testoParlato(md){
+  return String(md || '').replace(/@@DA_VERIFICARE@@/g, '').replace(/\[\d\d:\d\d:\d\d\]/g, '').replace(/^#{1,6}\s*/gm, '')
+    .replace(/\*\*(.+?)\*\*/g, '$1').replace(/^\s*[-•*]\s+/gm, '').replace(/⭐/g, '').replace(/\[\?\]/g, '').replace(/[_`>|]/g, ' ');
+}
+function frasiDaLeggere(t){
+  const out = [];
+  for (const par of t.split(/\n+/).map(x => x.trim()).filter(Boolean)) {
+    let cur = '';
+    for (const fr of par.split(/(?<=[.!?;:])\s+/)) {
+      const pezzi = fr.length > 240 ? fr.split(/(?<=,)\s+/) : [fr];
+      for (const p of pezzi) {
+        if ((cur + ' ' + p).trim().length > 220 && cur) { out.push(cur.trim()); cur = p; } else cur = (cur + ' ' + p).trim();
+      }
+    }
+    if (cur) out.push(/[.!?;:]$/.test(cur) ? cur : cur + '.');
+  }
+  return out;
+}
+function voceItaliana(){
+  const v = speechSynthesis.getVoices().filter(x => /^it/i.test(x.lang));
+  return v.find(x => /Alice|Federica|Elsa|Paola|Google italiano|Luca/i.test(x.name)) || v.find(x => x.localService) || v[0] || null;
+}
+function ltAggiorna(){
+  const n = lettore.parti.length;
+  $('ltPlay').textContent = lettore.attivo ? '⏸' : '▶'; $('ltPlay').setAttribute('aria-label', lettore.attivo ? 'Pausa' : 'Riprendi');
+  $('ltStato').textContent = n ? `${Math.min(lettore.i + 1, n)} di ${n}` : '';
+  $('ltBar').style.width = n ? (lettore.i / n * 100) + '%' : '0';
+  $('ltVel').textContent = String(lettore.vel).replace('.', ',') + '×';
+}
+function ltParla(){
+  if (lettore.i >= lettore.parti.length) { lettore.attivo = false; lettore.u = null; ltAggiorna(); $('ltStato').textContent = 'Finito'; $('ltBar').style.width = '100%'; return; }
+  const u = new SpeechSynthesisUtterance(lettore.parti[lettore.i]);
+  u.lang = 'it-IT'; const v = voceItaliana(); if (v) u.voice = v; u.rate = lettore.vel;
+  u.onend = () => { if (lettore.u === u && lettore.attivo) { lettore.i++; ltParla(); } };
+  u.onerror = e => { if (lettore.u === u && lettore.attivo && !/interrupted|canceled/.test(e.error || '')) { lettore.i++; ltParla(); } };
+  lettore.u = u; lettore.attivo = true; ltAggiorna();
+  speechSynthesis.speak(u);
+}
+function ltFerma(){ lettore.attivo = false; lettore.u = null; try { speechSynthesis.cancel(); } catch (_) {} ltAggiorna(); }
+function ascolta(titolo, md){
+  if (!PARLA) return;
+  const parti = frasiDaLeggere(testoParlato(md));
+  if (!parti.length) return;
+  ltFerma();
+  lettore.parti = parti; lettore.i = 0;
+  $('ltTitolo').textContent = '🔊 ' + titolo; $('lettore').hidden = false;
+  track('ascolta');
+  ltParla();
+}
+$('ltPlay').addEventListener('click', () => { if (lettore.attivo) ltFerma(); else { if (lettore.i >= lettore.parti.length) lettore.i = 0; ltParla(); } });
+$('ltAvanti').addEventListener('click', () => { const era = lettore.attivo; ltFerma(); lettore.i = Math.min(lettore.parti.length - 1, lettore.i + 1); if (era) ltParla(); else ltAggiorna(); });
+$('ltIndietro').addEventListener('click', () => { const era = lettore.attivo; ltFerma(); lettore.i = Math.max(0, lettore.i - 1); if (era) ltParla(); else ltAggiorna(); });
+$('ltVel').addEventListener('click', () => { lettore.vel = VELOCITA[(VELOCITA.indexOf(lettore.vel) + 1) % VELOCITA.length]; const era = lettore.attivo; ltFerma(); if (era) ltParla(); else ltAggiorna(); });
+$('ltChiudi').addEventListener('click', () => { ltFerma(); $('lettore').hidden = true; });
+if (PARLA) { try { speechSynthesis.getVoices(); speechSynthesis.addEventListener?.('voiceschanged', () => {}); } catch (_) {} }
+else { $('aiAscolta').hidden = true; }
+$('aiAscolta').addEventListener('click', () => ascolta($('aiTitolo').textContent || 'Appunti', $('aiOut').value));
+$('lezAscolta').addEventListener('click', () => ascolta($('titolo').value.trim() || 'Appunti della lezione', $('appunti').value));
+$('schAscolta').addEventListener('click', () => ascolta('Scheda di ' + $('simMateria').value, schedaTesto));
+
+/* ---------- Pannello amministratore: errori ---------- */
+function admErrRender(lista){
+  const box = $('admErr'); box.textContent = '';
+  $('admErrTit').textContent = `🐞 Errori dell'app` + (lista.length ? ` (${lista.length})` : '');
+  const quando = t => new Date(t).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  lista.forEach(e => {
+    const d = document.createElement('div'); d.className = 'fb' + (Date.now() - e.ultimo < 86400000 ? ' nuovo' : '');
+    const t = document.createElement('p'); t.textContent = e.messaggio;
+    const m = document.createElement('span'); m.className = 'meta';
+    m.textContent = `${e.volte} ${e.volte === 1 ? 'volta' : 'volte'} · ${e.persone} ${e.persone === 1 ? 'persona' : 'persone'} · ultima ${quando(e.ultimo)} · ${[e.versione, e.dove, e.dispositivo].filter(Boolean).join(' · ')}`;
+    const src = document.createElement('span'); src.className = 'meta'; src.textContent = e.sorgente;
+    d.append(t, m, src);
+    if (e.stack) { const det = document.createElement('details'); const sm = document.createElement('summary'); sm.textContent = 'Dettagli tecnici'; const pre = document.createElement('p'); pre.className = 'meta'; pre.style.whiteSpace = 'pre-wrap'; pre.textContent = e.stack; det.append(sm, pre); d.append(det); }
+    const ok = document.createElement('button'); ok.type = 'button'; ok.textContent = '✓ Risolto';
+    ok.addEventListener('click', async () => { try { await privApi('admin/errori', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ chiave: e.chiave }) }); admErrRender(lista.filter(x => x !== e)); } catch (err) { admSt('Errore: ' + err.message, 'err'); } });
+    const r = document.createElement('div'); r.className = 'row'; r.append(ok); d.append(r);
+    box.append(d);
+  });
+  if (!lista.length) { const p = document.createElement('p'); p.className = 'note'; p.textContent = 'Nessun errore registrato. 🎉'; box.append(p); }
 }
 
 /* ---------- Chiedi alle tue lezioni ---------- */
@@ -3901,7 +4065,10 @@ let privPw = null, currentId = null, delArm = null;
 const todayISO = () => { const d = new Date(), z = v => String(v).padStart(2, '0'); return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`; };
 function privStatus(t, kind){ const s = $('saveStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
 async function privApi(path, opts = {}){
-  const res = await fetch('/api/privato/' + path, { ...opts, headers: { ...(opts.headers || {}), 'x-chiave': privPw || '' } });
+  let res;
+  try { res = await fetch('/api/privato/' + path, { ...opts, headers: { ...(opts.headers || {}), 'x-chiave': privPw || '' } }); }
+  catch (_) { segnaOffline(true); const e = new Error('sei offline'); e.code = 'offline'; e.status = 0; throw e; }
+  segnaOffline(res.headers.get('x-offline') === '1');
   const data = await res.json().catch(() => ({}));
   if (!res.ok) { const e = new Error(data.error || ('Errore ' + res.status)); e.status = res.status; e.code = data.code; throw e; }
   return data;
@@ -4051,7 +4218,7 @@ async function loadList(){
   try {
     const items = await privApi('lezioni' + (q ? '?q=' + encodeURIComponent(q) : ''));
     renderList(items);
-    if (!q) { archivioItems = items; materieArchivio = [...new Set(items.map(i => i.materia))]; aggiornaMaterie(); aggiornaSelezioni(items); gloCaricaMaterie(); esMaterie(); }
+    if (!q) { archivioItems = items; materieArchivio = [...new Set(items.map(i => i.materia))]; aggiornaMaterie(); aggiornaSelezioni(items); gloCaricaMaterie(); esMaterie(); preparaOffline(items); }
   } catch (e) { $('lista').textContent = 'Non riesco a caricare l’archivio: ' + e.message; }
 }
 let cercaTimer = null;
@@ -4127,6 +4294,7 @@ async function salvaOra(){
     } else if (Math.abs(($('appunti').value || '').length - appuntiPrima.length) > 300) gloEstrai(l.id, true);
     caricaOggi(); aggiornaContesto(); loadList();
   } catch (e) {
+    if (e.code === 'offline') { chipSalva('Da salvare', ''); privStatus('Sei offline: salvo la lezione appena torna la rete.', 'warn'); return; }
     chipSalva('Non salvata', '');
     privStatus(e.status === 401 ? 'La password non è più valida: ricarica la pagina e reinseriscila.' : 'Non riesco a salvare (' + e.message + '): riprovo alla prossima modifica.', 'err');
   }
