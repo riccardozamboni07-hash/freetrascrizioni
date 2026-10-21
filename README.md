@@ -56,7 +56,7 @@ Usa i piani gratuiti di Cloudflare e Groq: con Groq gratis trascrivi circa **8 o
 16. Aggiungi l'app alla schermata Home:
     - **iPhone**: Condividi → **Aggiungi alla schermata Home**
     - **Android**: menu ⋮ → **Aggiungi a schermata Home**
-17. Tocca **"Prova con l'esempio"** per controllare che tutto funzioni.
+17. Registra qualche secondo di voce e premi **Trascrivi** per controllare che tutto funzioni.
 
 ## Domande frequenti
 

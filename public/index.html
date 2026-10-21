@@ -356,8 +356,6 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 .steps li::before{content:counter(st);flex:none;width:1.6rem;height:1.6rem;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.85rem;background:var(--accent);color:var(--accent-fg)}
 .steps strong{display:block}
 .steps span{color:var(--muted);font-size:.88rem}
-.demo{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px;border-radius:18px;background:var(--accent-soft)}
-.demo p{margin:0;flex:1 1 220px;font-size:.92rem}
 .support{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px 16px;border-radius:20px;border:1px solid var(--line);background:var(--surface)}
 .support p{margin:0;flex:1 1 240px;font-size:.92rem;color:var(--muted)}
 .support strong{color:var(--fg)}
@@ -571,10 +569,6 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
         <span class="btn">Scegli file</span>
         <input type="file" id="fileIn" accept="audio/*,video/*,.m4a,.mp3,.wav,.ogg,.webm,.aac,.opus,.flac">
       </label>
-    </div>
-    <div class="demo">
-      <p><strong>Vuoi vedere come funziona?</strong> Prova con un audio di esempio di 25 secondi, una lezione sul bilancio d'esercizio.</p>
-      <button type="button" id="demoBtn">Prova con l'esempio</button>
     </div>
     <div class="selected" id="selected" hidden>
       <strong id="selName"></strong>
@@ -887,7 +881,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.1.1<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.1.2<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="contesto priv" id="contesto" data-tab="studia">
     <span id="contestoTxt"></span>
     <button type="button" class="link" id="contestoBtn"></button>
@@ -2042,21 +2036,6 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('pagehide', () => { lsSet(CRASH_KEY, null); if (running) track('pagina-chiusa-durante-trascrizione-' + devTag(), stage + ' · ' + pctDone()); });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && (running || segRec)) requestWake(); });
-$('demoBtn').addEventListener('click', async () => {
-  if (running || segRec) { setStatus('Aspetta che finisca l’operazione in corso.', 'warn'); return; }
-  track('esempio-provato-' + devTag(), modelName());
-  $('demoBtn').disabled = true;
-  try {
-    const res = await fetch('esempio-lezione.mp3');
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const blob = await res.blob();
-    setSource({ kind: 'file', file: new File([blob], 'esempio-lezione.mp3', { type: 'audio/mpeg' }), name: 'Esempio: lezione sul bilancio d’esercizio (25 s)' });
-    $('goBtn').click();
-    $('l2').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  } catch (_) {
-    setStatus('Non riesco a caricare l’audio di esempio. Controlla la connessione e riprova.', 'err');
-  } finally { $('demoBtn').disabled = false; }
-});
 
 
 /* ---------- Appunti e trascrizione corretta creati nell'app (Groq, a parti) ---------- */
