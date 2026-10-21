@@ -389,38 +389,6 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <textarea id="out" spellcheck="false" placeholder="Il testo comparirà qui man mano, blocco per blocco, e viene salvato automaticamente. Puoi correggerlo prima di scaricarlo o riassumerlo."></textarea>
   </section>
 
-  <section class="panel priv" aria-labelledby="lSave" style="flex-direction:column">
-    <div class="row between">
-      <span class="label" id="lSave">Salva nell'archivio</span>
-      <span class="chip" id="currentChip">Nuova lezione</span>
-    </div>
-    <p class="note">Materia: <strong id="materiaEco">non scelta</strong> · la cambi al punto 2.</p>
-    <div class="form">
-      <label class="field"><span>Titolo</span><input type="text" id="titolo" placeholder="es. Le fonti del diritto"></label>
-      <label class="field"><span>Data</span><input type="date" id="dataLez"></label>
-    </div>
-    <label class="field"><span>I tuoi appunti (incolla qui quelli fatti con Claude)</span>
-      <textarea id="appunti" spellcheck="true" placeholder="Appunti, riassunto, domande d'esame…"></textarea>
-    </label>
-    <div class="row">
-      <button type="button" class="primary" id="saveLesson">Salva lezione</button>
-      <button type="button" id="newLesson">Nuova lezione</button>
-      <button type="button" id="delLesson" class="danger" hidden>Elimina</button>
-    </div>
-    <div class="status" id="saveStatus" role="status"></div>
-  </section>
-
-  <section class="panel priv" aria-labelledby="lArch" style="flex-direction:column">
-    <div class="row between">
-      <span class="label" id="lArch">Le tue lezioni</span>
-      <span class="usage" id="usage"></span>
-    </div>
-    <input type="search" id="cerca" placeholder="Cerca per titolo, materia o parola della lezione" aria-label="Cerca nelle lezioni">
-    <div class="filters" id="filtri" role="group" aria-label="Filtra per materia" hidden></div>
-    <div class="status" id="archStatus" role="status"></div>
-    <div class="lesson-list" id="lista"><p class="note">Le lezioni che salvi compaiono qui, divise per materia.</p></div>
-  </section>
-
   <section class="panel" aria-labelledby="l4">
     <span class="label" id="l4">4 · Appunti e correzione</span>
     <div class="aicard">
@@ -541,6 +509,38 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <div class="status" id="askStatus" role="status"></div>
   </section>
 
+  <section class="panel priv" aria-labelledby="lSave" style="flex-direction:column">
+    <div class="row between">
+      <span class="label" id="lSave">Salva nell'archivio</span>
+      <span class="chip" id="currentChip">Nuova lezione</span>
+    </div>
+    <p class="note">Materia: <strong id="materiaEco">non scelta</strong> · la cambi al punto 2.</p>
+    <div class="form">
+      <label class="field"><span>Titolo</span><input type="text" id="titolo" placeholder="es. Le fonti del diritto"></label>
+      <label class="field"><span>Data</span><input type="date" id="dataLez"></label>
+    </div>
+    <label class="field"><span>I tuoi appunti (incolla qui quelli fatti con Claude)</span>
+      <textarea id="appunti" spellcheck="true" placeholder="Appunti, riassunto, domande d'esame…"></textarea>
+    </label>
+    <div class="row">
+      <button type="button" class="primary" id="saveLesson">Salva lezione</button>
+      <button type="button" id="newLesson">Nuova lezione</button>
+      <button type="button" id="delLesson" class="danger" hidden>Elimina</button>
+    </div>
+    <div class="status" id="saveStatus" role="status"></div>
+  </section>
+
+  <section class="panel priv" aria-labelledby="lArch" style="flex-direction:column">
+    <div class="row between">
+      <span class="label" id="lArch">Le tue lezioni</span>
+      <span class="usage" id="usage"></span>
+    </div>
+    <input type="search" id="cerca" placeholder="Cerca per titolo, materia o parola della lezione" aria-label="Cerca nelle lezioni">
+    <div class="filters" id="filtri" role="group" aria-label="Filtra per materia" hidden></div>
+    <div class="status" id="archStatus" role="status"></div>
+    <div class="lesson-list" id="lista"><p class="note">Le lezioni che salvi compaiono qui, divise per materia.</p></div>
+  </section>
+
   <section class="panel" aria-labelledby="l5">
     <span class="label" id="l5">Consigli</span>
     <ul class="tips">
@@ -550,7 +550,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.8<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 1.8.1<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
 </main>
 <div class="overlay" id="overlay" hidden></div>
 <nav class="drawer" id="menu" aria-label="Menu" hidden>
@@ -1785,7 +1785,7 @@ $('aiUsa').addEventListener('click', async () => {
   if (aiTipo === 'aggiusta') { $('out').value = t; $('out').dispatchEvent(new Event('input')); }
   else $('appunti').value = t;
   if (currentId) { $('saveLesson').click(); aiSt(aiTipo === 'aggiusta' ? 'Trascrizione sostituita e salvata nella lezione.' : 'Appunti salvati nella lezione.'); }
-  else aiSt((aiTipo === 'aggiusta' ? 'Trascrizione sostituita.' : 'Appunti inseriti.') + ' Ora tocca «Salva lezione» per tenerli nell’archivio.');
+  else { aiSt((aiTipo === 'aggiusta' ? 'Trascrizione sostituita.' : 'Appunti inseriti.') + ' Ora salva la lezione qui sotto per tenerli nell’archivio.'); setTimeout(() => $('lSave').closest('section').scrollIntoView({ behavior: 'smooth', block: 'start' }), 600); }
 });
 function aiNome(){
   const base = ($('titolo').value || materiaCorrente() || 'lezione').trim().replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, '_').slice(0, 60) || 'lezione';
