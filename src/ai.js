@@ -201,3 +201,21 @@ Rispondi SOLO con JSON: {"titolo":"concetto centrale","rami":[{"titolo":"...","n
   if (!d?.titolo) return { status: 502, body: { error: 'Non riesco a creare la mappa: riprova.' }, token: r.token };
   return { status: 200, body: { mappa: pulisci(d, 1) }, token: r.token };
 }
+
+// Indovina materia (tra quelle già usate, se possibile) e un titolo breve per una lezione appena trascritta
+export async function indovinaLezione(env, { testo, materie }) {
+  const elenco = (materie || []).filter(Boolean).slice(0, 40);
+  const r = await chat(env, modelliTesto(env), [
+    { role: 'system', content: `Ricevi l'inizio del testo di una lezione universitaria italiana (trascrizione o appunti).
+1. "materia": l'insegnamento a cui appartiene. ${elenco.length ? `Se corrisponde a una di queste materie dello studente usa ESATTAMENTE quel nome: ${elenco.map(m => '«' + m + '»').join(', ')}. Altrimenti` : 'Scrivi'} il nome di un insegnamento universitario plausibile (es. "Diritto pubblico", "Economia aziendale", "Algebra lineare"), con la maiuscola iniziale.
+2. "titolo": l'argomento principale della lezione in 2-6 parole (es. "Le fonti del diritto"), senza la parola "lezione".
+Rispondi SOLO con JSON: {"materia":"...","titolo":"..."}` },
+    { role: 'user', content: riduci(testo, 6000) },
+  ], { temperature: 0.1, maxOut: 120, json: true });
+  if (r.status !== 200) return r;
+  const d = leggiJsonAI(r.body.testo) || {};
+  let materia = String(d.materia || '').replace(/[«»"]/g, '').trim().slice(0, 60);
+  const uguale = elenco.find(m => m.toLowerCase() === materia.toLowerCase());
+  if (uguale) materia = uguale;
+  return { status: 200, body: { materia, titolo: String(d.titolo || '').replace(/[«»"]/g, '').trim().slice(0, 80) }, token: r.token };
+}

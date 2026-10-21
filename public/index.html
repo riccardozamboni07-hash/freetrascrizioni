@@ -128,6 +128,7 @@ textarea{width:100%;min-height:280px;resize:vertical;font:16px/1.65 var(--sans);
 #sumOut{min-height:200px}
 .note{color:var(--muted);font-size:.88rem;margin:0}
 .tips{color:var(--muted);font-size:.88rem;margin:0;padding-left:1.1rem;display:flex;flex-direction:column;gap:4px}
+.chip.salvando{opacity:.7}
 .chip{font-size:.78rem;font-weight:600;padding:.15rem .55rem;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
 .chip.ok{color:var(--accent-text);border-color:var(--accent-text)}
 .sumgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -677,7 +678,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <span class="note">E adesso?</span>
       <div class="row">
         <button type="button" class="primary" id="vaiAppunti">Crea gli appunti</button>
-        <button type="button" id="vaiSalva">Salva nell'archivio</button>
+        <button type="button" id="vaiSalva">Materia e titolo</button>
       </div>
     </div>
   </section>
@@ -906,20 +907,22 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
 
   <section class="panel priv" aria-labelledby="lSave" style="flex-direction:column">
     <div class="row between">
-      <span class="label" id="lSave">Salva nell'archivio</span>
-      <span class="chip" id="currentChip">Nuova lezione</span>
+      <span class="label" id="lSave">La lezione</span>
+      <span class="chip" id="currentChip">Non ancora salvata</span>
     </div>
-    <p class="note">Materia: <strong id="materiaEco">non scelta</strong> · <button type="button" class="link" id="cambiaMateria">cambiala</button></p>
+    <p class="note" id="salvaInfo">Si salva da sola nell'archivio: la materia e il titolo li sceglie l'AI, tu puoi cambiarli quando vuoi.</p>
+    <span id="materiaEco" hidden></span>
     <p class="note" id="salvaVuoto">Non c'è ancora testo da salvare: registra una lezione in <button type="button" class="link" id="vaiTrascrivi">Trascrivi</button>, carica un file in <button type="button" class="link" id="vaiFonte">Appunti</button> o apri una lezione dall'<button type="button" class="link" id="vaiArchivio">Archivio</button>.</p>
+    <label class="field"><span>Materia</span><input type="text" id="materia2" list="materieList" autocomplete="off" placeholder="La sceglie l'AI, oppure scrivila tu"></label>
     <div class="form">
-      <label class="field"><span>Titolo</span><input type="text" id="titolo" placeholder="es. Le fonti del diritto"></label>
+      <label class="field"><span>Titolo</span><input type="text" id="titolo" placeholder="Lo sceglie l'AI, oppure scrivilo tu"></label>
       <label class="field"><span>Data</span><input type="date" id="dataLez"></label>
     </div>
     <label class="field"><span>Appunti della lezione</span>
       <textarea id="appunti" spellcheck="true" placeholder="Appunti, riassunto, domande d'esame…"></textarea>
     </label>
     <div class="row">
-      <button type="button" class="primary" id="saveLesson">Salva lezione</button>
+      <button type="button" class="primary" id="saveLesson" hidden>Salva lezione</button>
       <button type="button" id="newLesson">Nuova lezione</button>
       <button type="button" id="condBtn" hidden>🔗 Condividi appunti</button>
       <button type="button" id="delLesson" class="danger" hidden>Elimina</button>
@@ -952,7 +955,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.3<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.4<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="contesto priv" id="contesto" data-tab="studia appunti">
     <span id="contestoTxt"></span>
     <button type="button" class="link" id="contestoBtn"></button>
@@ -991,7 +994,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <li><button type="button" data-vai="lGlo"><span>📖</span>Glossario</button></li>
     <li class="menu-sep" role="separator"></li>
     <li class="menu-gruppo">Archivio</li>
-    <li><button type="button" data-vai="lSave"><span>💾</span>Salva lezione</button></li>
+    <li><button type="button" data-vai="lSave"><span>💾</span>La lezione</button></li>
     <li><button type="button" data-vai="lArch"><span>📚</span>Le tue lezioni</button></li>
     <li class="menu-sep" role="separator"></li>
     <li><button type="button" data-vai="l5"><span>💡</span>Consigli</button></li>
@@ -2208,10 +2211,12 @@ async function aiRun(tipo){
     }
     $('aiOut').value = finale; aiRender(); aiModifica(false);
     $('aiTitolo').textContent = tipo === 'aggiusta' ? 'Trascrizione corretta' : 'Appunti della lezione';
-    $('aiUsa').textContent = tipo === 'aggiusta' ? 'Usa come trascrizione' : 'Salva negli appunti della lezione';
+    $('aiUsa').textContent = 'Usa come trascrizione';
+    $('aiUsa').hidden = tipo !== 'aggiusta';
+    if (tipo !== 'aggiusta') { $('appunti').value = finale; autoSalva(); }
     $('aiRis').hidden = false; $('aiRis').style.display = 'flex';
     const parz = aiStop || fatti.length < parti.length;
-    aiSt(parz ? `Interrotto: pronte ${fatti.length} parti su ${parti.length}.` : (tipo === 'aggiusta' ? 'Trascrizione corretta pronta: controllala e tocca «Usa come trascrizione».' : 'Appunti pronti: puoi modificarli qui sotto, salvarli o scaricarli.'), parz ? 'warn' : '');
+    aiSt(parz ? `Interrotto: pronte ${fatti.length} parti su ${parti.length}.` : (tipo === 'aggiusta' ? 'Trascrizione corretta pronta: controllala e tocca «Usa come trascrizione».' : 'Appunti pronti e salvati nella lezione: puoi modificarli o scaricarli.'), parz ? 'warn' : '');
   } catch (e) {
     const msg = e.code === 'chiave-groq' ? 'La chiave Groq non è valida: controlla GROQ_API_KEY su Cloudflare.'
       : e.code === 'fondi-esauriti' ? 'Hai raggiunto il tetto di spesa che hai impostato su Groq.'
@@ -2229,10 +2234,10 @@ $('aiAggiusta').addEventListener('click', () => aiRun('aggiusta'));
 $('aiStop').addEventListener('click', () => { aiStop = true; aiSt('Mi fermo dopo la parte in corso…', 'warn'); });
 $('aiUsa').addEventListener('click', async () => {
   const t = $('aiOut').value.trim(); if (!t) return;
-  if (aiTipo === 'aggiusta') { $('out').value = t; $('out').dispatchEvent(new Event('input')); }
+  if (aiTipo === 'aggiusta') { $('out').value = t; aggiornaContesto(); }
   else $('appunti').value = t;
-  if (currentId) { $('saveLesson').click(); aiSt(aiTipo === 'aggiusta' ? 'Trascrizione sostituita e salvata nella lezione.' : 'Appunti salvati nella lezione.'); }
-  else { aiSt((aiTipo === 'aggiusta' ? 'Trascrizione sostituita.' : 'Appunti inseriti.') + ' Ora salva la lezione qui sotto per tenerli nell’archivio.'); setTimeout(() => $('lSave').closest('section').scrollIntoView({ behavior: 'smooth', block: 'start' }), 600); }
+  await autoSalva();
+  aiSt(aiTipo === 'aggiusta' ? 'Trascrizione sostituita e salvata nella lezione.' : 'Appunti salvati nella lezione.');
 });
 function aiNome(){
   const base = ($('titolo').value || materiaCorrente() || 'lezione').trim().replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, '_').slice(0, 60) || 'lezione';
@@ -2260,6 +2265,7 @@ $('aiWord').addEventListener('click', () => {
 $('aiTxt').addEventListener('click', () => saveFile(new Blob([$('aiOut').value.replace(/\*\*(.+?)\*\*/g, '$1')], { type: 'text/plain;charset=utf-8' }), aiNome() + '.txt'));
 function aiRender(){ $('aiView').innerHTML = mdHtml($('aiOut').value); }
 function aiModifica(on){ $('aiOut').hidden = !on; $('aiView').hidden = on; $('aiMod').textContent = on ? 'Fine modifica' : 'Modifica'; if (!on) aiRender(); }
+$('aiOut').addEventListener('input', () => { if (aiTipo !== 'aggiusta') { $('appunti').value = $('aiOut').value; programmaSalva(); } });
 $('aiMod').addEventListener('click', () => aiModifica($('aiView').hidden === false));
 $('aiCopia').addEventListener('click', () => copy($('aiOut').value, $('aiCopia'), 'Copia'));
 
@@ -3000,7 +3006,7 @@ async function dispensa(materia, formato, btn){
   btn.disabled = true;
   try {
     const [items, glo] = await Promise.all([privApi('appunti?materia=' + encodeURIComponent(materia)), privApi('glossario?materia=' + encodeURIComponent(materia)).catch(() => [])]);
-    if (!items.length) { st.textContent = `Nessuna lezione di ${materia} ha ancora appunti: creali in Trascrivi → Appunti e salva la lezione.`; st.className = 'status warn'; finestra?.close(); return; }
+    if (!items.length) { st.textContent = `Nessuna lezione di ${materia} ha ancora appunti: creali nella scheda Appunti.`; st.className = 'status warn'; finestra?.close(); return; }
     const esc = x => String(x).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
     const senzaTitolo = a => a.trim().replace(/^#\s+.*\n(.*·.*\n)?/, '');
     let corpo = `<div class="copertina"><h1>${esc(materia)}</h1><p>Dispensa · ${items.length} ${items.length === 1 ? 'lezione' : 'lezioni'}${glo.length ? ' · glossario di ' + glo.length + ' termini' : ''}</p><p>Aggiornata al ${esc(fmtData(todayISO()))}</p></div>`;
@@ -3266,7 +3272,6 @@ $('contestoBtn').addEventListener('click', e => $(e.currentTarget.dataset.dove)?
 $('vaiAppunti').addEventListener('click', () => $('l4').scrollIntoView({ behavior: 'smooth', block: 'start' }));
 $('vaiSalva').addEventListener('click', () => $('lSave').scrollIntoView({ behavior: 'smooth', block: 'start' }));
 $('vaiTrascrivi').addEventListener('click', () => $('l1').scrollIntoView({ behavior: 'smooth', block: 'start' }));
-$('cambiaMateria').addEventListener('click', () => { $('materia').scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => $('materia').focus(), 400); });
 ['input', 'change'].forEach(ev => { $('out').addEventListener(ev, aggiornaContesto); $('titolo').addEventListener(ev, aggiornaContesto); $('materia').addEventListener(ev, aggiornaContesto); });
 setInterval(aggiornaContesto, 1500);
 
@@ -3303,8 +3308,8 @@ function fonteImposta(testo, titolo, origine){
   privNewRun(); chunks = new Map(); doneSec = 0;
   $('out').value = testo; if (titolo) $('titolo').value = titolo;
   try { localStorage.setItem(LS, testo); } catch (_) {}
-  aggiornaContesto(); fonteInfo();
-  fonteSt(`${origine} pronto: ${testo.split(/\s+/).length.toLocaleString('it-IT')} parole. Ora premi «Crea appunti».`, 'ok');
+  aggiornaContesto(); fonteInfo(); autoSalva();
+  fonteSt(`${origine} pronto: ${testo.split(/\s+/).length.toLocaleString('it-IT')} parole. Lo salvo nell’archivio; ora premi «Crea appunti».`, 'ok');
   track('appunti-da-' + (origine.startsWith('Testo') ? 'incolla' : 'file'));
   setTimeout(() => $('l4').scrollIntoView({ behavior: 'smooth', block: 'start' }), 600);
   return true;
@@ -3600,6 +3605,7 @@ function aggiornaMaterie(){
 function onMateria(){
   const m = materiaCorrente();
   $('materiaEco').textContent = m || 'non scelta';
+  if ($('materia2') && document.activeElement !== $('materia2')) $('materia2').value = m;
   lsSet(MATERIA_KEY, m || null);
   clearTimeout(precTimer); precTimer = setTimeout(caricaPrecedenti, 400);
 }
@@ -3732,8 +3738,7 @@ let cercaTimer = null;
 $('cerca').addEventListener('input', () => { clearTimeout(cercaTimer); cercaTimer = setTimeout(loadList, 300); });
 function setCurrent(l){
   currentId = l ? l.id : null;
-  $('currentChip').textContent = l ? 'Lezione salvata' : 'Nuova lezione';
-  $('currentChip').classList.toggle('ok', !!l);
+  chipSalva(l ? 'Salvata ✓' : 'Non ancora salvata', l ? 'ok' : '');
   $('delLesson').hidden = !l;
   disarmDel(); condDa(l);
 }
@@ -3748,31 +3753,74 @@ async function openLesson(id){
     let fc = []; try { fc = l.flashcard ? JSON.parse(l.flashcard) : []; } catch (_) {}
     fcSet(fc, false); fcSt(''); $('gloAggiorna').hidden = false;
     matLezione = l.materiale || ''; matPending = []; matRender(); mappaDa(l);
+    ultimoSalvato = firmaLezione();
     privStatus(`Aperta: ${l.titolo} (${l.materia}).`);
     loadList(); fonteScegli('trascr');
     tabScelta = true; attivaTab('appunti'); window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (e) { privStatus('Non riesco ad aprire la lezione: ' + e.message, 'err'); }
 }
-$('saveLesson').addEventListener('click', async () => {
+/* ---------- Salvataggio automatico ---------- */
+// La lezione si salva da sola: a fine trascrizione, quando carichi un file o incolli un testo,
+// quando l'AI crea gli appunti e (dopo qualche secondo) quando modifichi testo, appunti, materia, titolo o data.
+let salvaInCorso = null, salvaDiNuovo = false, autoTimer = null, materiaUtente = 0, ultimoSalvato = '';
+const firmaLezione = () => JSON.stringify([$('out').value.length, $('out').value.slice(-300), $('appunti').value, materiaCorrente(), $('titolo').value, $('dataLez').value, currentId]);
+const titoloGenerico = t => !t || /^lezione([ _]\d{4}|\s+del\b)/i.test(t.trim()) || /^(esempio|registrazione|audio|nuova registrazione|recording|memo)/i.test(t.trim());
+function chipSalva(testo, cls){ const c = $('currentChip'); c.textContent = testo; c.classList.toggle('ok', cls === 'ok'); c.classList.toggle('salvando', cls === 'salvando'); }
+function programmaSalva(ms = 2500){ clearTimeout(autoTimer); autoTimer = setTimeout(() => autoSalva(), ms); }
+function autoSalva(){
+  clearTimeout(autoTimer);
+  if (salvaInCorso) { salvaDiNuovo = true; return salvaInCorso; }
+  salvaInCorso = (async () => {
+    try { await salvaOra(); }
+    finally { salvaInCorso = null; if (salvaDiNuovo) { salvaDiNuovo = false; programmaSalva(300); } }
+  })();
+  return salvaInCorso;
+}
+async function salvaOra(){
   const testo = $('out').value.trim();
-  if (!testo) { privStatus('Non c’è testo da salvare: trascrivi un audio o apri una lezione.', 'warn'); return; }
-  if (!materiaCorrente()) { privStatus('Scegli la materia al punto 2, così la ritrovi più facilmente.', 'warn'); $('materia').focus(); return; }
-  $('saveLesson').disabled = true;
+  if (!PRIVATE || testo.length < 50 || running || segRec) return;
+  if (document.body.classList.contains('locked')) return;
+  if (firmaLezione() === ultimoSalvato) return;
+  const nuova = !currentId;
+  chipSalva('Salvataggio…', 'salvando');
+  if (nuova && (!materiaUtente || !materiaCorrente() || titoloGenerico($('titolo').value))) {
+    try {
+      const g = await privApi('indovina', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ testo: testo.slice(0, 7000) }) });
+      if (g.materia && (!materiaUtente || !materiaCorrente())) { $('materia').value = g.materia; onMateria(); }
+      if (g.titolo && titoloGenerico($('titolo').value)) $('titolo').value = g.titolo;
+    } catch (_) {}
+  }
+  if (!materiaCorrente()) { $('materia').value = 'Senza materia'; onMateria(); }
   try {
     const l = await privApi('lezioni', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
-      id: currentId, materia: materiaCorrente(), titolo: $('titolo').value || 'Lezione del ' + fmtData($('dataLez').value || todayISO()),
+      id: currentId, materia: materiaCorrente(), titolo: $('titolo').value.trim() || 'Lezione del ' + fmtData($('dataLez').value || todayISO()),
       data: $('dataLez').value || todayISO(), durata: Math.round(doneSec || totalSec || 0), testo: $('out').value, appunti: $('appunti').value,
     }) });
-    setCurrent(l); $('titolo').value = l.titolo;
+    const appuntiPrima = (ultimoSalvato && JSON.parse(ultimoSalvato)[2]) || '';
+    setCurrent(l); $('titolo').value = l.titolo; if (!$('dataLez').value) $('dataLez').value = l.data;
+    ultimoSalvato = firmaLezione();
     if (fcDaSalvare) await fcSalva();
-    privStatus(`Salvata in «${l.materia}».`);
-    gloEstrai(l.id, true); caricaOggi(); salvaMatPending(l.id); mappaDa(l); aggiornaContesto();
-    loadList(); caricaPrecedenti();
-  } catch (e) { privStatus(e.status === 401 ? 'La password non è più valida: ricarica la pagina e reinseriscila.' : 'Non riesco a salvare: ' + e.message, 'err'); }
-  finally { $('saveLesson').disabled = false; }
-});
+    chipSalva('Salvata ✓', 'ok');
+    if (nuova) {
+      privStatus(`Salvata nell'archivio in «${l.materia}» come «${l.titolo}». Puoi cambiare materia e titolo qui sotto.`);
+      gloEstrai(l.id, true); salvaMatPending(l.id); mappaDa(l);
+    } else if (Math.abs(($('appunti').value || '').length - appuntiPrima.length) > 300) gloEstrai(l.id, true);
+    caricaOggi(); aggiornaContesto(); loadList(); caricaPrecedenti();
+  } catch (e) {
+    chipSalva('Non salvata', '');
+    privStatus(e.status === 401 ? 'La password non è più valida: ricarica la pagina e reinseriscila.' : 'Non riesco a salvare (' + e.message + '): riprovo alla prossima modifica.', 'err');
+  }
+}
+$('saveLesson').addEventListener('click', () => { ultimoSalvato = ''; autoSalva(); });
+$('materia2').addEventListener('input', () => { $('materia').value = $('materia2').value; materiaUtente = Date.now(); onMateria(); programmaSalva(); });
+$('materia2').value = materiaCorrente();
+$('materia').addEventListener('input', () => { materiaUtente = Date.now(); programmaSalva(); });
+['titolo', 'dataLez', 'appunti'].forEach(id => $(id).addEventListener('input', () => programmaSalva()));
+$('dataLez').addEventListener('change', () => programmaSalva(500));
+$('out').addEventListener('input', () => { if (!running && !segRec) programmaSalva(4000); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && autoTimer) autoSalva(); });
 function privNewRun(){
-  setCurrent(null);
+  setCurrent(null); if (Date.now() - materiaUtente > 30 * 60000) materiaUtente = 0; ultimoSalvato = ''; clearTimeout(autoTimer); chipSalva('Non ancora salvata', '');
   $('appunti').value = ''; $('titolo').value = ''; $('dataLez').value = todayISO();
   privStatus(''); fcSet([], false); fcSt(''); lavFoto = []; lavRender(); matLezione = ''; matPending = []; matRender(); mappaDa(null);
 }
@@ -3795,7 +3843,8 @@ $('delLesson').addEventListener('click', async () => {
 });
 function privAfterRun(){
   if (!$('titolo').value && source?.name) $('titolo').value = source.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ');
-  privStatus('Trascrizione pronta: controlla materia e titolo, poi tocca «Salva lezione».');
+  privStatus('Trascrizione pronta: la salvo nell’archivio…');
+  ultimoSalvato = ''; autoSalva();
   privApi('verifica').then(showUsage).catch(() => {});
 }
 if (PRIVATE) {

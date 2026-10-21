@@ -7,7 +7,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { onRequest as trascrivi } from './trascrivi.js';
 import { generaFlashcard } from './flashcard.js';
-import { generaTesto, leggiLavagna, rispondi, estraiGlossario, domandaOrale, valutaOrale, creaMappa } from './ai.js';
+import { generaTesto, leggiLavagna, rispondi, estraiGlossario, domandaOrale, valutaOrale, creaMappa, indovinaLezione } from './ai.js';
 import { creaChiaviVapid, inviaPush, chiaveValida } from './push.js';
 import { privacy, condizioni, paginaCondivisa } from './legale.js';
 import { hashPassword, verificaPassword, sha, nuovoToken, nuovoId, leggiCookie, cookie, emailValida, googleInizio, googleFine } from './auth.js';
@@ -120,6 +120,7 @@ export class Store extends DurableObject {
     }
     return { nuovi, aggiornati };
   }
+  materieUsate() { return this.sql.exec('SELECT materia, count(*) AS n FROM lezioni GROUP BY materia ORDER BY n DESC').toArray().map(r => r.materia).filter(m => m && m !== 'Senza materia'); }
   segnaGlossario(id, n) { this.sql.exec('UPDATE lezioni SET glo_len = ? WHERE id = ?', n, id); }
   eliminaTermine(chiave) { this.sql.exec('DELETE FROM glossario WHERE chiave = ?', chiave); return { ok: true }; }
   // ---------- esami e piano di ripasso ----------
@@ -511,7 +512,7 @@ export default {
       if (!multi && !env.PASSWORD) return json(503, { error: 'Password non impostata.', code: 'no-password' });
       if (!entrato) return json(401, { error: multi ? 'Accedi di nuovo.' : 'Password errata.' });
       const azione = url.pathname.slice('/api/privato/'.length);
-      if (['ai', 'flashcard', 'lavagna', 'chiedi', 'glossario-estrai', 'orale-domanda', 'orale-valuta', 'mappa'].includes(azione)) { const l = await limiteAi(); if (l) return l; }
+      if (['ai', 'flashcard', 'lavagna', 'chiedi', 'glossario-estrai', 'orale-domanda', 'orale-valuta', 'mappa', 'indovina'].includes(azione)) { const l = await limiteAi(); if (l) return l; }
       if (azione === 'verifica') return json(200, {
         ok: true, uso: multi ? { ...(await auth().usoOggi()), flashcardToken: (await store().usoOggi()).flashcardToken } : await store().usoOggi(), limitePubblicoOre: null,
         limiteGroq: { orePerGiorno: 8, orePerOra: 2, tokenFlashcardGiorno: multi ? tokenGiorno : 500000, tokenFlashcardMinuto: 30000 },
@@ -556,6 +557,14 @@ export default {
           return r ? json(200, r) : json(404, { error: 'Salva prima la lezione.' });
         }
         if (request.method === 'DELETE') return json(200, await store().togliMateriale(String(url.searchParams.get('id') || '').slice(0, 64)));
+      }
+      if (azione === 'indovina' && request.method === 'POST') {
+        const b = await corpo();
+        const testo = String(b?.testo || '').slice(0, 8000);
+        if (testo.trim().length < 80) return json(400, { error: 'Testo troppo corto.' });
+        const materie = await store().materieUsate();
+        const r = await conToken(await indovinaLezione(env, { testo, materie }));
+        return json(r.status, r.body);
       }
       if (azione === 'mappa' && request.method === 'POST') {
         const b = await corpo();
