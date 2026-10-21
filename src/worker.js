@@ -604,7 +604,7 @@ export default {
         const b = await corpo();
         const sub = b?.iscrizione;
         if (!sub || typeof sub.endpoint !== 'string' || !/^https:\/\//.test(sub.endpoint)) return json(400, { error: 'Iscrizione non valida.' });
-        const ora = Math.max(0, Math.min(23, Math.round(Number(b.ora) || 18)));
+        const ora = Number.isFinite(Number(b.ora)) && b.ora !== '' && b.ora != null ? Math.max(0, Math.min(23, Math.round(Number(b.ora)))) : 18;
         const st = await store().iscriviPush({ endpoint: sub.endpoint.slice(0, 1000), keys: sub.keys || {} }, ora);
         if (multi) await auth().segnaUtentePush(utente.id, ora);
         return json(200, st);

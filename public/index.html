@@ -123,7 +123,7 @@ select{font:inherit;padding:.55rem .8rem;min-height:44px;border-radius:14px;bord
 .bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden}
 .bar > i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
 .status{font-size:.92rem;color:var(--muted);font-variant-numeric:tabular-nums}
-.status.err{color:var(--err)} .status.warn{color:var(--warn)}
+.status.err{color:var(--err)} .status.warn{color:var(--warn)} .status.ok{color:var(--accent-text)}
 textarea{width:100%;min-height:280px;resize:vertical;font:16px/1.65 var(--sans);padding:14px;border-radius:18px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
 #sumOut{min-height:200px}
 .note{color:var(--muted);font-size:.88rem;margin:0}
@@ -378,6 +378,15 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 .mappa .nipoti{font-weight:400;font-size:.8rem;color:var(--muted)}
 .cond-box{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
 .link{background:none;border:none;padding:0;min-height:0;font:inherit;font-weight:600;color:var(--accent-text);text-decoration:underline;text-underline-offset:2px;cursor:pointer;display:inline}
+.fonti{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.fonti button{flex-direction:column;gap:4px;min-height:72px;padding:10px 4px;border-radius:16px;font-size:1.3rem;border:1.5px solid var(--line);background:var(--surface)}
+.fonti button span{font-size:.8rem;font-weight:600}
+.fonti button[aria-checked="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-text)}
+.drop-fonte{display:flex;flex-direction:column;gap:4px;align-items:center;text-align:center;padding:22px 14px;border:1.5px dashed var(--line);border-radius:16px;cursor:pointer}
+.drop-fonte small{color:var(--muted);font-size:.84rem}
+.drop-fonte input{position:absolute;width:1px;height:1px;opacity:0}
+.drop-fonte.drag{border-color:var(--accent);background:var(--accent-soft)}
+#fonteTesto{min-height:180px}
 .dopo{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
 .dopo[hidden]{display:none}
 .contesto{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--tenue);border:1px solid var(--line);border-radius:16px;padding:10px 14px;font-size:.88rem}
@@ -673,8 +682,32 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     </div>
   </section>
 
+  <section class="panel priv" aria-labelledby="lFonte" id="fontePanel">
+    <span class="label" id="lFonte">1. Da cosa partiamo?</span>
+    <div class="fonti" role="radiogroup" aria-label="Testo di partenza">
+      <button type="button" data-fonte="trascr" aria-checked="true" role="radio">🎙️<span>Trascrizione</span></button>
+      <button type="button" data-fonte="file" aria-checked="false" role="radio">📄<span>Carica file</span></button>
+      <button type="button" data-fonte="incolla" aria-checked="false" role="radio">📋<span>Incolla testo</span></button>
+    </div>
+    <div data-fonte-box="trascr">
+      <p class="note" id="fonteTrascr"></p>
+    </div>
+    <div data-fonte-box="file" hidden>
+      <label class="drop-fonte" for="fonteIn">
+        <strong>Scegli un file</strong>
+        <small>PDF, Word, PowerPoint, testo o foto degli appunti (anche più foto insieme)</small>
+        <input type="file" id="fonteIn" multiple accept=".pdf,.docx,.pptx,.txt,.md,image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain">
+      </label>
+    </div>
+    <div data-fonte-box="incolla" hidden>
+      <textarea id="fonteTesto" spellcheck="true" placeholder="Incolla qui il testo: appunti di un compagno, una pagina del libro, una trascrizione fatta altrove…"></textarea>
+      <button type="button" class="primary" id="fonteUsa">Usa questo testo</button>
+    </div>
+    <div class="status" id="fonteStatus" role="status"></div>
+  </section>
+
   <section class="panel" aria-labelledby="l4">
-    <span class="label" id="l4">Appunti e correzione</span>
+    <span class="label" id="l4">2. Appunti e correzione</span>
     <div class="aicard">
       <h3>Crea qui nell'app</h3>
       <p class="note">L'intelligenza artificiale scrive gli <strong>appunti</strong> della lezione o <strong>corregge la trascrizione</strong> direttamente qui. Poi li salvi nella lezione o li scarichi come file Word. Una lezione di 2 ore richiede 1-3 minuti.</p>
@@ -687,7 +720,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
         <div class="thumbs" id="lavThumbs" hidden></div>
         <div class="row">
           <label class="btn" for="matIn">📎 Slide o PDF del professore</label>
-          <input type="file" id="matIn" accept=".pdf,.pptx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain">
+          <input type="file" id="matIn" accept=".pdf,.pptx,.docx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain">
           <span class="note" id="matNota">Facoltativi: l'AI li usa per appunti, flashcard, orale e Chiedi.</span>
         </div>
         <div class="mat-lista" id="matLista" hidden></div>
@@ -877,7 +910,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <span class="chip" id="currentChip">Nuova lezione</span>
     </div>
     <p class="note">Materia: <strong id="materiaEco">non scelta</strong> · <button type="button" class="link" id="cambiaMateria">cambiala</button></p>
-    <p class="note" id="salvaVuoto">Non c'è ancora testo da salvare: registra o carica una lezione in <button type="button" class="link" id="vaiTrascrivi">Trascrivi</button>, oppure apri una lezione qui sotto.</p>
+    <p class="note" id="salvaVuoto">Non c'è ancora testo da salvare: registra una lezione in <button type="button" class="link" id="vaiTrascrivi">Trascrivi</button>, carica un file in <button type="button" class="link" id="vaiFonte">Appunti</button> o apri una lezione dall'<button type="button" class="link" id="vaiArchivio">Archivio</button>.</p>
     <div class="form">
       <label class="field"><span>Titolo</span><input type="text" id="titolo" placeholder="es. Le fonti del diritto"></label>
       <label class="field"><span>Data</span><input type="date" id="dataLez"></label>
@@ -902,7 +935,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
   <section class="panel priv" aria-labelledby="lArch" style="flex-direction:column">
     <div class="row between">
       <span class="label" id="lArch">Le tue lezioni</span>
-      <span class="usage" id="usage"></span>
+      <span class="usage" id="usage" hidden></span>
     </div>
     <input type="search" id="cerca" placeholder="Cerca per titolo, materia o parola della lezione" aria-label="Cerca nelle lezioni">
     <div class="filters" id="filtri" role="group" aria-label="Filtra per materia" hidden></div>
@@ -919,15 +952,10 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.2<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
-  <div class="contesto priv" id="contesto" data-tab="studia">
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.3<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <div class="contesto priv" id="contesto" data-tab="studia appunti">
     <span id="contestoTxt"></span>
     <button type="button" class="link" id="contestoBtn"></button>
-  </div>
-  <div class="segmenti" data-tab="trascrivi" id="segTrascrivi" role="tablist" aria-label="Trascrizione o appunti">
-    <span class="seg-ind" aria-hidden="true"></span>
-    <button type="button" data-sub-btn="trascrizione">Trascrizione</button>
-    <button type="button" data-sub-btn="appunti">Appunti</button>
   </div>
   <div class="segmenti" data-tab="studia" id="segStudia" role="tablist" aria-label="Strumenti di studio">
     <span class="seg-ind" aria-hidden="true"></span>
@@ -938,7 +966,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <button type="button" data-sub-btn="glossario">Glossario</button>
   </div>
 </main>
-<nav class="tabbar" id="tabbar" aria-label="Sezioni dell'app"><span class="tab-ind" id="tabInd" aria-hidden="true"></span><button type="button" data-tab-btn="oggi" aria-label="Oggi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M8.5 14.5l2.2 2 4.8-4.5"/></svg><span>Oggi</span><i class="dot" id="oggiDot" hidden></i></button><button type="button" data-tab-btn="trascrivi" aria-label="Trascrivi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg><span>Trascrivi</span></button><button type="button" data-tab-btn="studia" aria-label="Studia"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5M9 8h7M9 11.5h5"/></svg><span>Studia</span></button><button type="button" data-tab-btn="archivio" aria-label="Archivio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v9.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V9M10 13h4"/></svg><span>Archivio</span></button></nav>
+<nav class="tabbar" id="tabbar" aria-label="Sezioni dell'app"><span class="tab-ind" id="tabInd" aria-hidden="true"></span><button type="button" data-tab-btn="oggi" aria-label="Oggi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M8.5 14.5l2.2 2 4.8-4.5"/></svg><span>Oggi</span><i class="dot" id="oggiDot" hidden></i></button><button type="button" data-tab-btn="trascrivi" aria-label="Trascrivi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg><span>Trascrivi</span></button><button type="button" data-tab-btn="studia" aria-label="Studia"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5M9 8h7M9 11.5h5"/></svg><span>Studia</span></button><button type="button" data-tab-btn="appunti" aria-label="Appunti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Appunti</span></button><button type="button" data-tab-btn="archivio" aria-label="Archivio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v9.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V9M10 13h4"/></svg><span>Archivio</span></button></nav>
 
 <div class="overlay" id="overlay" hidden></div>
 <nav class="drawer" id="menu" aria-label="Menu" hidden>
@@ -2480,19 +2508,19 @@ $('delAccOk').addEventListener('click', async () => {
 
 
 /* ---------- Navigazione a schede (con sotto-schede in Trascrivi e Studia) ---------- */
-const MAPPA_TAB = { lUso: ['oggi'], lOggi: ['oggi'], lTimer: ['oggi'], lNotif: ['oggi'], lOrale: ['studia', 'orale'], lMappa: ['studia', 'mappa'], l1: ['trascrivi', 'trascrizione'], l2: ['trascrivi', 'trascrizione'], l3: ['trascrivi', 'trascrizione'], l4: ['trascrivi', 'appunti'],
-  lFc: ['studia', 'flashcard'], lAsk: ['studia', 'chiedi'], lGlo: ['studia', 'glossario'], lSave: ['archivio'], lArch: ['archivio'], l5: ['archivio'] };
-const TITOLI_TAB = { oggi: 'Oggi', trascrivi: 'Trascrivi', studia: 'Studia', archivio: 'Archivio' };
-const ORDINE_TAB = ['oggi', 'trascrivi', 'studia', 'archivio'];
-const ORDINE_SUB = { trascrivi: ['trascrizione', 'appunti'], studia: ['flashcard', 'orale', 'mappa', 'chiedi', 'glossario'] };
+const MAPPA_TAB = { lUso: ['oggi'], lOggi: ['oggi'], lTimer: ['oggi'], lNotif: ['oggi'], lOrale: ['studia', 'orale'], lMappa: ['studia', 'mappa'], l1: ['trascrivi'], l2: ['trascrivi'], l3: ['trascrivi'], lFonte: ['appunti'], l4: ['appunti'],
+  lFc: ['studia', 'flashcard'], lAsk: ['studia', 'chiedi'], lGlo: ['studia', 'glossario'], lSave: ['trascrivi appunti'], lArch: ['archivio'], l5: ['trascrivi'] };
+const TITOLI_TAB = { oggi: 'Oggi', trascrivi: 'Trascrivi', studia: 'Studia', appunti: 'Appunti', archivio: 'Archivio' };
+const ORDINE_TAB = ['oggi', 'trascrivi', 'studia', 'appunti', 'archivio'];
+const ORDINE_SUB = { studia: ['flashcard', 'orale', 'mappa', 'chiedi', 'glossario'] };
 for (const [id, [t, sub]] of Object.entries(MAPPA_TAB)) { const sez = $(id)?.closest('section'); if (sez) { sez.dataset.tab = t; if (sub) sez.dataset.sub = sub; } }
-const passi = document.querySelector('.steps.pub'); if (passi) { passi.dataset.tab = 'trascrivi'; passi.dataset.sub = 'trascrizione'; }
-document.querySelector('header.top')?.after($('segTrascrivi'), $('segStudia'), $('contesto'));
+const passi = document.querySelector('.steps.pub'); if (passi) passi.dataset.tab = 'trascrivi';
+document.querySelector('header.top')?.after($('segStudia'), $('contesto'));
 // i pulsanti di una sotto-scheda sanno a quale scheda appartengono
 document.querySelectorAll('.segmenti').forEach(sg => sg.querySelectorAll('[data-sub-btn]').forEach(b => { b.dataset.perTab = sg.dataset.tab; }));
 const notaVersione = [...document.querySelectorAll('main > p.note')].pop(); if (notaVersione) { notaVersione.style.marginTop = '8px'; $('profilo').append(notaVersione); }
 let tabAttiva = null, tabScelta = false;
-const subAttive = { trascrivi: 'trascrizione', studia: 'flashcard' };
+const subAttive = { studia: 'flashcard' };
 function muoviIndicatori(){
   const btn = document.querySelector(`[data-tab-btn="${tabAttiva}"]`), ind = $('tabInd');
   if (btn && ind && btn.offsetWidth) { ind.style.width = btn.offsetWidth + 'px'; ind.style.transform = `translateX(${btn.offsetLeft}px)`; }
@@ -2514,7 +2542,7 @@ function attivaTab(tab, sub){
   else if (primaTab === tab && primaSub !== subOra) verso = ORDINE_SUB[tab].indexOf(subOra) > ORDINE_SUB[tab].indexOf(primaSub) ? 1 : -1;
   let n = 0;
   document.querySelectorAll('main > [data-tab]').forEach(el => {
-    const on = el.dataset.tab === tab && (!el.dataset.sub || el.dataset.sub === subOra), era = el.classList.contains('vis');
+    const on = el.dataset.tab.split(' ').includes(tab) && (!el.dataset.sub || el.dataset.sub === subOra), era = el.classList.contains('vis');
     el.classList.toggle('vis', on);
     el.classList.remove('entra-dx', 'entra-sx');
     // scivola dentro: da destra se vai avanti, da sinistra se torni indietro (il selettore delle sotto-schede resta fermo)
@@ -2534,11 +2562,11 @@ document.querySelectorAll('[data-sub-btn]').forEach(b => b.addEventListener('cli
 const _scrollIntoView = Element.prototype.scrollIntoView;
 Element.prototype.scrollIntoView = function(o){
   const sez = this.closest && this.closest('main > [data-tab]');
-  if (sez && !sez.classList.contains('vis')) { tabScelta = true; attivaTab(sez.dataset.tab, sez.dataset.sub); }
+  if (sez && !sez.classList.contains('vis')) { tabScelta = true; attivaTab(sez.dataset.tab.split(' ')[0], sez.dataset.sub); }
   return _scrollIntoView.call(this, o);
 };
 try {
-  Object.assign(subAttive, JSON.parse(sessionStorage.getItem('ft:subs') || '{}'));
+  const subSalvate = JSON.parse(sessionStorage.getItem('ft:subs') || '{}'); if (subSalvate.studia) subAttive.studia = subSalvate.studia;
   const t = sessionStorage.getItem('ft:tab');
   if (t) { tabScelta = true; attivaTab(t); } else attivaTab('trascrivi');
 } catch (_) { attivaTab('trascrivi'); }
@@ -2791,6 +2819,16 @@ async function estraiTesto(file){
     }
     return { testo: out.join('\n'), info: `${slides.length} slide` };
   }
+  if (nome.endsWith('.docx')) {
+    await caricaScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+    const zip = await window.JSZip.loadAsync(file);
+    const xml = await zip.file('word/document.xml')?.async('string');
+    if (!xml) throw new Error('file Word non valido');
+    const dec = t => t.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
+    const par = [...xml.matchAll(/<w:p[ >][\s\S]*?<\/w:p>/g)].map(m => dec([...m[0].matchAll(/<w:t(?: [^>]*)?>([\s\S]*?)<\/w:t>/g)].map(x => x[1]).join(''))).filter(t => t.trim());
+    return { testo: par.join('\n\n'), info: `${par.length} paragrafi` };
+  }
+  if (nome.endsWith('.doc')) throw new Error('i vecchi file .doc non sono supportati: salvalo come .docx o PDF');
   return { testo: await file.text(), info: 'testo' };
 }
 function materialeTesto(){ return [matLezione, ...matPending.map(m => `=== ${m.nome} ===\n${m.testo}`)].filter(Boolean).join('\n\n'); }
@@ -3231,6 +3269,85 @@ $('vaiTrascrivi').addEventListener('click', () => $('l1').scrollIntoView({ behav
 $('cambiaMateria').addEventListener('click', () => { $('materia').scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => $('materia').focus(), 400); });
 ['input', 'change'].forEach(ev => { $('out').addEventListener(ev, aggiornaContesto); $('titolo').addEventListener(ev, aggiornaContesto); $('materia').addEventListener(ev, aggiornaContesto); });
 setInterval(aggiornaContesto, 1500);
+
+/* ---------- Scheda Appunti: da cosa partiamo (trascrizione, file, testo incollato) ---------- */
+let fonteAttiva = 'trascr';
+function fonteScegli(f){
+  fonteAttiva = f;
+  document.querySelectorAll('[data-fonte]').forEach(b => b.setAttribute('aria-checked', b.dataset.fonte === f));
+  document.querySelectorAll('[data-fonte-box]').forEach(b => { b.hidden = b.dataset.fonteBox !== f; });
+  fonteInfo();
+}
+function fonteSt(t, k){ $('fonteStatus').textContent = t || ''; $('fonteStatus').className = 'status' + (k ? ' ' + k : ''); }
+function fonteInfo(){
+  const t = $('out').value.trim(), el = $('fonteTrascr'); el.textContent = '';
+  if (t.length < 50) {
+    el.append('Non c’è ancora una trascrizione. Registra o carica un audio in ');
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'link'; b.textContent = 'Trascrivi';
+    b.addEventListener('click', () => { tabScelta = true; attivaTab('trascrivi'); window.scrollTo({ top: 0 }); });
+    el.append(b, ', oppure carica un file o incolla un testo.');
+    return;
+  }
+  const parole = t.split(/\s+/).length, tit = $('titolo').value.trim();
+  el.append(`Uso il testo ${currentId ? 'della lezione' : 'attuale'}${tit ? ` «${tit}»` : ''}: ${parole.toLocaleString('it-IT')} parole. Ora crea gli appunti qui sotto.`);
+}
+// mette il testo come nuova lezione (senza perdere quella aperta se è già salvata nell'archivio)
+function fonteImposta(testo, titolo, origine){
+  testo = String(testo || '').trim();
+  if (testo.length < 50) { fonteSt('Il testo è troppo corto: servono almeno un paio di frasi.', 'warn'); return false; }
+  if (running || segRec) { fonteSt('Aspetta che finisca la trascrizione o la registrazione in corso.', 'warn'); return false; }
+  const vecchio = $('out').value.trim();
+  if (vecchio && !currentId && vecchio !== testo) {
+    if (!confirm('C’è una trascrizione non ancora salvata: sostituirla con il nuovo testo?')) return false;
+  }
+  privNewRun(); chunks = new Map(); doneSec = 0;
+  $('out').value = testo; if (titolo) $('titolo').value = titolo;
+  try { localStorage.setItem(LS, testo); } catch (_) {}
+  aggiornaContesto(); fonteInfo();
+  fonteSt(`${origine} pronto: ${testo.split(/\s+/).length.toLocaleString('it-IT')} parole. Ora premi «Crea appunti».`, 'ok');
+  track('appunti-da-' + (origine.startsWith('Testo') ? 'incolla' : 'file'));
+  setTimeout(() => $('l4').scrollIntoView({ behavior: 'smooth', block: 'start' }), 600);
+  return true;
+}
+document.querySelectorAll('[data-fonte]').forEach(b => b.addEventListener('click', () => fonteScegli(b.dataset.fonte)));
+$('fonteUsa').addEventListener('click', () => { if (fonteImposta($('fonteTesto').value, '', 'Testo')) $('fonteTesto').value = ''; });
+async function fonteDaFile(files){
+  files = [...files]; if (!files.length) return;
+  const foto = files.filter(f => f.type.startsWith('image/')), doc = files.filter(f => !f.type.startsWith('image/'));
+  const titolo = (doc[0] || foto[0]).name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim();
+  const pezzi = [];
+  try {
+    for (const f of doc) {
+      fonteSt(`Leggo «${f.name}»…`);
+      const { testo } = await estraiTesto(f);
+      if (testo.replace(/\[(pagina|slide) \d+\]/g, '').trim().length < 50) { fonteSt(`In «${f.name}» non trovo testo: se è una scansione, carica le pagine come foto.`, 'warn'); continue; }
+      pezzi.push(doc.length > 1 ? `=== ${f.name} ===\n${testo}` : testo);
+    }
+    if (foto.length) {
+      const imm = [];
+      for (const f of foto.slice(0, 15)) imm.push(await comprimiFoto(f));
+      for (let k = 0; k < imm.length; k += 5) {
+        fonteSt(`Leggo le foto con l’AI (${Math.min(k + 5, imm.length)} di ${imm.length})…`);
+        const r = await privApi('lavagna', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ immagini: imm.slice(k, k + 5), materia: materiaCorrente() }) });
+        if (r?.testo) pezzi.push(r.testo);
+      }
+      if (foto.length > 15) fonteSt('Ho letto le prime 15 foto.', 'warn');
+    }
+  } catch (e) {
+    fonteSt(e.message === 'connessione' ? 'Serve la connessione per leggere il file.' : e.code === 'limite-ai' ? 'Hai finito l’AI di oggi: le foto si leggono di nuovo domani.' : 'Non riesco a leggere il file: ' + e.message, 'err');
+    return;
+  }
+  if (pezzi.length) fonteImposta(pezzi.join('\n\n'), titolo, files.length > 1 ? `${files.length} file` : `«${(doc[0] || foto[0]).name}»`);
+}
+$('fonteIn').addEventListener('change', e => { const f = [...e.target.files]; e.target.value = ''; fonteDaFile(f); });
+const dropF = document.querySelector('.drop-fonte');
+['dragenter', 'dragover'].forEach(ev => dropF.addEventListener(ev, e => { e.preventDefault(); dropF.classList.add('drag'); }));
+['dragleave', 'drop'].forEach(ev => dropF.addEventListener(ev, e => { e.preventDefault(); dropF.classList.remove('drag'); }));
+dropF.addEventListener('drop', e => fonteDaFile(e.dataTransfer.files));
+$('vaiFonte').addEventListener('click', () => { fonteScegli('file'); $('fontePanel').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+$('vaiArchivio').addEventListener('click', () => { tabScelta = true; attivaTab('archivio'); window.scrollTo({ top: 0 }); });
+$('out').addEventListener('input', fonteInfo);
+setInterval(() => { if (tabAttiva === 'appunti' && fonteAttiva === 'trascr') fonteInfo(); }, 2000);
 /* ---------- Chiedi alle tue lezioni ---------- */
 let askStoria = [];
 function askSt(t, kind){ const s = $('askStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
@@ -3632,8 +3749,8 @@ async function openLesson(id){
     fcSet(fc, false); fcSt(''); $('gloAggiorna').hidden = false;
     matLezione = l.materiale || ''; matPending = []; matRender(); mappaDa(l);
     privStatus(`Aperta: ${l.titolo} (${l.materia}).`);
-    loadList();
-    $('l3').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    loadList(); fonteScegli('trascr');
+    tabScelta = true; attivaTab('appunti'); window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (e) { privStatus('Non riesco ad aprire la lezione: ' + e.message, 'err'); }
 }
 $('saveLesson').addEventListener('click', async () => {
