@@ -171,23 +171,66 @@ export class Store extends DurableObject {
   }
   registraOrale(materia, voto) { this.sql.exec('INSERT INTO orale (quando, materia, voto) VALUES (?, ?, ?)', Date.now(), materia, voto); }
   registraStudio(minuti, materia) { this.sql.exec('INSERT INTO studio (quando, minuti, materia) VALUES (?, ?, ?)', Date.now(), minuti, materia || ''); return { ok: true }; }
-  // giorni di studio di fila (ripassi, quiz, orale, timer), in ora italiana
+  // Serie di giorni di studio (ripassi, quiz, orale, timer ≥10 min), in ora italiana.
+  // Salva-serie: ogni 7 giorni di studio se ne guadagna uno (max 2); un giorno saltato ne consuma
+  // uno invece di azzerare la serie. Tutto è ricalcolato dallo storico: niente stato da tenere.
   serie() {
     const giorno = t => new Date(t).toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' });
-    const tempi = [];
-    for (const q of ['SELECT quando FROM fc_sessioni', 'SELECT quando FROM ripassi', 'SELECT quando FROM orale', 'SELECT quando FROM studio WHERE minuti >= 10'])
-      for (const r of this.sql.exec(q).toArray()) tempi.push(r.quando);
-    const giorni = new Set(tempi.map(giorno));
-    const oggi = giorno(Date.now()), ieri = giorno(Date.now() - 86400000);
-    const conta = da => { let n = 0, d = new Date(da + 'T12:00:00Z'); while (giorni.has(d.toISOString().slice(0, 10))) { n++; d = new Date(d.getTime() - 86400000); } return n; };
-    const serie = giorni.has(oggi) ? conta(oggi) : giorni.has(ieri) ? conta(ieri) : 0;
-    let record = 0;
-    for (const g of giorni) { const prima = new Date(new Date(g + 'T12:00:00Z').getTime() - 86400000).toISOString().slice(0, 10); if (!giorni.has(prima)) record = Math.max(record, conta2(g)); }
-    function conta2(da) { let n = 0, d = new Date(da + 'T12:00:00Z'); while (giorni.has(d.toISOString().slice(0, 10))) { n++; d = new Date(d.getTime() + 86400000); } return n; }
-    const minutiOggi = this.sql.exec('SELECT quando, minuti FROM studio WHERE quando > ?', Date.now() - 2 * 86400000).toArray()
-      .filter(r => giorno(r.quando) === oggi).reduce((n, r) => n + r.minuti, 0);
+    const piu = (g, n) => new Date(new Date(g + 'T12:00:00Z').getTime() + n * 86400000).toISOString().slice(0, 10);
+    const att = new Map();
+    const add = (t, k, n = 1) => { const g = giorno(t); const a = att.get(g) || { quiz: 0, ripassi: 0, orali: 0, minuti: 0 }; a[k] += n; att.set(g, a); };
+    for (const r of this.sql.exec('SELECT quando FROM fc_sessioni').toArray()) add(r.quando, 'quiz');
+    for (const r of this.sql.exec('SELECT quando FROM ripassi').toArray()) add(r.quando, 'ripassi');
+    for (const r of this.sql.exec('SELECT quando FROM orale').toArray()) add(r.quando, 'orali');
+    for (const r of this.sql.exec('SELECT quando, minuti FROM studio').toArray()) add(r.quando, 'minuti', Number(r.minuti) || 0);
+    const fatto = g => { const a = att.get(g); return !!a && (a.quiz > 0 || a.ripassi > 0 || a.orali > 0 || a.minuti >= 10); };
+    const oggi = giorno(Date.now());
+    const fatti = [...att.keys()].filter(fatto).sort();
+    const MAX_SALVA = 2;
+    let serie = 0, record = 0, salva = 0, verso = 0, usati = 0;
+    const congelati = new Set();
+    if (fatti.length) for (let g = fatti[0]; g <= oggi; g = piu(g, 1)) {
+      if (fatto(g)) {
+        serie++; verso++; record = Math.max(record, serie);
+        if (verso >= 7) { verso = 0; salva = Math.min(MAX_SALVA, salva + 1); }
+      } else if (g === oggi) {
+        // oggi non è ancora finito
+      } else if (serie > 0 && salva > 0) { salva--; usati++; congelati.add(g); }
+      else { serie = 0; verso = 0; }
+    }
+    const dow = (new Date(oggi + 'T12:00:00Z').getUTCDay() + 6) % 7;
+    const lunedi = piu(oggi, -dow);
+    const settimana = Array.from({ length: 7 }, (_, k) => {
+      const g = piu(lunedi, k), a = att.get(g) || { quiz: 0, ripassi: 0, orali: 0, minuti: 0 };
+      const stato = fatto(g) ? 'fatto' : congelati.has(g) ? 'congelato' : g > oggi ? 'futuro' : g === oggi ? 'oggi' : 'mancato';
+      return { g, stato, oggi: g === oggi, quiz: a.quiz, ripassi: a.ripassi, orali: a.orali, minuti: Math.round(a.minuti) };
+    });
+    const minutiOggi = Math.round((att.get(oggi) || {}).minuti || 0);
     const orali = this.sql.exec('SELECT quando, materia, voto FROM orale ORDER BY quando DESC LIMIT 10').toArray();
-    return { serie, record: Math.max(record, serie), oggiFatto: giorni.has(oggi), giorniTotali: giorni.size, minutiOggi, orali };
+    // traguardi
+    const uno = q => this.sql.exec(q).toArray()[0] || {};
+    const giuste = uno('SELECT coalesce(sum(giuste), 0) AS n FROM fc_sessioni').n || 0;
+    const minutiTot = uno('SELECT coalesce(sum(minuti), 0) AS n FROM studio').n || 0;
+    const nOrali = uno('SELECT count(*) AS n FROM orale').n || 0;
+    const maxVoto = uno('SELECT coalesce(max(voto), 0) AS n FROM orale').n || 0;
+    const nLezioni = uno('SELECT count(*) AS n FROM lezioni').n || 0;
+    const nTermini = uno('SELECT count(*) AS n FROM glossario').n || 0;
+    const T = (id, icona, nome, desc, val, max) => ({ id, icona, nome, desc, val: Math.min(Math.round(val), max), max, fatto: val >= max });
+    const traguardi = [
+      T('serie3', '🔥', 'Si parte', '3 giorni di fila', record, 3),
+      T('serie7', '🔥', 'Una settimana', '7 giorni di fila', record, 7),
+      T('serie30', '🔥', 'Un mese intero', '30 giorni di fila', record, 30),
+      T('serie100', '🏆', 'Leggenda', '100 giorni di fila', record, 100),
+      T('lezioni10', '📚', 'Archivio pieno', '10 lezioni salvate', nLezioni, 10),
+      T('giuste100', '✅', 'Cento giuste', '100 risposte giuste alle flashcard', giuste, 100),
+      T('ore10', '⏱️', 'Dieci ore', '10 ore con il timer di studio', minutiTot / 60, 10),
+      T('orale1', '🎤', 'Prima interrogazione', 'Fai un’interrogazione', nOrali, 1),
+      T('trenta', '🎓', 'Da trenta', 'Prendi 30 a un’interrogazione', maxVoto >= 30 ? 1 : 0, 1),
+      T('glossario50', '📖', 'Vocabolario', '50 termini nel glossario', nTermini, 50),
+      T('salva1', '❄️', 'Salvato in extremis', 'Un salva-serie ti ha salvato la serie', usati, 1),
+    ];
+    return { serie, record, oggiFatto: fatto(oggi), giorniTotali: fatti.length, minutiOggi, orali,
+      salva, maxSalva: MAX_SALVA, prossimoSalva: salva >= MAX_SALVA ? 0 : 7 - verso, settimana, traguardi };
   }
   // ---------- impostazioni, promemoria, condivisione ----------
   impostazione(k) { return (this.sql.exec('SELECT v FROM impostazioni WHERE k = ?', k).toArray()[0] || {}).v || null; }

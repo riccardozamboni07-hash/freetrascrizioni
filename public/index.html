@@ -311,12 +311,47 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 .anelli{grid-template-columns:repeat(4,1fr)!important}
 .serie{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:12px}
 .serie-top{display:flex;align-items:center;gap:10px}
-.fiamma{font-size:1.8rem;line-height:1}
+.fiamma{font-size:1.8rem;line-height:1;display:inline-block;transition:transform .4s cubic-bezier(.3,1.6,.5,1),filter .3s}
+.fiamma.l0{filter:grayscale(1);opacity:.45}
+.fiamma.l1{font-size:1.8rem}
+.fiamma.l2{font-size:2.2rem;filter:drop-shadow(0 0 4px rgba(255,140,0,.45))}
+.fiamma.l3{font-size:2.5rem;filter:drop-shadow(0 0 7px rgba(255,110,0,.6));animation:arde 2.4s ease-in-out infinite}
+.fiamma.l4{font-size:2.8rem;filter:drop-shadow(0 0 10px rgba(255,80,0,.75)) hue-rotate(-15deg) saturate(1.4);animation:arde 1.8s ease-in-out infinite}
+@keyframes arde{0%,100%{transform:scale(1) rotate(-2deg)}50%{transform:scale(1.08) rotate(2deg)}}
+.serie-top>div{flex:1;min-width:0}
 .serie-top strong{display:block;font-size:1.1rem}
 .serie-top small{color:var(--muted);font-size:.82rem}
-.traguardi{display:flex;flex-wrap:wrap;gap:6px}
-.traguardi span{font-size:.78rem;font-weight:600;border-radius:999px;padding:.2rem .6rem;border:1px solid var(--line);color:var(--muted)}
-.traguardi span.ok{background:var(--accent-soft);border-color:transparent;color:var(--accent-text)}
+.salva{display:inline-flex;align-items:center;gap:4px;min-height:0;padding:.3rem .6rem;border-radius:999px;font-size:.85rem;font-weight:700;background:var(--tenue);border:1px solid var(--line);color:var(--fg)}
+.salva.zero{opacity:.55}
+.settimana{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.settimana button{display:flex;flex-direction:column;align-items:center;gap:5px;min-height:0;padding:6px 0;border:none;background:none;border-radius:12px;font-size:.72rem;font-weight:600;color:var(--muted)}
+.settimana button.sel{background:var(--tenue)}
+.settimana i{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:.8rem;border:2px solid var(--line);background:transparent;color:#fff;transition:transform .3s}
+.settimana .fatto i{background:var(--accent);border-color:var(--accent)}
+.settimana .congelato i{background:#d8ecfb;border-color:#9fcdf0}
+.settimana .oggi i{border-color:var(--accent);border-style:dashed}
+.settimana .mancato i{background:var(--tenue)}
+.settimana .futuro i{opacity:.45}
+.settimana .is-oggi{color:var(--fg)}
+.giorno-dett{margin:0;font-size:.84rem;color:var(--muted);min-height:1.2em}
+.trg-lista{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+.trg{display:flex;flex-direction:column;gap:4px;padding:10px;border-radius:14px;border:1px solid var(--line);background:var(--surface)}
+.trg .ic{font-size:1.5rem;line-height:1}
+.trg b{font-size:.86rem}
+.trg small{font-size:.74rem;color:var(--muted);line-height:1.3}
+.trg .barra{height:5px;border-radius:9px;background:var(--tenue);overflow:hidden}
+.trg .barra span{display:block;height:100%;background:var(--accent);border-radius:9px}
+.trg.no .ic{filter:grayscale(1);opacity:.4}
+.trg.ok{background:var(--accent-soft);border-color:transparent}
+.festa{position:fixed;inset:0;z-index:90;pointer-events:none;display:flex;align-items:center;justify-content:center}
+.festa canvas{position:absolute;inset:0;width:100%;height:100%}
+.festa .msg{position:relative;background:var(--surface);color:var(--fg);border-radius:24px;padding:18px 26px;box-shadow:0 18px 50px rgba(0,0,0,.18);text-align:center;animation:pop .5s cubic-bezier(.3,1.6,.5,1)}
+.festa .msg .f{font-size:3rem;display:block;line-height:1.1}
+.festa .msg b{font-size:1.3rem;display:block}
+.festa .msg small{color:var(--muted)}
+.festa.via .msg{transition:opacity .4s,transform .4s;opacity:0;transform:translateY(-12px) scale(.95)}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.fiamma.l3,.fiamma.l4{animation:none}.festa .msg{animation:none}}
 .timer-grande{font-size:3.2rem;font-weight:700;letter-spacing:-.02em;text-align:center;font-variant-numeric:tabular-nums;line-height:1.1}
 .timer-grande.attivo{color:var(--accent-text)}
 .mat-lista{display:flex;flex-direction:column;gap:6px}
@@ -471,8 +506,11 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     </div>
     <div class="anelli" id="anelli"></div>
     <div class="serie" id="serieBox" hidden>
-      <div class="serie-top"><span class="fiamma" aria-hidden="true">🔥</span><div><strong id="serieN"></strong><small id="serieRec"></small></div></div>
-      <div class="traguardi" id="traguardi" aria-label="Traguardi"></div>
+      <div class="serie-top"><span class="fiamma l0" id="fiamma" aria-hidden="true">🔥</span><div><strong id="serieN"></strong><small id="serieRec"></small></div>
+        <button type="button" class="salva" id="salvaBtn" aria-label="Salva-serie">❄️ <span id="salvaN">0</span></button></div>
+      <div class="settimana" id="settimana" role="group" aria-label="Questa settimana"></div>
+      <p class="giorno-dett" id="giornoDett" aria-live="polite"></p>
+      <button type="button" class="link" id="trgApri">I tuoi traguardi</button>
     </div>
   </section>
 
@@ -881,7 +919,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.1.2<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.2<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="contesto priv" id="contesto" data-tab="studia">
     <span id="contestoTxt"></span>
     <button type="button" class="link" id="contestoBtn"></button>
@@ -958,6 +996,10 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
   <label class="field"><span>Professione</span><input type="text" id="pProf" placeholder="es. Studente di Economia"></label>
   <button type="button" class="primary" id="profSalva">Salva profilo</button>
   <div class="status" id="profStatus" role="status"></div>
+  <div class="prof-sez" id="trgSez">
+    <strong id="trgTitolo">I tuoi traguardi</strong>
+    <div class="trg-lista" id="trgLista"></div>
+  </div>
   <div class="prof-sez">
     <strong>Account</strong>
     <p class="note" id="accInfo">Per cambiare la password: su Cloudflare apri il tuo Worker → Settings → Variables and Secrets → PASSWORD.</p>
@@ -2486,7 +2528,7 @@ function attivaTab(tab, sub){
   try { sessionStorage.setItem('ft:tab', tab); sessionStorage.setItem('ft:subs', JSON.stringify(subAttive)); } catch (_) {}
   return cambia;
 }
-document.querySelectorAll('[data-tab-btn]').forEach(b => b.addEventListener('click', () => { tabScelta = true; attivaTab(b.dataset.tabBtn); window.scrollTo({ top: 0 }); if (b.dataset.tabBtn === 'oggi' && !document.body.classList.contains('locked')) { aggiornaUso(); caricaOggi(); } }));
+document.querySelectorAll('[data-tab-btn]').forEach(b => b.addEventListener('click', () => { tabScelta = true; attivaTab(b.dataset.tabBtn); window.scrollTo({ top: 0 }); if (b.dataset.tabBtn === 'oggi' && !document.body.classList.contains('locked')) { aggiornaUso(); caricaOggi(); caricaSerie(); } }));
 document.querySelectorAll('[data-sub-btn]').forEach(b => b.addEventListener('click', () => { tabScelta = true; attivaTab(b.dataset.perTab, b.dataset.subBtn); window.scrollTo({ top: 0 }); }));
 // Quando un'azione porta a una sezione (es. "Apri" una lezione, inizia un quiz), apre prima la scheda giusta
 const _scrollIntoView = Element.prototype.scrollIntoView;
@@ -2675,7 +2717,7 @@ function oggiRender(piani){
           if (l.conFlashcard) { const fq = document.createElement('button'); fq.type = 'button'; fq.className = 'primary'; fq.textContent = 'Flashcard';
             fq.addEventListener('click', async () => { await openLesson(l.id); if (fcCarte.length) fcInizia(fcCarte, { tipo: 'lezione' }); }); r.append(fq); }
           const ok = document.createElement('button'); ok.type = 'button'; ok.textContent = 'Fatto ✓';
-          ok.addEventListener('click', async () => { try { await privApi('ripassata', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: l.id }) }); caricaOggi(); } catch (_) {} });
+          ok.addEventListener('click', async () => { try { await privApi('ripassata', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: l.id }) }); caricaOggi(); caricaSerie(); } catch (_) {} });
           r.append(ok);
         }
         c.append(r);
@@ -2946,20 +2988,114 @@ h1{font-size:20pt;color:#14573d;margin:0 0 4pt}h2{font-size:14pt;color:#14573d;m
 }
 
 /* ---------- Serie di giorni e anello Studio ---------- */
-const TRAGUARDI = [3, 7, 14, 30, 60, 100], OBIETTIVO_STUDIO = 60;
-let serieDati = null;
+const OBIETTIVO_STUDIO = 60;
+let serieDati = null, giornoSel = null;
+const GIORNI_BREVI = ['L', 'M', 'M', 'G', 'V', 'S', 'D'];
+const livelloFiamma = n => n <= 0 ? 0 : n < 7 ? 1 : n < 30 ? 2 : n < 100 ? 3 : 4;
+function giornoTesto(d){
+  const quando = d.oggi ? 'Oggi' : new Date(d.g + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'short' });
+  const Q = quando.charAt(0).toUpperCase() + quando.slice(1);
+  if (d.stato === 'futuro') return `${Q}: ancora da venire.`;
+  if (d.stato === 'congelato') return `${Q}: ❄️ salva-serie usato, la serie è salva.`;
+  const p = [];
+  if (d.ripassi) p.push(`${d.ripassi} ${d.ripassi === 1 ? 'ripasso' : 'ripassi'}`);
+  if (d.quiz) p.push(`${d.quiz} ${d.quiz === 1 ? 'quiz' : 'quiz'}`);
+  if (d.orali) p.push(`${d.orali} ${d.orali === 1 ? 'interrogazione' : 'interrogazioni'}`);
+  if (d.minuti) p.push(`${d.minuti} min di studio`);
+  if (!p.length) return d.oggi ? 'Oggi: ancora niente. Basta un ripasso, un quiz o 10 minuti di timer.' : `${Q}: nessuno studio.`;
+  return `${Q}: ${p.join(' · ')}${d.stato !== 'fatto' && d.minuti ? ' (servono almeno 10 min)' : ''}.`;
+}
+function serieRender(){
+  const s = serieDati; if (!s) return;
+  $('serieBox').hidden = false;
+  $('fiamma').className = 'fiamma l' + livelloFiamma(s.serie);
+  $('serieN').textContent = s.serie ? `${s.serie} ${s.serie === 1 ? 'giorno' : 'giorni'} di fila` : 'Inizia una serie oggi';
+  $('serieRec').textContent = (s.oggiFatto ? 'Oggi fatto ✓' : s.serie ? 'Studia oggi per non perderla' : 'Ripassa, fai un quiz, un orale o 10 minuti di timer') + (s.record > 1 ? ` · record ${s.record}` : '');
+  $('salvaN').textContent = s.salva || 0; $('salvaBtn').classList.toggle('zero', !s.salva);
+  const box = $('settimana'); box.textContent = '';
+  (s.settimana || []).forEach((d, k) => {
+    const b = document.createElement('button'); b.type = 'button';
+    b.className = d.stato + (d.oggi ? ' is-oggi' : '') + (giornoSel === d.g ? ' sel' : '');
+    const i = document.createElement('i'); i.textContent = d.stato === 'fatto' ? '✓' : d.stato === 'congelato' ? '❄️' : '';
+    b.append(i, GIORNI_BREVI[k]);
+    b.setAttribute('aria-label', giornoTesto(d));
+    b.addEventListener('click', () => { giornoSel = giornoSel === d.g ? null : d.g; serieRender(); });
+    box.append(b);
+  });
+  const sel = (s.settimana || []).find(d => d.g === giornoSel);
+  $('giornoDett').textContent = sel ? giornoTesto(sel) : '';
+  const tr = s.traguardi || [], fatti = tr.filter(t => t.fatto).length;
+  $('trgApri').textContent = `🏅 I tuoi traguardi: ${fatti} su ${tr.length} ›`;
+  $('trgTitolo').textContent = `I tuoi traguardi (${fatti}/${tr.length})`;
+  const lista = $('trgLista'); lista.textContent = '';
+  [...tr].sort((a, b) => (b.fatto - a.fatto) || (b.val / b.max - a.val / a.max)).forEach(t => {
+    const c = document.createElement('div'); c.className = 'trg ' + (t.fatto ? 'ok' : 'no');
+    const ic = document.createElement('span'); ic.className = 'ic'; ic.textContent = t.icona;
+    const n = document.createElement('b'); n.textContent = t.nome;
+    const d = document.createElement('small'); d.textContent = t.fatto ? t.desc + ' ✓' : `${t.desc} · ${t.val}/${t.max}`;
+    c.append(ic, n, d);
+    if (!t.fatto) { const br = document.createElement('div'); br.className = 'barra'; const sp = document.createElement('span'); sp.style.width = Math.round(t.val / t.max * 100) + '%'; br.append(sp); c.append(br); }
+    lista.append(c);
+  });
+}
+$('salvaBtn').addEventListener('click', () => {
+  const s = serieDati || {};
+  giornoSel = null; serieRender();
+  $('giornoDett').textContent = `❄️ Salva-serie: ne hai ${s.salva || 0} su ${s.maxSalva || 2}. Se salti un giorno ne usi uno e la serie non si azzera. ` +
+    (s.salva >= (s.maxSalva || 2) ? 'Sei al massimo.' : `Il prossimo lo guadagni tra ${s.prossimoSalva || 7} ${s.prossimoSalva === 1 ? 'giorno' : 'giorni'} di studio.`);
+});
+$('trgApri').addEventListener('click', () => { apri('profilo'); caricaProfilo(); setTimeout(() => $('trgSez').scrollIntoView({ behavior: 'smooth', block: 'start' }), 350); });
 async function caricaSerie(){
   try {
+    const prima = serieDati;
     serieDati = await privApi('serie');
     const s = serieDati;
-    $('serieBox').hidden = false;
-    $('serieN').textContent = s.serie ? `${s.serie} ${s.serie === 1 ? 'giorno' : 'giorni'} di fila` : 'Inizia una serie oggi';
-    $('serieRec').textContent = (s.oggiFatto ? 'Oggi fatto ✓' : s.serie ? 'Studia oggi per non perderla' : 'Ripassa, fai un quiz, un orale o una sessione di studio') + (s.record > 1 ? ` · record ${s.record}` : '');
-    const box = $('traguardi'); box.textContent = '';
-    TRAGUARDI.forEach(t => { const sp = document.createElement('span'); sp.textContent = `${t} giorni`; if (s.record >= t) sp.className = 'ok'; box.append(sp); });
+    serieRender();
     anelliDati.studio = { minuti: s.minutiOggi || 0, obiettivo: OBIETTIVO_STUDIO }; disegnaAnelli();
     if (s.orali?.length) { $('oraleStorico').hidden = false; $('oraleStorico').textContent = 'Ultimi voti: ' + s.orali.slice(0, 6).map(o => `${o.materia} ${votoTesto(o.voto)}`).join(' · '); }
+    // festa: primo studio della giornata (solo se è successo mentre l'app era aperta)
+    const oggi = (s.settimana || []).find(d => d.oggi)?.g || '';
+    if (s.oggiFatto && lsGet('ft:festa') !== oggi) {
+      lsSet('ft:festa', oggi);
+      if (prima && !prima.oggiFatto) festa('🔥', `+1 giorno! Serie: ${s.serie}`, s.serie === 1 ? 'Ottimo inizio: torna domani.' : 'Continua così, ci vediamo domani.');
+    }
+    // traguardi nuovi
+    const visti = new Set((lsGet('ft:traguardi') || '').split(',').filter(Boolean));
+    const nuovi = (s.traguardi || []).filter(t => t.fatto && !visti.has(t.id));
+    if (nuovi.length) {
+      lsSet('ft:traguardi', (s.traguardi || []).filter(t => t.fatto).map(t => t.id).join(','));
+      if (prima) setTimeout(() => festa(nuovi[0].icona, 'Traguardo sbloccato!', nuovi[0].nome + ' · ' + nuovi[0].desc), 2600);
+    }
   } catch (_) {}
+}
+function festa(icona, titolo, sotto){
+  document.querySelector('.festa')?.remove();
+  const f = document.createElement('div'); f.className = 'festa'; f.setAttribute('role', 'status');
+  const cv = document.createElement('canvas');
+  const m = document.createElement('div'); m.className = 'msg';
+  const a = document.createElement('span'); a.className = 'f'; a.textContent = icona;
+  const b = document.createElement('b'); b.textContent = titolo;
+  const c = document.createElement('small'); c.textContent = sotto;
+  m.append(a, b, c); f.append(cv, m); document.body.append(f);
+  try { navigator.vibrate?.(40); } catch (_) {}
+  const ridotto = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!ridotto) {
+    const dpr = window.devicePixelRatio || 1, W = innerWidth, H = innerHeight;
+    cv.width = W * dpr; cv.height = H * dpr; const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
+    const colori = ['#14573d', '#2fa37a', '#8fd6b4', '#ffb020', '#ff7a3d', '#ffffff'];
+    const pz = Array.from({ length: 110 }, () => ({ x: W / 2 + (Math.random() - .5) * 60, y: H * .45, vx: (Math.random() - .5) * 11, vy: -Math.random() * 13 - 4, r: Math.random() * 6 + 4, a: Math.random() * 6, va: (Math.random() - .5) * .3, c: colori[Math.floor(Math.random() * colori.length)] }));
+    const t0 = performance.now();
+    (function giro(t){
+      const dt = Math.min(2, (t - (giro.u || t)) / 16.7); giro.u = t;
+      ctx.clearRect(0, 0, W, H);
+      for (const p of pz) { p.vy += .32 * dt; p.vx *= .99; p.x += p.vx * dt; p.y += p.vy * dt; p.a += p.va * dt;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a); ctx.fillStyle = p.c; ctx.fillRect(-p.r / 2, -p.r / 4, p.r, p.r / 2); ctx.restore(); }
+      if (t - t0 < 2400 && f.isConnected) requestAnimationFrame(giro);
+      else ctx.clearRect(0, 0, W, H);
+    })(t0);
+  }
+  setTimeout(() => f.classList.add('via'), 2200);
+  setTimeout(() => f.remove(), 2700);
 }
 
 /* ---------- Timer di studio (Pomodoro) ---------- */
@@ -3247,7 +3383,7 @@ async function fcRegistra(risultati){
   if (ctx.ripetizione || ctx.tipo === 'glossario' || !materia || (ctx.tipo !== 'materia' && !lezione)) return;
   try {
     const r = await privApi('quiz', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ materia, lezione, risultati }) });
-    const st = r.storico || []; caricaOggi();
+    const st = r.storico || []; caricaOggi(); caricaSerie();
     if (st.length > 1) {
       const fmt = q => { const d = new Date(q.quando), oggi = new Date(); return d.toDateString() === oggi.toDateString() ? 'oggi' : d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }); };
       $('fcStorico').textContent = 'I tuoi ultimi risultati' + (ctx.tipo === 'materia' ? ` in ${materia}` : ' in questa lezione') + ': ' + st.map(q => `${fmt(q)} ${Math.round(q.giuste / q.totale * 100)}%`).join(' → ');
