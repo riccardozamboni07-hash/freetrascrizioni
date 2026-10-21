@@ -125,7 +125,6 @@ select{font:inherit;padding:.55rem .8rem;min-height:44px;border-radius:14px;bord
 .status{font-size:.92rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .status.err{color:var(--err)} .status.warn{color:var(--warn)} .status.ok{color:var(--accent-text)}
 textarea{width:100%;min-height:280px;resize:vertical;font:16px/1.65 var(--sans);padding:14px;border-radius:18px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
-#sumOut{min-height:200px}
 .note{color:var(--muted);font-size:.88rem;margin:0}
 .tips{color:var(--muted);font-size:.88rem;margin:0;padding-left:1.1rem;display:flex;flex-direction:column;gap:4px}
 .chip.salvando{opacity:.7}
@@ -190,6 +189,8 @@ body.locked .topbar{display:none}
 .menu-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
 .menu-list button{width:100%;justify-content:flex-start;border-color:transparent;border-radius:16px;padding:.75rem 1rem;font-size:1rem}
 .menu-list button:hover{background:var(--accent-soft)}
+.menu-link{display:flex;align-items:center;gap:8px;padding:.75rem 1rem;border-radius:16px;font-size:1rem;color:var(--fg);text-decoration:none}
+.menu-link:hover{background:var(--accent-soft)}
 .menu-list span{width:1.6rem;text-align:center}
 .menu-sep{height:1px;background:var(--line);margin:8px 6px}
 .menu-gruppo{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 16px 2px}
@@ -379,6 +380,11 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 .mappa .nipoti{font-weight:400;font-size:.8rem;color:var(--muted)}
 .cond-box{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
 .link{background:none;border:none;padding:0;min-height:0;font:inherit;font-weight:600;color:var(--accent-text);text-decoration:underline;text-underline-offset:2px;cursor:pointer;display:inline}
+.avanzate,.lav{border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.avanzate summary,.lav summary{cursor:pointer;font-weight:600;font-size:.9rem;color:var(--accent-text)}
+.avanzate summary small,.lav summary small{color:var(--muted);font-weight:500}
+.avanzate[open],.lav[open]{display:flex;flex-direction:column;gap:10px}
+.facolt{font-weight:500;color:var(--muted);font-size:.78rem}
 .fonti{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .fonti button{flex-direction:column;gap:4px;min-height:72px;padding:10px 4px;border-radius:16px;font-size:1.3rem;border:1.5px solid var(--line);background:var(--surface)}
 .fonti button span{font-size:.8rem;font-weight:600}
@@ -627,11 +633,14 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
 
   <section class="panel" aria-labelledby="l2">
     <span class="label" id="l2">2. Trascrizione</span>
-    <label class="field"><span>Materia della lezione</span>
-      <input type="text" id="materia" list="materieList" autocomplete="off" placeholder="Scegli o scrivi, es. Diritto pubblico">
+    <label class="field"><span>Materia <small class="facolt">facoltativa</small></span>
+      <input type="text" id="materia" list="materieList" autocomplete="off" placeholder="Se la sai: aiuta con i termini tecnici">
     </label>
     <datalist id="materieList"></datalist>
-    <p class="note" id="materiaNote">Con la materia la trascrizione online scrive meglio i termini tecnici, e l'AI prepara appunti, flashcard e glossario adatti a quella disciplina.</p>
+    <p class="note" id="materiaNote">Se la lasci vuota la sceglie l'AI quando salva la lezione.</p>
+    <label class="check"><input type="checkbox" id="live"> Trascrivi mentre registri: a fine lezione il testo è quasi pronto</label>
+    <details class="avanzate" id="avanzate">
+    <summary>Opzioni avanzate</summary>
     <div class="opts">
       <label class="field"><span>Modalità</span>
         <select id="mode">
@@ -654,8 +663,8 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       </label>
     </div>
     <p class="note" id="modeNote"></p>
-    <label class="check"><input type="checkbox" id="live"> Trascrivi mentre registri: a fine lezione il testo è quasi pronto</label>
     <label class="check"><input type="checkbox" id="stamps" checked> Mostra i minutaggi</label>
+    </details>
     <div class="row">
       <button class="primary" id="goBtn" type="button" disabled>Trascrivi</button>
       <button id="stopBtn" type="button" hidden>Interrompi</button>
@@ -670,15 +679,13 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <div class="row">
         <button type="button" id="copyBtn">Copia</button>
         <button type="button" id="shareBtn" hidden>Condividi</button>
-        <button type="button" id="dlBtn">Scarica .txt</button>
       </div>
     </div>
-    <textarea id="out" spellcheck="false" placeholder="Il testo comparirà qui man mano, blocco per blocco, e viene salvato automaticamente. Puoi correggerlo prima di scaricarlo o riassumerlo."></textarea>
+    <textarea id="out" spellcheck="false" placeholder="Il testo comparirà qui man mano, blocco per blocco, e viene salvato automaticamente. Puoi correggerlo quando vuoi."></textarea>
     <div class="dopo priv" id="dopoTesto" hidden>
       <span class="note">E adesso?</span>
       <div class="row">
         <button type="button" class="primary" id="vaiAppunti">Crea gli appunti</button>
-        <button type="button" id="vaiSalva">Materia e titolo</button>
       </div>
     </div>
   </section>
@@ -711,8 +718,9 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <span class="label" id="l4">2. Appunti e correzione</span>
     <div class="aicard">
       <h3>Crea qui nell'app</h3>
-      <p class="note">L'intelligenza artificiale scrive gli <strong>appunti</strong> della lezione o <strong>corregge la trascrizione</strong> direttamente qui. Poi li salvi nella lezione o li scarichi come file Word. Una lezione di 2 ore richiede 1-3 minuti.</p>
-      <div class="lav">
+      <p class="note">L'intelligenza artificiale scrive gli <strong>appunti</strong> della lezione o <strong>corregge la trascrizione</strong> direttamente qui. Si salvano da soli nella lezione e puoi scaricarli come file Word. Una lezione di 2 ore richiede 1-3 minuti.</p>
+      <details class="lav" id="supporto">
+        <summary>+ Aggiungi materiale di supporto <small>(foto della lavagna, slide)</small></summary>
         <div class="row">
           <label class="btn" for="lavIn">📷 Foto della lavagna</label>
           <input type="file" id="lavIn" accept="image/*" multiple>
@@ -725,7 +733,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
           <span class="note" id="matNota">Facoltativi: l'AI li usa per appunti, flashcard, orale e Chiedi.</span>
         </div>
         <div class="mat-lista" id="matLista" hidden></div>
-      </div>
+      </details>
       <div class="row">
         <button type="button" class="primary" id="aiAppunti">Crea appunti</button>
         <button type="button" id="aiAggiusta">Aggiusta la trascrizione</button>
@@ -745,25 +753,6 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
           <button type="button" id="aiMod">Modifica</button>
         </div>
       </div>
-    </div>
-    <span class="label">Altre opzioni</span>
-    <div class="sumgrid">
-      <div class="sumcard">
-        <h3>Con Claude</h3>
-        <p>Apre Claude con la trascrizione, istruzioni adatte alla materia e gli appunti che hai già salvato per quella materia. Con le lezioni lunghe il testo viene copiato: incollalo, allega se vuoi le foto della lavagna e invia.</p>
-        <a class="btn" id="claudeBtn" href="https://claude.ai/new" target="_blank" rel="noopener">Fai riassunti e appunti</a>
-        <a class="btn" id="claudeFixBtn" href="https://claude.ai/new" target="_blank" rel="noopener">Aggiusta la trascrizione</a>
-      </div>
-      <div class="sumcard">
-        <h3>Punti chiave istantanei</h3>
-        <p>Estrae sul dispositivo le frasi più importanti della lezione. Immediato e funziona anche offline, ma non riscrive il testo.</p>
-        <button type="button" id="keyBtn">Estrai punti chiave</button>
-      </div>
-    </div>
-    <div class="status" id="sumStatus" role="status"></div>
-    <textarea id="sumOut" hidden spellcheck="false"></textarea>
-    <div class="row" id="sumActions" hidden>
-      <button type="button" id="sumCopy">Copia punti chiave</button>
     </div>
   </section>
 
@@ -949,13 +938,11 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
   <section class="panel" aria-labelledby="l5">
     <span class="label" id="l5">Consigli</span>
     <ul class="tips">
-      <li><strong>Online veloce</strong>: l'audio viene compresso e inviato a pezzi al servizio di trascrizione (Groq), poi non viene conservato dall'app. Un'ora di lezione richiede pochi minuti e circa 15 MB di dati.</li>
-      <li><strong>Sul dispositivo</strong>: l'audio non lascia mai il telefono o il computer, ma è più lento. La prima volta scarica il modello, poi resta salvato.</li>
-      <li>Per i file lunghi si scarica una volta sola un lettore audio (~32 MB).</li>
-      <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
+      <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso.</li>
+      <li>Se si interrompe, riapri l'app: riprende da dove era rimasta e la registrazione non si perde.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.4<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.5<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="contesto priv" id="contesto" data-tab="studia appunti">
     <span id="contestoTxt"></span>
     <button type="button" class="link" id="contestoBtn"></button>
@@ -975,30 +962,13 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
 <nav class="drawer" id="menu" aria-label="Menu" hidden>
   <div class="row between"><strong>Menu</strong><button type="button" class="icon-btn" data-chiudi aria-label="Chiudi">✕</button></div>
   <ul class="menu-list">
-    <li class="menu-gruppo">Oggi</li>
-    <li><button type="button" data-vai="lOggi"><span>📅</span>Oggi ed esami</button></li>
     <li><button type="button" data-vai="lTimer"><span>⏱️</span>Sessione di studio</button></li>
     <li><button type="button" data-vai="lNotif"><span>🔔</span>Promemoria</button></li>
-    <li class="menu-sep" role="separator"></li>
-    <li class="menu-gruppo">Trascrivi</li>
-    <li><button type="button" data-vai="l1"><span>🎙️</span>Registra o carica</button></li>
-    <li><button type="button" data-vai="l2"><span>⚡</span>Trascrizione</button></li>
-    <li><button type="button" data-vai="l3"><span>📄</span>Testo</button></li>
-    <li><button type="button" data-vai="l4"><span>✍️</span>Appunti e correzione</button></li>
-    <li class="menu-sep" role="separator"></li>
-    <li class="menu-gruppo">Studia con l'AI</li>
-    <li><button type="button" data-vai="lFc"><span>🃏</span>Flashcard</button></li>
-    <li><button type="button" data-vai="lOrale"><span>🎓</span>Simulazione dell'orale</button></li>
-    <li><button type="button" data-vai="lMappa"><span>🧭</span>Mappa concettuale</button></li>
-    <li><button type="button" data-vai="lAsk"><span>💬</span>Chiedi alle tue lezioni</button></li>
-    <li><button type="button" data-vai="lGlo"><span>📖</span>Glossario</button></li>
-    <li class="menu-sep" role="separator"></li>
-    <li class="menu-gruppo">Archivio</li>
-    <li><button type="button" data-vai="lSave"><span>💾</span>La lezione</button></li>
-    <li><button type="button" data-vai="lArch"><span>📚</span>Le tue lezioni</button></li>
+    <li><button type="button" data-vai="lOggi"><span>📅</span>Date degli esami</button></li>
     <li class="menu-sep" role="separator"></li>
     <li><button type="button" data-vai="l5"><span>💡</span>Consigli</button></li>
-    <li><button type="button" id="menuProf"><span>👤</span>Profilo</button></li>
+    <li><button type="button" id="menuProf"><span>👤</span>Profilo e traguardi</button></li>
+    <li><a class="menu-link" href="/privacy" target="_blank" rel="noopener"><span>🔒</span>Privacy</a></li>
   </ul>
 </nav>
 <aside class="drawer wide" id="admin" aria-labelledby="admT" hidden>
@@ -1084,7 +1054,7 @@ $('model').value = isMobile ? 'onnx-community/whisper-base' : 'onnx-community/wh
 let mode = lsGet('trascrittore:modalita') === 'device' ? 'device' : 'online';
 function updateMode(){
   $('mode').value = mode;
-  $('modelField').hidden = mode === 'online';
+  $('modelField').hidden = mode === 'online'; $('gpuChip').hidden = mode === 'online';
   $('modeNote').textContent = mode === 'online'
     ? 'Online: molto più veloce e precisa. L’audio viene inviato al servizio di trascrizione e non viene conservato dall’app.'
     : 'Sul dispositivo: l’audio non lascia mai il tuo telefono o computer, ma la trascrizione è più lenta.';
@@ -1898,171 +1868,10 @@ const plain = () => txt().replace(/\[\d\d:\d\d:\d\d\]\s*/g, '').replace(/\s+/g, 
 const outName = () => (source?.name || 'lezione').replace(/\.[^.]+$/, '');
 
 $('copyBtn').addEventListener('click', () => copy(txt(), $('copyBtn'), 'Copia'));
-$('dlBtn').addEventListener('click', () => {
-  if (!txt()) { setStatus('Non c’è ancora testo da scaricare.', 'warn'); return; }
-  track('download-txt');
-  saveFile(new Blob([$('out').value], { type: 'text/plain;charset=utf-8' }), `${outName()}_trascrizione.txt`);
-});
 $('shareBtn').addEventListener('click', async () => {
   if (!txt()) { setStatus('Non c’è ancora testo da condividere.', 'warn'); return; }
   try { await navigator.share({ title: `${outName()} – trascrizione`, text: $('out').value }); } catch (_) {}
 });
-
-/* ---------- Riassunto con Claude ---------- */
-// Istruzioni per gli appunti: basate sull'app "Appunti universitari" (adattate a Freetrascrizioni).
-// Gli appunti già salvati della stessa materia vengono aggiunti in automatico come memoria.
-function claudePrompt(t){
-  const materia = materiaCorrente() || 'non indicata';
-  const data = fmtData($('dataLez')?.value || todayISO());
-  const precTxt = testoPrecedenti();
-  return `RUOLO
-Sei uno studente modello di università. Il tuo compito è trasformare la trascrizione di una lezione universitaria (ed eventualmente le foto della lavagna allegate) in appunti perfetti, che altri studenti useranno per studiare e preparare l'esame.
-
-INPUT
-- Materia: ${materia}
-- Data della lezione: ${data}
-- Trascrizione automatica della lezione (in fondo)
-- Foto della lavagna (opzionali: se ci sono, sono allegate a questo messaggio)
-- Appunti delle lezioni precedenti della stessa materia (opzionali: se ci sono, sono in fondo)
-
-Se la materia non è tra quelle note (diritto pubblico, diritto privato, filosofia del diritto, economia aziendale, matematica), adatta la struttura alla natura della disciplina.
-
-PRINCIPI GENERALI (valgono per tutte le materie)
-1. Fedeltà al professore: usa la terminologia esatta del professore, senza sostituirla con sinonimi tuoi. Se il professore definisce un concetto in un certo modo, riporta quella definizione.
-2. Nessuna invenzione: non aggiungere contenuti, dati, articoli, formule o riferimenti che non sono nella lezione. Se serve un chiarimento tuo, mettilo in una "Nota" separata, distinta dal contenuto del professore.
-3. Esempi: includi tutti gli esempi del professore, collegati al concetto che illustrano.
-4. Completezza utile: cattura ogni concetto, definizione, classificazione, collegamento logico, eccezione e dettaglio che può essere chiesto all'esame. Elimina solo ciò che non serve: chiacchiere, divagazioni, avvisi organizzativi, ripetizioni. Segnala le indicazioni del professore sull'esame o sull'importanza di un argomento.
-5. Chiarezza: scrivi in modo ordinato e leggibile, con gerarchia chiara. Spiega brevemente i termini tecnici non intuitivi, senza cambiare le parole del professore.
-6. Struttura logica: se il professore ha parlato in modo non lineare, riordina in modo coerente senza alterare il significato.
-
-FOTO DELLA LAVAGNA
-- Usale per chiarire e completare la trascrizione: schemi, formule, definizioni, grafici, tabelle.
-- Integra il contenuto della lavagna al punto giusto e riproducilo in forma testuale (schema, tabella o formula).
-- Se una foto è illeggibile, segnalalo invece di indovinare.
-
-ERRORI DI TRASCRIZIONE E INCONGRUENZE CON LA LAVAGNA
-La trascrizione è automatica e può contenere errori, soprattutto nei numeri, nelle formule, nei nomi e nei termini tecnici.
-- Se lavagna e trascrizione sono in contrasto (in particolare sui numeri), prevale la lavagna.
-- Se non hai la foto e un dato è dubbio, non indovinare: scrivilo come l'hai letto, marcalo con [?] ed elencalo in "Da verificare".
-- Ogni correzione fatta in base alla lavagna va segnalata in "Da verificare" (es. "Trascrizione: 1.200 €, lavagna: 12.000 € → usato 12.000 €").
-
-ADATTAMENTO PER MATERIA
-- Diritto pubblico: massima chiarezza concettuale. Spiega bene i concetti, mantieni i termini tecnici del professore e chiariscili quando non sono intuitivi. Evidenzia definizioni, fonti normative citate, classificazioni, principi, organi e competenze, differenze tra istituti.
-- Diritto privato: definizioni, istituti, requisiti, effetti, distinzioni tra figure simili, articoli del codice citati, casi ed esempi.
-- Filosofia del diritto: autori e correnti, tesi centrali, argomenti a sostegno, confronti tra posizioni, concetti chiave con la terminologia del professore.
-- Economia aziendale: definizioni, schemi, formule, calcoli ed esempi numerici passo per passo, collegamento tra concetti. Riporta i numeri esattamente come detti o scritti alla lavagna.
-- Matematica: definizioni, teoremi, proposizioni, dimostrazioni (passaggi in ordine), formule precise, esercizi svolti dal professore con i passaggi. Distingui ipotesi, tesi e dimostrazione.
-- Altre materie: individua la natura della disciplina (teorica, pratica, quantitativa) e usa la struttura più adatta.
-
-STRUTTURA DEGLI APPUNTI DELLA LEZIONE
-1. Titolo della lezione, materia e data (${data}) subito sotto il titolo
-2. Argomenti trattati (elenco breve)
-3. Appunti, organizzati per argomento, con gerarchia chiara
-4. Esempi del professore, accanto ai concetti
-5. Glossario dei termini tecnici (solo quelli utili da ripassare)
-6. Punti importanti per l'esame (solo se indicati dal professore)
-7. Da verificare
-
-APPUNTI PRECEDENTI
-${precTxt ? `Più in basso trovi gli appunti delle lezioni precedenti di questa materia. Non riscriverli e non ripeterli: usali solo come contesto (terminologia, argomenti già trattati). Se la nuova lezione si collega a una lezione precedente, indicalo con un breve rimando (es. "Vedi lezione del [data]"). Se la nuova lezione contraddice gli appunti precedenti, non decidere tu: segnala il contrasto in "Da verificare".` : 'Non ci sono appunti precedenti per questa materia.'}
-
-STILE E USCITA
-Italiano chiaro, preciso e ordinato, adatto allo studio. Restituisci solo gli appunti di questa lezione, seguendo la struttura sopra, senza introduzioni o commenti tuoi. Se la lezione è molto lunga, procedi a blocchi e fermati quando serve: io scriverò "continua".
-
-<trascrizione>
-${t}
-</trascrizione>${precTxt ? `
-
-<appunti_precedenti>
-${precTxt}
-</appunti_precedenti>` : ''}`;
-}
-function claudeFixPrompt(t){
-  return `<contesto>
-Il testo qui sotto è la trascrizione automatica di una lezione universitaria: contiene errori di riconoscimento vocale, punteggiatura approssimativa e frasi spezzate.
-</contesto>
-
-<istruzioni>
-1. Correggi gli errori di trascrizione (parole sbagliate, nomi, termini tecnici) basandoti sul contesto.
-2. Sistema punteggiatura e maiuscole e dividi il testo in paragrafi leggibili.
-3. Elimina solo ripetizioni e intercalari inutili ("allora", "diciamo", "ok").
-</istruzioni>
-
-<vincoli>
-- Mantieni TUTTO il contenuto: non riassumere e non aggiungere nulla.
-- Se un passaggio è incomprensibile, segnalalo con [?].
-- Se il testo è molto lungo, procedi a blocchi e fermati quando serve: io scriverò "continua".
-</vincoli>
-
-<output>
-Solo il testo corretto, senza commenti.
-</output>
-
-<trascrizione>
-${t}
-</trascrizione>`;
-}
-
-// Con i testi brevi il prompt va direttamente nell'indirizzo (claude.ai/new?q=…) e Claude parte da solo;
-// con le lezioni lunghe l'indirizzo sarebbe troppo lungo, quindi il testo viene copiato da incollare.
-const MAX_URL = 7000;
-function openClaude(e, btn, prompt, eventName){
-  const t = plain();
-  if (!t) { e.preventDefault(); sum('Prima trascrivi un audio: Claude lavora sul testo della trascrizione.', 'warn'); return; }
-  const p = prompt(t);
-  const url = 'https://claude.ai/new?q=' + encodeURIComponent(p);
-  if (url.length <= MAX_URL) {
-    btn.href = url;
-    track(eventName + '-automatico');
-    sum('Apro Claude con la trascrizione già inserita.');
-    return;
-  }
-  btn.href = 'https://claude.ai/new';
-  track(eventName + '-copiato');
-  let ok = true;
-  try { navigator.clipboard.writeText(p).catch(() => fallbackCopy(p)); } catch (_) { ok = fallbackCopy(p); }
-  const extra = eventName === 'riassunto-claude'
-    ? ' Se hai le foto della lavagna, allegale prima di inviare.' + (precInfo() ? ' ' + precInfo() : '')
-    : '';
-  sum(ok ? 'Ho copiato testo e istruzioni. In Claude tieni premuto nel campo di scrittura, scegli Incolla e invia.' + extra : 'Non sono riuscito a copiare: copia il testo a mano e incollalo in Claude.', ok ? '' : 'err');
-}
-$('claudeBtn').addEventListener('click', e => openClaude(e, $('claudeBtn'), claudePrompt, 'riassunto-claude'));
-$('claudeFixBtn').addEventListener('click', e => openClaude(e, $('claudeFixBtn'), claudeFixPrompt, 'correzione-claude'));
-
-/* ---------- Punti chiave (estrattivo, sul dispositivo) ---------- */
-const STOP = new Set(('a ad al allo ai agli alla alle anche ancora avere abbiamo avete hanno ho hai ha c che chi ci con come cosa cui da dal dallo dai dagli dalla dalle del dello dei degli della delle di dove e è ed era erano essere fa fare fra gli già i il in io la le lei li lo loro lui ma me mi mio molto ne nei negli nel nello nella nelle no noi non nostro o ogni per perché più poi può quale quando quanto quella quelle quelli quello questa queste questi questo qui se sarà sei si sia siamo siete sono sopra sotto su sua sue sui sul sullo sulla sulle suo stato stessa stesso tra tu tutti tutto un una uno vi voi allora cioè quindi però insomma diciamo ok okay ecco va bene sì infatti appunto praticamente comunque the of and to is in that it').split(' '));
-function keyPoints(text){
-  const sents = text.split(/(?<=[.!?…])\s+/).map(s => s.trim()).filter(s => s.split(/\s+/).length >= 7 && s.split(/\s+/).length <= 60);
-  if (sents.length < 3) return sents;
-  const tok = s => s.toLowerCase().normalize('NFC').match(/[a-zàèéìòóù0-9]{3,}/g) || [];
-  const freq = new Map();
-  sents.forEach(s => new Set(tok(s).filter(w => !STOP.has(w))).forEach(w => freq.set(w, (freq.get(w) || 0) + 1)));
-  const max = Math.max(1, ...freq.values());
-  const scored = sents.map((s, i) => {
-    const w = tok(s).filter(x => !STOP.has(x));
-    return { s, i, sc: w.reduce((a, x) => a + (freq.get(x) || 0) / max, 0) / Math.pow(Math.max(w.length, 1), 0.6) };
-  });
-  const k = Math.min(25, Math.max(5, Math.round(sents.length * 0.06)));
-  const picked = [], seen = [];
-  for (const o of scored.sort((a, b) => b.sc - a.sc)) {
-    const ws = new Set(tok(o.s));
-    if (seen.some(p => [...ws].filter(x => p.has(x)).length / ws.size > 0.6)) continue;
-    picked.push(o); seen.push(ws);
-    if (picked.length >= k) break;
-  }
-  return picked.sort((a, b) => a.i - b.i).map(o => o.s);
-}
-$('keyBtn').addEventListener('click', () => {
-  const t = plain();
-  if (!t) { sum('Prima trascrivi un audio: i punti chiave partono dal testo.', 'warn'); return; }
-  const pts = keyPoints(t);
-  track('punti-chiave');
-  if (!pts.length) { sum('Il testo è troppo corto per estrarre punti chiave.', 'warn'); return; }
-  $('sumOut').value = pts.map(p => '• ' + p).join('\n\n');
-  $('sumOut').hidden = false; $('sumActions').hidden = false;
-  sum(`${pts.length} frasi chiave estratte dalla lezione.`);
-});
-$('sumCopy').addEventListener('click', () => copy($('sumOut').value, $('sumCopy'), 'Copia punti chiave'));
 
 /* ---------- Utility ---------- */
 function devTag(){ return (isMobile ? 'telefono' : 'computer') + '-' + (device === 'webgpu' ? 'gpu' : 'cpu'); }
@@ -2100,7 +1909,6 @@ async function saveFile(blob, name){
 function hms(s){ s = Math.max(0, Math.round(s)); const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; return [h,m,x].map(v => String(v).padStart(2,'0')).join(':'); }
 function mb(b){ return (b / 1048576).toFixed(0); }
 function setStatus(t, kind){ const s = $('status'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
-function sum(t, kind){ const s = $('sumStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
 async function requestWake(){ try { wakeLock = await navigator.wakeLock?.request('screen'); } catch (_) {} }
 function releaseWake(){ try { wakeLock && wakeLock.release(); } catch (_) {} wakeLock = null; }
 let bgTracked = false;
@@ -2562,7 +2370,7 @@ function attivaTab(tab, sub){
   try { sessionStorage.setItem('ft:tab', tab); sessionStorage.setItem('ft:subs', JSON.stringify(subAttive)); } catch (_) {}
   return cambia;
 }
-document.querySelectorAll('[data-tab-btn]').forEach(b => b.addEventListener('click', () => { tabScelta = true; attivaTab(b.dataset.tabBtn); window.scrollTo({ top: 0 }); if (b.dataset.tabBtn === 'oggi' && !document.body.classList.contains('locked')) { aggiornaUso(); caricaOggi(); caricaSerie(); } }));
+document.querySelectorAll('[data-tab-btn]').forEach(b => b.addEventListener('click', () => { tabScelta = true; attivaTab(b.dataset.tabBtn); window.scrollTo({ top: 0 }); if (b.dataset.tabBtn === 'oggi' && !document.body.classList.contains('locked')) { aggiornaUso(); caricaOggi(); caricaSerie(); } if (b.dataset.tabBtn === 'appunti') fonteInfo(); }));
 document.querySelectorAll('[data-sub-btn]').forEach(b => b.addEventListener('click', () => { tabScelta = true; attivaTab(b.dataset.perTab, b.dataset.subBtn); window.scrollTo({ top: 0 }); }));
 // Quando un'azione porta a una sezione (es. "Apri" una lezione, inizia un quiz), apre prima la scheda giusta
 const _scrollIntoView = Element.prototype.scrollIntoView;
@@ -3270,7 +3078,6 @@ function aggiornaContesto(){
 }
 $('contestoBtn').addEventListener('click', e => $(e.currentTarget.dataset.dove)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
 $('vaiAppunti').addEventListener('click', () => $('l4').scrollIntoView({ behavior: 'smooth', block: 'start' }));
-$('vaiSalva').addEventListener('click', () => $('lSave').scrollIntoView({ behavior: 'smooth', block: 'start' }));
 $('vaiTrascrivi').addEventListener('click', () => $('l1').scrollIntoView({ behavior: 'smooth', block: 'start' }));
 ['input', 'change'].forEach(ev => { $('out').addEventListener(ev, aggiornaContesto); $('titolo').addEventListener(ev, aggiornaContesto); $('materia').addEventListener(ev, aggiornaContesto); });
 setInterval(aggiornaContesto, 1500);
@@ -3577,7 +3384,7 @@ async function unlock(pw, silent){
     const v = await privApi('verifica');
     if (!MULTI) lsSet(PW_KEY, pw);
     document.body.classList.remove('locked'); attivaTab(tabAttiva || 'trascrivi');
-    showUsage(v); fcLimiti(v); mostraAccount(v); loadList(); caricaPrecedenti(); caricaProfilo(); caricaOggi(); gloCaricaMaterie(); caricaSerie(); notifStato();
+    showUsage(v); fcLimiti(v); mostraAccount(v); loadList(); caricaProfilo(); caricaOggi(); gloCaricaMaterie(); caricaSerie(); notifStato();
     return true;
   } catch (e) {
     privPw = null;
@@ -3607,39 +3414,11 @@ function onMateria(){
   $('materiaEco').textContent = m || 'non scelta';
   if ($('materia2') && document.activeElement !== $('materia2')) $('materia2').value = m;
   lsSet(MATERIA_KEY, m || null);
-  clearTimeout(precTimer); precTimer = setTimeout(caricaPrecedenti, 400);
 }
 $('materia').value = lsGet(MATERIA_KEY) || '';
 $('materia').addEventListener('input', onMateria);
 $('materia').addEventListener('change', onMateria);
 aggiornaMaterie();
-
-/* Appunti già salvati della stessa materia: caricati in anticipo, così il pulsante Claude resta istantaneo */
-const PREC_MAX = 80000;   // caratteri massimi di appunti precedenti da mandare a Claude (i più recenti)
-let prec = { materia: '', items: [] }, precTimer = null;
-async function caricaPrecedenti(){
-  const m = materiaCorrente();
-  if (!m || !privPw) { prec = { materia: m, items: [] }; return; }
-  try { const items = await privApi('appunti?materia=' + encodeURIComponent(m)); if (materiaCorrente() === m) prec = { materia: m, items }; }
-  catch (_) { prec = { materia: m, items: [] }; }
-}
-function precScelti(){
-  if (prec.materia !== materiaCorrente()) return [];
-  const list = prec.items.filter(i => i.id !== currentId);
-  const out = []; let tot = 0;
-  for (let i = list.length - 1; i >= 0; i--) {   // dal più recente, finché c'è spazio
-    const n = list[i].appunti.length; if (out.length && tot + n > PREC_MAX) break;
-    out.unshift(list[i]); tot += n;
-  }
-  return out;
-}
-function testoPrecedenti(){
-  return precScelti().map(i => `### ${i.titolo} (${fmtData(i.data)})\n${i.appunti.trim()}`).join('\n\n');
-}
-function precInfo(){
-  const n = precScelti().length;
-  return n ? `Ho aggiunto anche gli appunti di ${n} ${n === 1 ? 'lezione precedente' : 'lezioni precedenti'} di ${materiaCorrente()}.` : '';
-}
 
 /* ---------- Archivio ---------- */
 const FILTRO_KEY = 'trascrittore:filtro-materia', CHIUSE_KEY = 'trascrittore:materie-chiuse';
@@ -3805,7 +3584,7 @@ async function salvaOra(){
       privStatus(`Salvata nell'archivio in «${l.materia}» come «${l.titolo}». Puoi cambiare materia e titolo qui sotto.`);
       gloEstrai(l.id, true); salvaMatPending(l.id); mappaDa(l);
     } else if (Math.abs(($('appunti').value || '').length - appuntiPrima.length) > 300) gloEstrai(l.id, true);
-    caricaOggi(); aggiornaContesto(); loadList(); caricaPrecedenti();
+    caricaOggi(); aggiornaContesto(); loadList();
   } catch (e) {
     chipSalva('Non salvata', '');
     privStatus(e.status === 401 ? 'La password non è più valida: ricarica la pagina e reinseriscila.' : 'Non riesco a salvare (' + e.message + '): riprovo alla prossima modifica.', 'err');
