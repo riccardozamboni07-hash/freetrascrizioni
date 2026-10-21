@@ -304,7 +304,8 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 .anello .nome{font-size:.82rem;font-weight:600;line-height:1.25}
 .anello .nome small{display:block;font-weight:500;color:var(--muted);font-size:.74rem}
 @media (prefers-reduced-motion:reduce){.anello .pieno{transition:none}}
-.segmenti button{font-size:.86rem}
+.segmenti button{font-size:.8rem;letter-spacing:-.01em;padding:.4rem .2rem}
+.segmenti{gap:2px}
 .anelli{grid-template-columns:repeat(4,1fr)!important}
 .serie{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:12px}
 .serie-top{display:flex;align-items:center;gap:10px}
@@ -339,6 +340,11 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 .mappa .figlio small{display:block;font-weight:400;color:var(--muted);font-size:.78rem}
 .mappa .nipoti{font-weight:400;font-size:.8rem;color:var(--muted)}
 .cond-box{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.link{background:none;border:none;padding:0;min-height:0;font:inherit;font-weight:600;color:var(--accent-text);text-decoration:underline;text-underline-offset:2px;cursor:pointer;display:inline}
+.dopo{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.dopo[hidden]{display:none}
+.contesto{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--tenue);border:1px solid var(--line);border-radius:16px;padding:10px 14px;font-size:.88rem}
+.contesto b{font-weight:700}
 .banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px;border-radius:18px;border:1px solid var(--warn)}
 .banner p{margin:0;flex:1 1 240px}
 .live{font-size:.78rem;font-weight:600;color:var(--rec)}
@@ -580,7 +586,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <input type="text" id="materia" list="materieList" autocomplete="off" placeholder="Scegli o scrivi, es. Diritto pubblico">
     </label>
     <datalist id="materieList"></datalist>
-    <p class="note" id="materiaNote">Con la materia la trascrizione online scrive meglio i termini tecnici, e Claude prepara appunti adatti a quella disciplina.</p>
+    <p class="note" id="materiaNote">Con la materia la trascrizione online scrive meglio i termini tecnici, e l'AI prepara appunti, flashcard e glossario adatti a quella disciplina.</p>
     <div class="opts">
       <label class="field"><span>Modalità</span>
         <select id="mode">
@@ -619,10 +625,17 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <div class="row">
         <button type="button" id="copyBtn">Copia</button>
         <button type="button" id="shareBtn" hidden>Condividi</button>
-        <button type="button" id="dlBtn" class="primary">Scarica .txt</button>
+        <button type="button" id="dlBtn">Scarica .txt</button>
       </div>
     </div>
     <textarea id="out" spellcheck="false" placeholder="Il testo comparirà qui man mano, blocco per blocco, e viene salvato automaticamente. Puoi correggerlo prima di scaricarlo o riassumerlo."></textarea>
+    <div class="dopo priv" id="dopoTesto" hidden>
+      <span class="note">E adesso?</span>
+      <div class="row">
+        <button type="button" class="primary" id="vaiAppunti">Crea gli appunti</button>
+        <button type="button" id="vaiSalva">Salva nell'archivio</button>
+      </div>
+    </div>
   </section>
 
   <section class="panel" aria-labelledby="l4">
@@ -828,7 +841,8 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <span class="label" id="lSave">Salva nell'archivio</span>
       <span class="chip" id="currentChip">Nuova lezione</span>
     </div>
-    <p class="note">Materia: <strong id="materiaEco">non scelta</strong> · la cambi al punto 2.</p>
+    <p class="note">Materia: <strong id="materiaEco">non scelta</strong> · <button type="button" class="link" id="cambiaMateria">cambiala</button></p>
+    <p class="note" id="salvaVuoto">Non c'è ancora testo da salvare: registra o carica una lezione in <button type="button" class="link" id="vaiTrascrivi">Trascrivi</button>, oppure apri una lezione qui sotto.</p>
     <div class="form">
       <label class="field"><span>Titolo</span><input type="text" id="titolo" placeholder="es. Le fonti del diritto"></label>
       <label class="field"><span>Data</span><input type="date" id="dataLez"></label>
@@ -870,7 +884,11 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.0.1<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.1<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <div class="contesto priv" id="contesto" data-tab="studia">
+    <span id="contestoTxt"></span>
+    <button type="button" class="link" id="contestoBtn"></button>
+  </div>
   <div class="segmenti" data-tab="trascrivi" id="segTrascrivi" role="tablist" aria-label="Trascrizione o appunti">
     <span class="seg-ind" aria-hidden="true"></span>
     <button type="button" data-sub-btn="trascrizione">Trascrizione</button>
@@ -2417,7 +2435,7 @@ const ORDINE_TAB = ['oggi', 'trascrivi', 'studia', 'archivio'];
 const ORDINE_SUB = { trascrivi: ['trascrizione', 'appunti'], studia: ['flashcard', 'orale', 'mappa', 'chiedi', 'glossario'] };
 for (const [id, [t, sub]] of Object.entries(MAPPA_TAB)) { const sez = $(id)?.closest('section'); if (sez) { sez.dataset.tab = t; if (sub) sez.dataset.sub = sub; } }
 const passi = document.querySelector('.steps.pub'); if (passi) { passi.dataset.tab = 'trascrivi'; passi.dataset.sub = 'trascrizione'; }
-document.querySelector('header.top')?.after($('segTrascrivi'), $('segStudia'));
+document.querySelector('header.top')?.after($('segTrascrivi'), $('segStudia'), $('contesto'));
 // i pulsanti di una sotto-scheda sanno a quale scheda appartengono
 document.querySelectorAll('.segmenti').forEach(sg => sg.querySelectorAll('[data-sub-btn]').forEach(b => { b.dataset.perTab = sg.dataset.tab; }));
 const notaVersione = [...document.querySelectorAll('main > p.note')].pop(); if (notaVersione) { notaVersione.style.marginTop = '8px'; $('profilo').append(notaVersione); }
@@ -2526,7 +2544,7 @@ async function gloCaricaMaterie(scegli){
     const sel = $('gloMateria'), prima = scegli || sel.value || materiaCorrente();
     sel.textContent = '';
     gloMaterie.forEach(m => { const o = document.createElement('option'); o.value = m.materia; o.textContent = `${m.materia} (${m.n})`; sel.append(o); });
-    if (!gloMaterie.length) { gloTermini = []; gloRender(); return; }
+    if (!gloMaterie.length) { const o = document.createElement('option'); o.value = ''; o.textContent = 'Nessuna materia'; sel.append(o); gloTermini = []; gloRender(); return; }
     sel.value = gloMaterie.some(m => m.materia === prima) ? prima : gloMaterie[0].materia;
     await gloCarica();
   } catch (_) {}
@@ -2565,7 +2583,8 @@ async function gloEstrai(id, silenzioso){
   if (!id) return;
   if (!silenzioso) { $('gloAggiorna').disabled = true; gloSt('Aggiorno il glossario dalla lezione…'); }
   try {
-    const r = await privApi('glossario-estrai', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id }) });
+    const r = await privApi('glossario-estrai', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, auto: !!silenzioso }) });
+    if (r.saltato) return;
     gloSt(r.nuovi || r.aggiornati ? `Glossario di ${r.materia}: ${r.nuovi} ${r.nuovi === 1 ? 'termine nuovo' : 'termini nuovi'}` + (r.aggiornati ? `, ${r.aggiornati} arricchiti.` : '.') : `Glossario di ${r.materia}: nessun termine nuovo.`);
     if (r.uso && fcUso) { fcUso.uso = r.uso; fcLimiti(); }
     gloCaricaMaterie(r.materia);
@@ -2784,6 +2803,7 @@ $('oraleInizia').addEventListener('click', () => {
 $('oraleEsci').addEventListener('click', () => { if (mr) mr.stop(); oraleVista('start'); oraleSt(''); });
 $('oraleRec').addEventListener('click', async () => {
   if (mr) { mr.stop(); return; }
+  if (!window.MediaRecorder || !navigator.mediaDevices?.getUserMedia) { oraleSt('Questo browser non registra l’audio: scrivi la risposta.', 'warn'); return; }
   try { mrStream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
   catch (_) { oraleSt('Non ho il permesso di usare il microfono: puoi scrivere la risposta.', 'warn'); return; }
   const tipo = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg'].find(t => window.MediaRecorder?.isTypeSupported?.(t)) || '';
@@ -3041,6 +3061,30 @@ $('condStop').addEventListener('click', async () => {
   try { await privApi('condividi?id=' + encodeURIComponent(currentId), { method: 'DELETE' }); $('condBox').hidden = true; privStatus('Il link non funziona più.'); } catch (e) { privStatus('Errore: ' + e.message, 'err'); }
 });
 oraleVista('start'); matRender(); mappaDa(null);
+
+/* ---------- Lezione aperta: barra di contesto e passi successivi ---------- */
+function aggiornaContesto(){
+  const testo = $('out').value.trim(), titolo = $('titolo').value.trim(), materia = materiaCorrente();
+  const t = $('contestoTxt'), b = $('contestoBtn');
+  t.textContent = '';
+  if (testo.length > 50) {
+    const x = document.createElement('span'); x.textContent = 'Lezione: ';
+    const y = document.createElement('b'); y.textContent = titolo || (currentId ? 'senza titolo' : 'non ancora salvata');
+    t.append(x, y); if (materia) t.append(' · ' + materia);
+    b.textContent = currentId ? 'Cambia' : 'Salva'; b.dataset.dove = currentId ? 'lArch' : 'lSave';
+  } else {
+    t.textContent = 'Nessuna lezione aperta.'; b.textContent = 'Apri dall’archivio'; b.dataset.dove = 'lArch';
+  }
+  $('dopoTesto').hidden = testo.length < 200;
+  $('salvaVuoto').hidden = testo.length > 0;
+}
+$('contestoBtn').addEventListener('click', e => $(e.currentTarget.dataset.dove)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+$('vaiAppunti').addEventListener('click', () => $('l4').scrollIntoView({ behavior: 'smooth', block: 'start' }));
+$('vaiSalva').addEventListener('click', () => $('lSave').scrollIntoView({ behavior: 'smooth', block: 'start' }));
+$('vaiTrascrivi').addEventListener('click', () => $('l1').scrollIntoView({ behavior: 'smooth', block: 'start' }));
+$('cambiaMateria').addEventListener('click', () => { $('materia').scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => $('materia').focus(), 400); });
+['input', 'change'].forEach(ev => { $('out').addEventListener(ev, aggiornaContesto); $('titolo').addEventListener(ev, aggiornaContesto); $('materia').addEventListener(ev, aggiornaContesto); });
+setInterval(aggiornaContesto, 1500);
 /* ---------- Chiedi alle tue lezioni ---------- */
 let askStoria = [];
 function askSt(t, kind){ const s = $('askStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
@@ -3205,6 +3249,8 @@ function aggiornaSelezioni(items){
   const om = $('oraleMateria'), primaO = om.value || materiaCorrente();
   om.textContent = ''; [...new Set(items.map(i => i.materia))].sort((a, b) => a.localeCompare(b, 'it')).forEach(m => { const o = document.createElement('option'); o.value = o.textContent = m; om.append(o); });
   if ([...om.options].some(o => o.value === primaO)) om.value = primaO;
+  if (!om.options.length) { const o = document.createElement('option'); o.value = ''; o.textContent = 'Nessuna lezione salvata'; om.append(o); }
+  $('oraleInizia').disabled = !om.value;
   const conFc = [...new Set(items.filter(i => i.conFlashcard).map(i => i.materia))].sort((a, b) => a.localeCompare(b, 'it'));
   const sel = $('fcMateria'), prima = sel.value || materiaCorrente();
   sel.textContent = ''; conFc.forEach(m => { const o = document.createElement('option'); o.value = o.textContent = m; sel.append(o); });
@@ -3457,7 +3503,7 @@ $('saveLesson').addEventListener('click', async () => {
     setCurrent(l); $('titolo').value = l.titolo;
     if (fcDaSalvare) await fcSalva();
     privStatus(`Salvata in «${l.materia}».`);
-    gloEstrai(l.id, true); caricaOggi(); salvaMatPending(l.id); mappaDa(l);
+    gloEstrai(l.id, true); caricaOggi(); salvaMatPending(l.id); mappaDa(l); aggiornaContesto();
     loadList(); caricaPrecedenti();
   } catch (e) { privStatus(e.status === 401 ? 'La password non è più valida: ricarica la pagina e reinseriscila.' : 'Non riesco a salvare: ' + e.message, 'err'); }
   finally { $('saveLesson').disabled = false; }

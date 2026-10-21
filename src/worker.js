@@ -30,7 +30,7 @@ export class Store extends DurableObject {
     this.sql.exec(`CREATE TABLE IF NOT EXISTS esami (id TEXT PRIMARY KEY, materia TEXT, nome TEXT, data TEXT, creato INTEGER)`);
     this.sql.exec(`CREATE TABLE IF NOT EXISTS ripassi (lezione TEXT, quando INTEGER)`);
     // versione 3.0: slide/PDF e mappa per lezione, orale, studio, promemoria, condivisione
-    for (const c of ["materiale TEXT NOT NULL DEFAULT ''", "mappa TEXT NOT NULL DEFAULT ''", "condiviso TEXT"]) { try { this.sql.exec(`ALTER TABLE lezioni ADD COLUMN ${c}`); } catch (_) {} }
+    for (const c of ["materiale TEXT NOT NULL DEFAULT ''", "mappa TEXT NOT NULL DEFAULT ''", "condiviso TEXT", "glo_len INTEGER"]) { try { this.sql.exec(`ALTER TABLE lezioni ADD COLUMN ${c}`); } catch (_) {} }
     this.sql.exec(`CREATE TABLE IF NOT EXISTS orale (quando INTEGER, materia TEXT, voto INTEGER)`);
     this.sql.exec(`CREATE TABLE IF NOT EXISTS studio (quando INTEGER, minuti REAL, materia TEXT)`);
     this.sql.exec(`CREATE TABLE IF NOT EXISTS impostazioni (k TEXT PRIMARY KEY, v TEXT)`);
@@ -120,6 +120,7 @@ export class Store extends DurableObject {
     }
     return { nuovi, aggiornati };
   }
+  segnaGlossario(id, n) { this.sql.exec('UPDATE lezioni SET glo_len = ? WHERE id = ?', n, id); }
   eliminaTermine(chiave) { this.sql.exec('DELETE FROM glossario WHERE chiave = ?', chiave); return { ok: true }; }
   // ---------- esami e piano di ripasso ----------
   esami() { return this.sql.exec('SELECT * FROM esami ORDER BY data').toArray(); }
@@ -602,10 +603,13 @@ export default {
         if (!l) return json(404, { error: 'Salva prima la lezione.' });
         const testo = (l.appunti && l.appunti.length > 500 ? l.appunti : l.testo) || '';
         if (testo.length < 300) return json(400, { error: 'La lezione è troppo corta per un glossario.' });
+        // al salvataggio automatico non rifà il glossario se la lezione è cambiata poco (risparmia AI)
+        if (b.auto && l.glo_len && Math.abs(testo.length - l.glo_len) < Math.max(400, l.glo_len * 0.15)) return json(200, { nuovi: 0, aggiornati: 0, materia: l.materia, saltato: true });
         const r = await estraiGlossario(env, { testo, materia: l.materia, esistenti: await store().terminiMateria(l.materia) });
         if (r.token) await store().usaToken(r.token);
         if (r.status !== 200) return json(r.status, r.body);
         const esito = await store().salvaTermini(l.materia, l, r.body.termini);
+        await store().segnaGlossario(l.id, testo.length);
         return json(200, { ...esito, materia: l.materia, uso: await store().usoOggi() });
       }
       if (azione === 'glossario') {
