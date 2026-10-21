@@ -105,6 +105,8 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .danger.armed{background:var(--err);color:var(--surface);border-color:var(--err)}
 .rec .dot{width:.7rem;height:.7rem;border-radius:50%;background:var(--rec)}
 .rec.on .dot{animation:pulse 1.2s infinite}
+.rec.pausa .dot{border-radius:0;background:none;width:0;height:0;border-top:.4rem solid transparent;border-bottom:.4rem solid transparent;border-left:.66rem solid var(--rec)}
+.timer.pausa{opacity:.55}
 @keyframes pulse{50%{opacity:.25}}
 @media (prefers-reduced-motion:reduce){.rec.on .dot{animation:none}}
 .timer{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:1.05rem}
@@ -559,6 +561,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
         <small id="recHint">Tieni questa pagina aperta e lo schermo acceso. La registrazione viene salvata a pezzi da 5 minuti: se la pagina si chiude, la recuperi.</small>
         <div class="row">
           <button class="rec" id="recBtn" type="button"><span class="dot"></span><span id="recLabel">Avvia registrazione</span></button>
+          <button type="button" id="recFine" hidden>Termina registrazione</button>
           <span class="timer" id="recTime">00:00:00</span>
         </div>
       </div>
@@ -884,7 +887,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.1<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.1.1<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="contesto priv" id="contesto" data-tab="studia">
     <span id="contestoTxt"></span>
     <button type="button" class="link" id="contestoBtn"></button>
@@ -1158,7 +1161,7 @@ $('removeBtn').addEventListener('click', async () => {
   player.removeAttribute('src'); try { player.load(); } catch (_) {}
   source = null;
   $('selected').hidden = true; $('player').hidden = true; $('saveRec').hidden = true;
-  $('fileIn').value = ''; $('goBtn').disabled = true; $('recTime').textContent = '00:00:00';
+  $('fileIn').value = ''; $('goBtn').disabled = true; $('recTime').textContent = '00:00:00'; recBottoni();
   if (wasRec) { try { await idb.clear(); } catch (_) {} }
   else { lsSet(JOB_DONE_KEY, null); idb.jobClear().catch(() => {}); }
   track('audio-rimosso', wasRec ? 'registrazione' : 'file');
@@ -1182,7 +1185,33 @@ drop.addEventListener('drop', e => pickFile(e.dataTransfer.files[0]));
 // MediaRecorder salva il file compresso, solo per poterlo scaricare.
 let stream = null, segRec = null, fullRec = null, fullParts = [], recStart = 0, segIdx = 0, recTick = null, recMime = '';
 let actx = null, proc = null, srcNode = null, pcmParts = [], pcmLen = 0, segOffset = 0, resample = null, recPeak = 0;
-$('recBtn').addEventListener('click', () => (segRec ? stopRecording() : startRecording()));
+$('recBtn').addEventListener('click', () => (!segRec ? startRecording() : segRec.pausa ? riprendiRecording() : pausaRecording()));
+$('recFine').addEventListener('click', () => segRec && stopRecording());
+let recPrima = 0; // secondi registrati prima dell'ultima pausa
+const recSecondi = () => recPrima + (segRec && !segRec.pausa ? (Date.now() - recStart) / 1000 : 0);
+function recBottoni(){
+  const p = !!segRec?.pausa;
+  $('recBtn').classList.toggle('on', !!segRec && !p); $('recBtn').classList.toggle('pausa', p);
+  $('recLabel').textContent = !segRec ? (source?.kind === 'rec' && source.segs?.length ? 'Nuova registrazione' : 'Avvia registrazione') : p ? 'Riprendi registrazione' : 'Metti in pausa';
+  $('recFine').hidden = !segRec; $('recTime').classList.toggle('pausa', p);
+}
+function pausaRecording(){
+  if (!segRec || segRec.pausa) return;
+  recPrima = recSecondi(); segRec.pausa = true;
+  finishSegment(); // il pezzo registrato finora va subito in trascrizione/salvataggio
+  try { if (fullRec?.state === 'recording') fullRec.pause(); } catch (_) {}
+  try { actx?.suspend?.(); } catch (_) {}
+  recBottoni(); $('recTime').textContent = hms(recPrima);
+  setStatus('Registrazione in pausa. Premi «Riprendi registrazione» per continuare o «Termina registrazione» se la lezione è finita.');
+  track('registrazione-pausa');
+}
+function riprendiRecording(){
+  if (!segRec?.pausa) return;
+  try { actx?.resume?.().catch(() => {}); } catch (_) {}
+  try { if (fullRec?.state === 'paused') fullRec.resume(); } catch (_) {}
+  recStart = Date.now(); segRec.pausa = false; recBottoni(); requestWake();
+  setStatus('Registrazione ripresa…');
+}
 
 function makeResampler(inRate){
   const ratio = inRate / SR;
@@ -1228,7 +1257,7 @@ async function startRecording(){
   srcNode = actx.createMediaStreamSource(stream);
   proc = actx.createScriptProcessor(4096, 1, 1);
   proc.onaudioprocess = e => {
-    if (!segRec) return;
+    if (!segRec || segRec.pausa) return;
     const d = resample(e.inputBuffer.getChannelData(0));
     if (!d.length) return;
     for (let i = 0; i < d.length; i += 16) { const v = Math.abs(d[i]); if (v > recPeak) recPeak = v; }
@@ -1247,20 +1276,21 @@ async function startRecording(){
     fullRec.start(10000);
   } catch (_) { fullRec = null; }
 
-  recStart = Date.now(); segRec = { on: true };
+  recStart = Date.now(); recPrima = 0; segRec = { on: true, pausa: false };
   recTick = setInterval(() => {
-    $('recTime').textContent = hms((Date.now() - recStart) / 1000);
+    if (segRec?.pausa) return;
+    $('recTime').textContent = hms(recSecondi());
     if (actx && actx.state === 'suspended') actx.resume?.().catch(() => {});
     if (live) liveStatus();
     else if (Date.now() - recStart > 8000 && recPeak < 0.003) setStatus('Non sento la voce: controlla che il microfono non sia coperto o disattivato.', 'warn');
-    else if (!running) setStatus('Registrazione in corso… Al termine premi «Ferma registrazione».');
+    else if (!running) setStatus('Registrazione in corso… Puoi metterla in pausa; a fine lezione premi «Termina registrazione».');
   }, 1000);
-  $('recBtn').classList.add('on'); $('recLabel').textContent = 'Ferma registrazione';
+  recBottoni();
   requestWake();
   live = $('live').checked;
   track('registrazione-avviata', live ? 'con trascrizione in diretta' : 'senza diretta');
   if (live) { beginRun(); recNext = 0; ensureModel().catch(err => failRun(err)); }
-  else setStatus('Registrazione in corso… Al termine premi «Ferma registrazione».');
+  else setStatus('Registrazione in corso… Puoi metterla in pausa; a fine lezione premi «Termina registrazione».');
 }
 
 function finishSegment(){
@@ -1277,8 +1307,9 @@ function finishSegment(){
 
 async function stopRecording(){
   clearInterval(recTick);
+  const eraPausa = segRec?.pausa;
   segRec = null;
-  finishSegment();
+  if (!eraPausa) finishSegment();
   try { proc.onaudioprocess = null; srcNode.disconnect(); proc.disconnect(); } catch (_) {}
   try { await actx.close(); } catch (_) {}
   actx = null;
@@ -1292,7 +1323,7 @@ async function stopRecording(){
   stream.getTracks().forEach(t => t.stop());
   source.ongoing = false; source.dur = segOffset;
   track('registrazione-finita-' + devTag(), bucket(segOffset) + (recPeak < 0.003 ? ' · silenzio' : ''));
-  $('recBtn').classList.remove('on'); $('recLabel').textContent = 'Avvia registrazione';
+  recBottoni();
   const name = source.full ? `${source.name}.${(source.full.type || '').includes('mp4') ? 'm4a' : 'webm'}` : source.name;
   setSource(source); $('selName').textContent = name; source.fileName = name;
   if (live && running) { liveStatus(); pumpRec(); }
@@ -1303,7 +1334,7 @@ async function stopRecording(){
   }
 }
 $('saveRec').addEventListener('click', () => source?.full && saveFile(source.full, source.fileName || source.name));
-const recDuration = () => source?.dur ?? (Date.now() - recStart) / 1000;
+const recDuration = () => source?.dur ?? recSecondi();
 
 /* ---------- Motore Whisper (worker) ---------- */
 const whisperSrc = `
