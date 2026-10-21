@@ -7,7 +7,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { onRequest as trascrivi } from './trascrivi.js';
 import { generaFlashcard } from './flashcard.js';
-import { generaTesto, leggiLavagna, rispondi, estraiGlossario, domandaOrale, valutaOrale, creaMappa, indovinaLezione } from './ai.js';
+import { generaTesto, leggiLavagna, rispondi, estraiGlossario, domandaOrale, valutaOrale, creaMappa, indovinaLezione, testoMateria, creaScheda, creaEsercizi } from './ai.js';
 import { creaChiaviVapid, inviaPush, chiaveValida } from './push.js';
 import { privacy, condizioni, paginaCondivisa } from './legale.js';
 import { hashPassword, verificaPassword, sha, nuovoToken, nuovoId, leggiCookie, cookie, emailValida, googleInizio, googleFine } from './auth.js';
@@ -44,7 +44,47 @@ export class Store extends DurableObject {
     // versione 1.8: limite ore per utente, blocco, accettazione di privacy e condizioni
     for (const c of ['ore_limite REAL', 'bloccato INTEGER NOT NULL DEFAULT 0', 'accettato INTEGER']) { try { this.sql.exec(`ALTER TABLE utenti ADD COLUMN ${c}`); } catch (_) {} }
     this.sql.exec(`CREATE TABLE IF NOT EXISTS fc_sessioni (id INTEGER PRIMARY KEY AUTOINCREMENT, quando INTEGER, materia TEXT, lezione TEXT, giuste INTEGER, totale INTEGER)`);
+    // versione 3.6: statistiche d'uso, segnalazioni, notifiche con testo, orario delle lezioni
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS eventi (giorno TEXT, azione TEXT, utente TEXT, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (giorno, azione, utente))`);
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS feedback (id INTEGER PRIMARY KEY AUTOINCREMENT, quando INTEGER, utente TEXT, email TEXT, nome TEXT, tipo TEXT, testo TEXT, info TEXT, letto INTEGER NOT NULL DEFAULT 0)`);
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS notifiche (hash TEXT PRIMARY KEY, titolo TEXT, testo TEXT, url TEXT, quando INTEGER)`);
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS orari_utenti (utente TEXT, giorno INTEGER, ora INTEGER)`);
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS esami_scritti (quando INTEGER, materia TEXT, giuste INTEGER, totale INTEGER, voto INTEGER)`);
   }
+  // ---------- statistiche, segnalazioni, notifiche (archivio "auth", o "principale" per la copia personale) ----------
+  evento(azione, utente) {
+    const g = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' });
+    this.sql.exec('INSERT INTO eventi (giorno, azione, utente, n) VALUES (?, ?, ?, 1) ON CONFLICT (giorno, azione, utente) DO UPDATE SET n = n + 1', g, azione, utente || 'io');
+  }
+  statistiche() {
+    const g = n => new Date(Date.now() - n * 86400000).toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' });
+    const d7 = g(6), d30 = g(29);
+    this.sql.exec('DELETE FROM eventi WHERE giorno < ?', g(120));
+    const funzioni = this.sql.exec(`SELECT azione, sum(CASE WHEN giorno >= ? THEN n ELSE 0 END) AS n7, count(DISTINCT CASE WHEN giorno >= ? THEN utente END) AS utenti7, sum(n) AS n30, count(DISTINCT utente) AS utenti30
+      FROM eventi WHERE giorno >= ? AND azione <> 'accesso' GROUP BY azione ORDER BY n30 DESC`, d7, d7, d30).toArray();
+    const giorni = this.sql.exec(`SELECT giorno, count(DISTINCT utente) AS attivi, sum(n) AS azioni FROM eventi WHERE giorno >= ? GROUP BY giorno ORDER BY giorno`, g(13)).toArray();
+    return { funzioni, giorni };
+  }
+  aggiungiFeedback(f) {
+    this.sql.exec('INSERT INTO feedback (quando, utente, email, nome, tipo, testo, info) VALUES (?, ?, ?, ?, ?, ?, ?)', Date.now(), f.utente || '', f.email || '', f.nome || '', f.tipo, f.testo, f.info || '');
+    return { ok: true };
+  }
+  elencoFeedback() { return this.sql.exec('SELECT * FROM feedback ORDER BY letto ASC, quando DESC LIMIT 200').toArray(); }
+  segnaFeedback(id, letto) { this.sql.exec('UPDATE feedback SET letto = ? WHERE id = ?', letto ? 1 : 0, id); return { ok: true }; }
+  eliminaFeedback(id) { this.sql.exec('DELETE FROM feedback WHERE id = ?', id); return { ok: true }; }
+  feedbackNuovi() { return (this.sql.exec('SELECT count(*) AS n FROM feedback WHERE letto = 0').toArray()[0] || {}).n || 0; }
+  salvaNotifica(hash, m) { this.sql.exec('INSERT INTO notifiche (hash, titolo, testo, url, quando) VALUES (?, ?, ?, ?, ?) ON CONFLICT (hash) DO UPDATE SET titolo = excluded.titolo, testo = excluded.testo, url = excluded.url, quando = excluded.quando', hash, m.titolo, m.testo, m.url || '/', Date.now()); }
+  notifica(hash) { return this.sql.exec('SELECT titolo, testo, url, quando FROM notifiche WHERE hash = ?', hash).toArray()[0] || null; }
+  salvaOrariUtente(utente, voci) {
+    this.sql.exec('DELETE FROM orari_utenti WHERE utente = ?', utente);
+    for (const v of voci) this.sql.exec('INSERT INTO orari_utenti (utente, giorno, ora) VALUES (?, ?, ?)', utente, v.g, Number(v.ora.slice(0, 2)));
+  }
+  utentiOrario(giorno, ora) { return this.sql.exec('SELECT DISTINCT utente FROM orari_utenti WHERE giorno = ? AND ora = ?', giorno, ora).toArray().map(r => r.utente); }
+  // ---------- orario delle lezioni e strumenti d'esame (archivio dell'utente) ----------
+  orario() { try { return JSON.parse(this.impostazione('orario') || '[]'); } catch (_) { return []; } }
+  salvaOrario(voci) { this.setImpostazione('orario', JSON.stringify(voci)); return voci; }
+  lezioniMateria(materia) { return this.sql.exec('SELECT id, titolo, data, testo, appunti FROM lezioni WHERE materia = ? AND length(testo) > 200 ORDER BY data ASC, creata ASC', materia).toArray(); }
+  registraEsame(materia, giuste, totale, voto) { this.sql.exec('INSERT INTO esami_scritti (quando, materia, giuste, totale, voto) VALUES (?, ?, ?, ?, ?)', Date.now(), materia, giuste, totale, voto); return this.sql.exec('SELECT quando, voto FROM esami_scritti WHERE materia = ? ORDER BY quando DESC LIMIT 6', materia).toArray().reverse(); }
   // ---------- utenti e sessioni (solo nell'archivio "auth") ----------
   utentePerEmail(email) { return this.sql.exec('SELECT * FROM utenti WHERE email = ?', email).toArray()[0] || null; }
   utentePerGoogle(sub) { return this.sql.exec('SELECT * FROM utenti WHERE google = ?', sub).toArray()[0] || null; }
@@ -86,6 +126,7 @@ export class Store extends DurableObject {
   }
   chiudiSessione(token) { this.sql.exec('DELETE FROM sessioni WHERE token = ?', token); }
   eliminaUtente(id) {
+    this.sql.exec('DELETE FROM orari_utenti WHERE utente = ?', id);
     for (const q of ['DELETE FROM sessioni WHERE utente = ?', 'DELETE FROM condivisi WHERE utente = ?', 'DELETE FROM push_utenti WHERE utente = ?', 'DELETE FROM utenti WHERE id = ?']) this.sql.exec(q, id);
     return { ok: true };
   }
@@ -267,7 +308,8 @@ export class Store extends DurableObject {
     return this.profilo();
   }
   eliminaTutto() {
-    for (const t of ['lezioni', 'fc_stat', 'fc_sessioni', 'profilo', 'glossario', 'esami', 'ripassi', 'orale', 'studio', 'push']) this.sql.exec(`DELETE FROM ${t}`);
+    for (const t of ['lezioni', 'fc_stat', 'fc_sessioni', 'profilo', 'glossario', 'esami', 'ripassi', 'orale', 'studio', 'push', 'esami_scritti']) this.sql.exec(`DELETE FROM ${t}`);
+    this.sql.exec(`DELETE FROM impostazioni WHERE k <> 'vapid'`);
     return { ok: true };
   }
   flashcardMateria(materia) {
@@ -492,6 +534,12 @@ export default {
     if (url.pathname === '/privacy' || url.pathname === '/condizioni') {
       return new Response(url.pathname === '/privacy' ? privacy(env) : condizioni(env), { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' } });
     }
+    // testo dell'ultima notifica, chiesto dal service worker (la notifica push arriva vuota)
+    if (url.pathname === '/api/notifica') {
+      const h = String(url.searchParams.get('e') || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
+      const n = h ? await env.STORE.get(env.STORE.idFromName(multi ? 'auth' : 'principale')).notifica(h) : null;
+      return json(200, n && Date.now() - n.quando < 6 * 3600000 ? n : {});
+    }
     if (url.pathname === '/api/stato') return json(200, {
       groq: Boolean(env.GROQ_API_KEY), password: multi || Boolean(env.PASSWORD), multiutente: multi,
       google: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET), invito: Boolean(env.CODICE_INVITO),
@@ -512,7 +560,17 @@ export default {
       if (!multi && !env.PASSWORD) return json(503, { error: 'Password non impostata.', code: 'no-password' });
       if (!entrato) return json(401, { error: multi ? 'Accedi di nuovo.' : 'Password errata.' });
       const azione = url.pathname.slice('/api/privato/'.length);
-      if (['ai', 'flashcard', 'lavagna', 'chiedi', 'glossario-estrai', 'orale-domanda', 'orale-valuta', 'mappa', 'indovina'].includes(azione)) { const l = await limiteAi(); if (l) return l; }
+      const AI = ['ai', 'flashcard', 'lavagna', 'chiedi', 'glossario-estrai', 'orale-domanda', 'orale-valuta', 'mappa', 'indovina', 'esame', 'esercizi'];
+      if (AI.includes(azione) || (azione === 'scheda' && request.method === 'POST')) { const l = await limiteAi(); if (l) return l; }
+      // statistiche d'uso per il pannello amministratore (solo conteggi, niente contenuti)
+      const globale = () => multi ? auth() : env.STORE.get(env.STORE.idFromName('principale'));
+      const EVENTI = { ai: 'appunti', flashcard: 'flashcard', quiz: 'quiz', lavagna: 'foto', chiedi: 'chiedi', mappa: 'mappa', 'orale-valuta': 'orale', studio: 'timer', esame: 'simulazione', scheda: 'scheda', esercizi: 'esercizi', condividi: 'condividi', materiale: 'slide', feedback: 'segnalazione', 'push-iscrivi': 'promemoria', orario: 'orario', verifica: 'accesso' };
+      if (EVENTI[azione] && (request.method === 'POST' || azione === 'verifica')) {
+        try { await globale().evento(EVENTI[azione], utente ? utente.id : 'io'); } catch (_) {}
+      }
+      if (azione === 'lezioni' && request.method === 'POST') {
+        try { const b = await request.clone().json(); if (!b.id) await globale().evento('lezione', utente ? utente.id : 'io'); } catch (_) {}
+      }
       if (azione === 'verifica') return json(200, {
         ok: true, uso: multi ? { ...(await auth().usoOggi()), flashcardToken: (await store().usoOggi()).flashcardToken } : await store().usoOggi(), limitePubblicoOre: null,
         limiteGroq: { orePerGiorno: 8, orePerOra: 2, tokenFlashcardGiorno: multi ? tokenGiorno : 500000, tokenFlashcardMinuto: 30000 },
@@ -549,6 +607,60 @@ export default {
       // ---------- slide/PDF, mappa, orale, studio, serie ----------
       const corpo = async () => request.json().catch(() => null);
       const conToken = async (r) => { if (r.token) await store().usaToken(r.token); return r; };
+      // ---------- strumenti d'esame: simulazione dello scritto, scheda di ripasso, esercizi ----------
+      if (azione === 'esame' && request.method === 'POST') {
+        const b = await corpo();
+        const materia = String(b?.materia || '').slice(0, 80);
+        const lez = materia ? await store().lezioniMateria(materia) : [];
+        if (!lez.length) return json(400, { error: 'Non ci sono lezioni di questa materia.' });
+        const r = await conToken(await generaFlashcard(env, { testo: testoMateria(lez, 55000), materia, quante: Math.min(30, Math.max(5, Number(b.quante) || 20)), argomenti: lez.length > 1 }));
+        if (r.status === 200) r.body.lezioni = lez.length;
+        return json(r.status, r.body);
+      }
+      if (azione === 'esame-esito' && request.method === 'POST') {
+        const b = await corpo();
+        const tot = Math.max(1, Number(b?.totale) || 1), giuste = Math.max(0, Math.min(tot, Number(b?.giuste) || 0));
+        return json(200, { storico: await store().registraEsame(String(b?.materia || '').slice(0, 80), giuste, tot, Math.round(Number(b?.voto) || 0)) });
+      }
+      if (azione === 'scheda') {
+        const materia = String((request.method === 'GET' ? url.searchParams.get('materia') : (await corpo())?.materia) || '').slice(0, 80);
+        if (!materia) return json(400, { error: 'Manca la materia.' });
+        const k = 'scheda:' + materia;
+        if (request.method === 'GET') { const v = await store().impostazione(k); return json(200, v ? JSON.parse(v) : {}); }
+        const lez = await store().lezioniMateria(materia);
+        if (!lez.length) return json(400, { error: 'Non ci sono lezioni di questa materia.' });
+        const r = await conToken(await creaScheda(env, { materia, lezioni: lez }));
+        if (r.status !== 200) return json(r.status, r.body);
+        const out = { testo: r.body.testo, quando: Date.now(), lezioni: lez.length };
+        await store().setImpostazione(k, JSON.stringify(out));
+        return json(200, out);
+      }
+      if (azione === 'esercizi' && request.method === 'POST') {
+        const b = await corpo();
+        const l = b?.lezione ? await store().leggi(String(b.lezione).slice(0, 64)) : await store().lezioneCasuale(String(b?.materia || '').slice(0, 80));
+        if (!l) return json(400, { error: 'Non ci sono lezioni di questa materia.' });
+        const r = await conToken(await creaEsercizi(env, { materia: l.materia || b.materia, titolo: l.titolo, testo: [l.appunti && l.appunti.length > 400 ? l.appunti : l.testo, l.materiale ? '\n\nSlide:\n' + l.materiale.slice(0, 8000) : ''].join(''), n: b.quanti }));
+        return json(r.status, r.body);
+      }
+      // ---------- orario delle lezioni ----------
+      if (azione === 'orario') {
+        if (request.method === 'GET') return json(200, await store().orario());
+        const b = await corpo();
+        const voci = (Array.isArray(b?.voci) ? b.voci : []).map(v => ({ g: Math.round(Number(v?.g)), ora: String(v?.ora || ''), materia: String(v?.materia || '').trim().slice(0, 80) }))
+          .filter(v => v.g >= 0 && v.g <= 6 && /^([01]\d|2[0-3]):[0-5]\d$/.test(v.ora) && v.materia).slice(0, 60)
+          .sort((a, b) => a.g - b.g || a.ora.localeCompare(b.ora));
+        await store().salvaOrario(voci);
+        if (multi) await auth().salvaOrariUtente(utente.id, voci);
+        return json(200, voci);
+      }
+      // ---------- segnalazioni (problemi e idee) ----------
+      if (azione === 'feedback' && request.method === 'POST') {
+        const b = await corpo();
+        const testo = String(b?.testo || '').trim().slice(0, 4000);
+        if (testo.length < 3) return json(400, { error: 'Scrivi qualcosa prima di inviare.' });
+        await globale().aggiungiFeedback({ utente: utente?.id, email: utente?.email, nome: utente?.nome, tipo: b.tipo === 'idea' ? 'idea' : 'problema', testo, info: String(b.info || '').slice(0, 300) });
+        return json(200, { ok: true });
+      }
       if (azione === 'materiale') {
         if (request.method === 'POST') {
           const b = await corpo();
@@ -602,7 +714,6 @@ export default {
       }
       if (azione === 'serie' && request.method === 'GET') return json(200, await store().serie());
       // ---------- promemoria (notifiche push) ----------
-      const globale = () => multi ? auth() : store();
       const chiaviVapid = async () => {
         let k = await globale().impostazione('vapid');
         if (!k) { k = JSON.stringify(await creaChiaviVapid()); await globale().setImpostazione('vapid', k); }
@@ -626,7 +737,9 @@ export default {
       }
       if (azione === 'push-prova' && request.method === 'POST') {
         const chiavi = await chiaviVapid(); let ok = 0;
-        for (const sub of await store().iscrizioni(null)) { const r = await inviaPush(sub, chiavi, env.CONTATTO_EMAIL && 'mailto:' + env.CONTATTO_EMAIL); if (r === 'ok') ok++; if (r === 'scaduta') await store().disiscriviPush(sub.endpoint); }
+        for (const sub of await store().iscrizioni(null)) {
+          await globale().salvaNotifica(await sha(sub.endpoint), { titolo: 'Promemoria attivi ✅', testo: 'Le notifiche funzionano: ti avviso per lezioni e ripassi.', url: '/?tab=oggi' });
+          const r = await inviaPush(sub, chiavi, env.CONTATTO_EMAIL && 'mailto:' + env.CONTATTO_EMAIL); if (r === 'ok') ok++; if (r === 'scaduta') await store().disiscriviPush(sub.endpoint); }
         return json(200, { inviate: ok });
       }
       // ---------- condivisione degli appunti ----------
@@ -694,9 +807,17 @@ export default {
           const def = Number(env.ORE_SETTIMANA_UTENTE) || 10, settimana = Date.now() - 7 * 86400000;
           return json(200, {
             utenti: utenti.map((u, i) => ({ ...u, ...dettagli[i], limite: u.oreLimite != null ? u.oreLimite : def })),
-            totali: { utenti: utenti.length, attivi7: utenti.filter(u => u.ultimo > settimana).length, oggi: await auth().usoOggi() },
+            totali: { utenti: utenti.length, attivi7: utenti.filter(u => u.ultimo > settimana).length, oggi: await auth().usoOggi(), segnalazioni: await auth().feedbackNuovi() },
             predefinito: def,
           });
+        }
+        if (azione === 'admin/statistiche' && request.method === 'GET') return json(200, await auth().statistiche());
+        if (azione === 'admin/feedback' && request.method === 'GET') return json(200, await auth().elencoFeedback());
+        if (azione === 'admin/feedback' && request.method === 'POST') {
+          const b = await corpo();
+          const id = Math.round(Number(b?.id));
+          if (!id) return json(400, { error: 'Segnalazione non valida.' });
+          return json(200, b.elimina ? await auth().eliminaFeedback(id) : await auth().segnaFeedback(id, !!b.letto));
         }
         if (azione === 'admin/elimina' && request.method === 'POST') {
           const b = await request.json().catch(() => null);
@@ -812,14 +933,37 @@ export default {
     const k = await globale.impostazione('vapid');
     if (!k) return;
     const chiavi = JSON.parse(k), contatto = env.CONTATTO_EMAIL ? 'mailto:' + env.CONTATTO_EMAIL : undefined;
-    const archivi = multi ? (await globale.utentiPush(ora)).map(u => 'u:' + u) : ['principale'];
+    // giorno della settimana in Italia (0 = lunedì)
+    const GG = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
+    const giorno = GG[new Date().toLocaleDateString('en-GB', { timeZone: 'Europe/Rome', weekday: 'short' })];
+    const archivi = multi
+      ? [...new Set([...(await globale.utentiPush(ora)), ...(await globale.utentiOrario(giorno, ora))])].map(u => 'u:' + u)
+      : ['principale'];
     for (const nome of archivi) {
       const st = env.STORE.get(env.STORE.idFromName(nome));
-      const subs = await st.iscrizioni(ora);
-      if (!subs.length) continue;
-      const serie = await st.serie();
-      if (!(await st.daRipassareOggi()) && !(serie.serie >= 2 && !serie.oggiFatto)) continue;
-      for (const sub of subs) { if (await inviaPush(sub, chiavi, contatto) === 'scaduta') await st.disiscriviPush(sub.endpoint); }
+      const tutte = await st.iscrizioni(null);
+      if (!tutte.length) continue;
+      // 1) lezione in orario in quest'ora: a tutti i dispositivi dell'utente
+      const lezioni = (await st.orario()).filter(v => v.g === giorno && Number(v.ora.slice(0, 2)) === ora);
+      let msg = null, subs = tutte;
+      if (lezioni.length) {
+        const l = lezioni[0];
+        msg = { titolo: `Alle ${l.ora}: ${l.materia} 🎙️`, testo: 'Tocca per aprire l’app e registrare la lezione.', url: '/?registra=' + encodeURIComponent(l.materia) };
+      } else {
+        // 2) promemoria di ripasso all'ora scelta
+        subs = await st.iscrizioni(ora);
+        if (!subs.length) continue;
+        const serie = await st.serie();
+        const ripasso = await st.daRipassareOggi();
+        if (!ripasso && !(serie.serie >= 2 && !serie.oggiFatto)) continue;
+        msg = ripasso
+          ? { titolo: 'È ora di ripassare 📚', testo: `Hai ${ripasso} ${ripasso === 1 ? 'lezione' : 'lezioni'} da ripassare oggi. Tocca per vedere il piano.`, url: '/?tab=oggi' }
+          : { titolo: `La tua serie di ${serie.serie} giorni ti aspetta 🔥`, testo: 'Basta un ripasso, un quiz o 10 minuti di studio per non perderla.', url: '/?tab=oggi' };
+      }
+      for (const sub of subs) {
+        await globale.salvaNotifica(await sha(sub.endpoint), msg);
+        if (await inviaPush(sub, chiavi, contatto) === 'scaduta') await st.disiscriviPush(sub.endpoint);
+      }
     }
   },
 };

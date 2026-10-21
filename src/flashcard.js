@@ -21,7 +21,7 @@ function riduci(testo, max) {
   return out.join(' […] ');
 }
 
-function istruzioni(materia, quante) {
+function istruzioni(materia, quante, argomenti) {
   return `Sei un docente universitario italiano${materia ? ` di ${materia}` : ''}. Dalla trascrizione di una lezione crea ${quante} flashcard a risposta multipla per ripassare per l'esame.
 Regole:
 - Domande sui concetti, le definizioni, le distinzioni e gli esempi importanti della lezione, non su dettagli banali o frasi di servizio del professore.
@@ -29,9 +29,11 @@ Regole:
 - Niente opzioni del tipo "tutte le precedenti" o "nessuna delle precedenti".
 - La trascrizione automatica può contenere errori: correggi i termini tecnici evidentemente sbagliati.
 - "spiegazione": una frase che spiega perché la risposta è corretta.
+- Dai priorità ai passaggi che iniziano con ⭐: lo studente li ha segnati come importanti.${argomenti ? `
+- Il testo contiene più lezioni (### Lezione: ...): distribuisci le domande su tutte le lezioni e in "argomento" scrivi il titolo della lezione da cui viene la domanda.` : ''}
 - Scrivi in italiano.
 Rispondi SOLO con JSON in questo formato:
-{"carte":[{"domanda":"...","opzioni":["...","...","...","..."],"corretta":0,"spiegazione":"..."}]}
+{"carte":[{"domanda":"...","opzioni":["...","...","...","..."],"corretta":0,"spiegazione":"..."${argomenti ? ',"argomento":"..."' : ''}}]}
 dove "corretta" è la posizione (0-3) della risposta giusta in "opzioni".`;
 }
 
@@ -47,7 +49,9 @@ function pulisci(dati) {
     if (!c?.domanda || opz.length < 2 || !(idx >= 0 && idx < opz.length) || new Set(opz).size !== opz.length) continue;
     const giusta = opz[idx];
     const nuove = mescola(opz.slice(0, 4).includes(giusta) ? opz.slice(0, 4) : [giusta, ...opz.filter(o => o !== giusta).slice(0, 3)]);
-    out.push({ domanda: String(c.domanda).trim().slice(0, 500), opzioni: nuove.map(o => o.slice(0, 300)), corretta: nuove.indexOf(giusta), spiegazione: String(c.spiegazione || '').trim().slice(0, 600) });
+    const carta = { domanda: String(c.domanda).trim().slice(0, 500), opzioni: nuove.map(o => o.slice(0, 300)), corretta: nuove.indexOf(giusta), spiegazione: String(c.spiegazione || '').trim().slice(0, 600) };
+    if (c.argomento) carta.argomento = String(c.argomento).replace(/^Lezione:\s*/i, '').trim().slice(0, 120);
+    out.push(carta);
   }
   return out;
 }
@@ -59,7 +63,7 @@ function leggiJson(s) {
   return null;
 }
 
-export async function generaFlashcard(env, { testo, materia, quante }) {
+export async function generaFlashcard(env, { testo, materia, quante, argomenti }) {
   if (!env.GROQ_API_KEY) return { status: 503, body: { error: 'Manca la chiave Groq.', code: 'no-key' } };
   const n = Math.min(Math.max(Number(quante) || 15, 5), 30);
   const modelli = env.GROQ_MODELLO_FLASHCARD ? [[env.GROQ_MODELLO_FLASHCARD, 24000], ...MODELLI] : MODELLI;
@@ -68,11 +72,11 @@ export async function generaFlashcard(env, { testo, materia, quante }) {
     const body = {
       model: modello,
       messages: [
-        { role: 'system', content: istruzioni(materia, n) },
+        { role: 'system', content: istruzioni(materia, n, argomenti) },
         { role: 'user', content: 'Trascrizione della lezione:\n\n' + riduci(testo, max) },
       ],
       temperature: 0.4,
-      max_completion_tokens: 6000,
+      max_completion_tokens: n > 20 ? 9000 : 6000,
       response_format: { type: 'json_object' },
     };
     if (modello.startsWith('openai/')) body.reasoning_effort = 'low';

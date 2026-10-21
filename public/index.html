@@ -309,6 +309,7 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 .anello .nome small{display:block;font-weight:500;color:var(--muted);font-size:.74rem}
 @media (prefers-reduced-motion:reduce){.anello .pieno{transition:none}}
 .segmenti button{font-size:.8rem;letter-spacing:-.01em;padding:.4rem .2rem}
+#segStudia button{flex:1 0 auto;padding:.4rem .62rem}
 .segmenti{gap:2px}
 .anelli{grid-template-columns:repeat(4,1fr)!important}
 .serie{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:12px}
@@ -385,6 +386,65 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 .avanzate summary small,.lav summary small{color:var(--muted);font-weight:500}
 .avanzate[open],.lav[open]{display:flex;flex-direction:column;gap:10px}
 .facolt{font-weight:500;color:var(--muted);font-size:.78rem}
+.stella{align-self:flex-start;min-height:44px;border-color:#e8b923;color:#8a6500;background:#fff8e1;font-weight:700}
+.stella.flash{animation:pop .4s cubic-bezier(.3,1.6,.5,1)}
+:root[data-theme="dark"] .stella{background:#3a3011;color:#ffd65c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .stella{background:#3a3011;color:#ffd65c}}
+.orario-oggi{display:flex;flex-direction:column;gap:8px;background:var(--accent-soft);border-radius:16px;padding:12px}
+.orario-oggi .r{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.orario-lista{display:flex;flex-direction:column;gap:10px}
+.orario-g{display:flex;flex-direction:column;gap:4px}
+.orario-g>b{font-size:.82rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.orario-v{display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--line);border-radius:12px}
+.orario-v .h{font-variant-numeric:tabular-nums;font-weight:700;min-width:3.2em}
+.orario-v .m{flex:1;min-width:0}
+.orario-v button{min-height:32px;padding:.2rem .6rem}
+.orario-oggi button{flex-direction:row;flex:0 0 auto;min-height:40px}
+.orario-form{grid-template-columns:1fr 1fr}
+.es-card{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--line);border-radius:18px}
+.es-card h3{margin:0;font-size:1rem}
+.ese-lista{display:flex;flex-direction:column;gap:10px}
+.ese{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:14px;background:var(--tenue)}
+.ese b{font-size:.92rem}
+.ese p{margin:0;white-space:pre-wrap;line-height:1.5}
+.ese details summary{cursor:pointer;font-weight:600;color:var(--accent-text)}
+.ese details p{margin-top:8px;padding:10px;border-radius:10px;background:var(--surface);border:1px solid var(--line)}
+.es-esito{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:16px;background:var(--accent-soft)}
+.es-esito .voto b{font-size:2.6rem}
+.es-arg{display:flex;flex-direction:column;gap:6px}
+.es-arg div{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:.86rem}
+.es-arg .barra{grid-column:1/-1;height:6px;border-radius:9px;background:var(--surface);overflow:hidden}
+.es-arg .barra span{display:block;height:100%;border-radius:9px;background:var(--accent)}
+.es-arg .barra span.basso{background:var(--err)}
+.fc-tempo{font-variant-numeric:tabular-nums;font-weight:700}
+.fc-tempo.poco{color:var(--err)}
+.benvenuto{position:fixed;inset:0;z-index:80;background:rgba(10,20,15,.45);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+.benvenuto[hidden]{display:none}
+.ben-card{width:100%;max-width:440px;background:var(--surface);color:var(--fg);border-radius:28px;padding:26px 22px 18px;display:flex;flex-direction:column;gap:16px;box-shadow:0 24px 60px rgba(0,0,0,.25);animation:pop .45s cubic-bezier(.3,1.4,.5,1)}
+.ben-slide{display:flex;flex-direction:column;gap:8px;text-align:center;min-height:210px}
+.ben-slide[hidden]{display:none}
+.ben-slide h2{margin:0;font-size:1.35rem}
+.ben-slide p{margin:0;line-height:1.5}
+.ben-ic{font-size:3rem;line-height:1.1}
+.ben-punti{display:flex;gap:6px;justify-content:center}
+.ben-punti i{width:8px;height:8px;border-radius:9px;background:var(--line);transition:width .3s,background .3s}
+.ben-punti i.on{width:22px;background:var(--accent)}
+.adm-sez{border:1px solid var(--line);border-radius:16px;padding:10px 12px}
+.adm-sez summary{cursor:pointer;font-weight:700}
+.adm-sez[open]{display:flex;flex-direction:column;gap:10px}
+.adm-giorni{display:flex;align-items:flex-end;gap:4px;height:70px;padding-top:6px}
+.adm-giorni div{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.62rem;color:var(--muted);height:100%;justify-content:flex-end}
+.adm-giorni i{display:block;width:100%;border-radius:4px 4px 0 0;background:var(--accent);min-height:2px}
+.adm-stat{display:flex;flex-direction:column;gap:6px}
+.adm-stat div{display:grid;grid-template-columns:7.5em 1fr auto;align-items:center;gap:8px;font-size:.84rem}
+.adm-stat .b{height:8px;border-radius:9px;background:var(--tenue);overflow:hidden}
+.adm-stat .b span{display:block;height:100%;background:var(--accent)}
+.adm-stat small{color:var(--muted);white-space:nowrap}
+.adm-fb{display:flex;flex-direction:column;gap:8px}
+.fb{border:1px solid var(--line);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.fb.nuovo{border-color:var(--accent);background:var(--accent-soft)}
+.fb p{margin:0;white-space:pre-wrap}
+.fb .meta{font-size:.78rem;color:var(--muted)}
 .fonti{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .fonti button{flex-direction:column;gap:4px;min-height:72px;padding:10px 4px;border-radius:16px;font-size:1.3rem;border:1.5px solid var(--line);background:var(--surface)}
 .fonti button span{font-size:.8rem;font-weight:600}
@@ -573,12 +633,34 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     </div>
   </section>
 
+  <section class="panel priv" aria-labelledby="lOrario" id="orarioPanel">
+    <div class="row between">
+      <span class="label" id="lOrario">Orario delle lezioni</span>
+      <span class="chip" id="orarioChip" hidden></span>
+    </div>
+    <div class="orario-oggi" id="orarioOggi" hidden></div>
+    <p class="note" id="orarioNota">Inserisci le tue lezioni della settimana: all'ora della lezione ti arriva una notifica e la materia è già pronta per registrare.</p>
+    <div class="orario-lista" id="orarioLista"></div>
+    <details class="avanzate" id="orarioAgg">
+      <summary>+ Aggiungi una lezione all'orario</summary>
+      <div class="form orario-form">
+        <label class="field"><span>Giorno</span>
+          <select id="orGiorno"><option value="0">Lunedì</option><option value="1">Martedì</option><option value="2">Mercoledì</option><option value="3">Giovedì</option><option value="4">Venerdì</option><option value="5">Sabato</option><option value="6">Domenica</option></select>
+        </label>
+        <label class="field"><span>Ora</span><input type="time" id="orOra" value="09:00" step="300"></label>
+      </div>
+      <label class="field"><span>Materia</span><input type="text" id="orMateria" list="materieList" autocomplete="off" placeholder="es. Diritto pubblico"></label>
+      <button type="button" class="primary" id="orAggiungi">Aggiungi all'orario</button>
+    </details>
+    <div class="status" id="orarioStatus" role="status"></div>
+  </section>
+
   <section class="panel priv" aria-labelledby="lNotif" id="notifPanel">
     <div class="row between">
       <span class="label" id="lNotif">Promemoria</span>
       <span class="chip" id="notifChip">spenti</span>
     </div>
-    <p class="note" id="notifNota">Una notifica al giorno quando hai lezioni da ripassare o rischi di perdere la serie.</p>
+    <p class="note" id="notifNota">Una notifica al giorno quando hai lezioni da ripassare o rischi di perdere la serie, più l'avviso all'inizio delle lezioni del tuo orario.</p>
     <div class="row">
       <label class="field" style="flex:0 0 auto"><span>Ora</span>
         <select id="notifOra"><option value="8">8:00</option><option value="13">13:00</option><option value="17">17:00</option><option value="18" selected>18:00</option><option value="19">19:00</option><option value="20">20:00</option><option value="21">21:00</option></select>
@@ -618,6 +700,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
           <button type="button" id="recFine" hidden>Termina registrazione</button>
           <span class="timer" id="recTime">00:00:00</span>
         </div>
+        <button type="button" class="stella" id="recStella" hidden>⭐ Importante <span id="recStelle"></span></button>
       </div>
       <label class="source" id="drop" for="fileIn">
         <h2>Carica un file</h2>
@@ -758,6 +841,45 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     </div>
   </section>
 
+  <section class="panel priv" aria-labelledby="lEsame" id="esamePanel">
+    <div class="row between">
+      <span class="label" id="lEsame">Preparati all'esame</span>
+    </div>
+    <label class="field"><span>Materia</span><select id="simMateria" aria-label="Materia dell'esame"></select></label>
+    <div class="es-card">
+      <h3>📝 Simulazione dello scritto</h3>
+      <p class="note">Domande da tutte le lezioni della materia, con il tempo che scorre e il voto in trentesimi alla fine. Ti dice anche quali lezioni ripassare.</p>
+      <div class="row">
+        <label class="field" style="flex:0 0 auto"><span>Domande</span>
+          <select id="esQuante"><option value="10">10 (15 min)</option><option value="20" selected>20 (30 min)</option><option value="30">30 (45 min)</option></select>
+        </label>
+        <button type="button" class="primary" id="esInizia" style="align-self:flex-end">Inizia la simulazione</button>
+      </div>
+      <p class="note" id="esStorico" hidden></p>
+    </div>
+    <div class="es-card">
+      <h3>📄 Scheda di ripasso</h3>
+      <p class="note">L'essenziale di tutta la materia in una-due pagine, con le domande probabili. Da leggere la mattina dell'esame.</p>
+      <div class="row">
+        <button type="button" class="primary" id="schCrea">Crea la scheda</button>
+        <button type="button" id="schPdf" hidden>Scarica PDF</button>
+        <button type="button" id="schCopia" hidden>Copia</button>
+      </div>
+      <p class="note" id="schInfo" hidden></p>
+      <div class="aiview" id="schView" hidden></div>
+    </div>
+    <div class="es-card">
+      <h3>🧮 Esercizi con soluzione</h3>
+      <p class="note">Esercizi numerici o casi pratici sugli argomenti di una lezione, con la soluzione passo per passo nascosta finché non la vuoi vedere.</p>
+      <div class="row">
+        <label class="field" style="flex:1 1 180px"><span>Da quale lezione</span><select id="esLezione"></select></label>
+        <button type="button" class="primary" id="eseCrea" style="align-self:flex-end">Crea esercizi</button>
+      </div>
+      <div class="ese-lista" id="eseLista"></div>
+    </div>
+    <div class="status" id="esStatus" role="status"></div>
+  </section>
+
   <section class="panel priv" aria-labelledby="lFc" id="fcPanel">
     <div class="row between">
       <span class="label" id="lFc">Flashcard</span>
@@ -797,6 +919,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
         </div>
       </div>
       <p class="note" id="fcStorico" hidden></p>
+      <div class="es-esito" id="fcEsame" hidden></div>
       <div class="fc-wrong" id="fcErrori"></div>
       <div class="row">
         <button type="button" class="primary" id="fcRifaiErr">Rifai le sbagliate</button>
@@ -944,7 +1067,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Se si interrompe, riapri l'app: riprende da dove era rimasta e la registrazione non si perde.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.5.2<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.6<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="contesto priv" id="contesto" data-tab="studia appunti">
     <span id="contestoTxt"></span>
     <span class="row" style="gap:14px"><button type="button" class="link" id="contestoBtn"></button><button type="button" class="link rimuovi" id="contestoVia" hidden>Rimuovi</button></span>
@@ -953,6 +1076,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <span class="seg-ind" aria-hidden="true"></span>
     <button type="button" data-sub-btn="flashcard">Flashcard</button>
     <button type="button" data-sub-btn="orale">Orale</button>
+    <button type="button" data-sub-btn="esame">Esame</button>
     <button type="button" data-sub-btn="mappa">Mappa</button>
     <button type="button" data-sub-btn="chiedi">Chiedi</button>
     <button type="button" data-sub-btn="glossario">Glossario</button>
@@ -967,19 +1091,68 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <li><button type="button" data-vai="lTimer"><span>⏱️</span>Sessione di studio</button></li>
     <li><button type="button" data-vai="lNotif"><span>🔔</span>Promemoria</button></li>
     <li><button type="button" data-vai="lOggi"><span>📅</span>Date degli esami</button></li>
+    <li><button type="button" data-vai="lOrario"><span>🗓️</span>Orario delle lezioni</button></li>
     <li class="menu-sep" role="separator"></li>
     <li><button type="button" data-vai="l5"><span>💡</span>Consigli</button></li>
     <li><button type="button" id="menuProf"><span>👤</span>Profilo e traguardi</button></li>
+    <li><button type="button" id="menuGuida"><span>👋</span>Come funziona</button></li>
+    <li><button type="button" id="menuSegnala"><span>💬</span>Segnala un problema o un'idea</button></li>
     <li><a class="menu-link" href="/privacy" target="_blank" rel="noopener"><span>🔒</span>Privacy</a></li>
   </ul>
 </nav>
 <aside class="drawer wide" id="admin" aria-labelledby="admT" hidden>
   <div class="row between"><strong id="admT">Pannello amministratore</strong><button type="button" class="icon-btn" data-chiudi aria-label="Chiudi">✕</button></div>
   <div class="adm-tot" id="admTot"></div>
+  <details class="adm-sez" id="admStatBox">
+    <summary>📊 Cosa usano (ultimi 7 e 30 giorni)</summary>
+    <div class="adm-giorni" id="admGiorni"></div>
+    <div class="adm-stat" id="admStat"></div>
+  </details>
+  <details class="adm-sez" id="admFbBox">
+    <summary id="admFbTit">💬 Segnalazioni</summary>
+    <div class="adm-fb" id="admFb"></div>
+  </details>
+  <strong>Utenti</strong>
   <input type="search" id="admCerca" placeholder="Cerca per nome o email" aria-label="Cerca utenti">
   <div class="status" id="admStatus" role="status"></div>
   <div class="adm-list" id="admLista"></div>
 </aside>
+<aside class="drawer" id="segnala" aria-labelledby="segT" hidden>
+  <div class="row between"><strong id="segT">Segnala un problema o un'idea</strong><button type="button" class="icon-btn" data-chiudi aria-label="Chiudi">✕</button></div>
+  <p class="note">Qualcosa non funziona o ti manca una funzione? Scrivilo qui: lo legge direttamente chi sviluppa l'app.</p>
+  <div class="fonti segn-tipo" role="radiogroup" aria-label="Tipo di segnalazione" style="grid-template-columns:1fr 1fr">
+    <button type="button" data-segn="problema" role="radio" aria-checked="true">🐞<span>Un problema</span></button>
+    <button type="button" data-segn="idea" role="radio" aria-checked="false">💡<span>Un'idea</span></button>
+  </div>
+  <label class="field"><span>Cosa succede?</span><textarea id="segTesto" maxlength="4000" placeholder="Es. quando premo «Crea appunti» su iPhone non succede niente…"></textarea></label>
+  <button type="button" class="primary" id="segInvia">Invia</button>
+  <div class="status" id="segStatus" role="status"></div>
+</aside>
+<div class="benvenuto" id="benvenuto" hidden role="dialog" aria-modal="true" aria-labelledby="benT">
+  <div class="ben-card">
+    <div class="ben-slide" data-ben="0">
+      <div class="ben-ic">🎙️</div>
+      <h2 id="benT">Registra la lezione</h2>
+      <p>In <b>Trascrivi</b> premi «Avvia registrazione» (o carica un audio): l'app scrive tutto quello che dice il prof e salva la lezione da sola nell'archivio.</p>
+      <p class="note">Durante la lezione tocca <b>⭐ Importante</b> quando il prof dice «questo all'esame».</p>
+    </div>
+    <div class="ben-slide" data-ben="1" hidden>
+      <div class="ben-ic">✍️</div>
+      <h2>Appunti con l'AI</h2>
+      <p>In <b>Appunti</b> l'AI trasforma la trascrizione in appunti ordinati. Puoi anche caricare un PDF, un Word, le slide o le foto degli appunti di un compagno.</p>
+    </div>
+    <div class="ben-slide" data-ben="2" hidden>
+      <div class="ben-ic">🎓</div>
+      <h2>Studia e preparati</h2>
+      <p>In <b>Studia</b> trovi flashcard, interrogazione orale, simulazione dello scritto, scheda di ripasso ed esercizi. In <b>Oggi</b> il piano di ripasso, l'orario e la tua serie 🔥.</p>
+    </div>
+    <div class="ben-punti" id="benPunti"><i class="on"></i><i></i><i></i></div>
+    <div class="row between">
+      <button type="button" id="benSalta">Salta</button>
+      <button type="button" class="primary" id="benAvanti">Avanti</button>
+    </div>
+  </div>
+</div>
 <aside class="drawer" id="profilo" aria-labelledby="profT" hidden>
   <div class="row between"><strong id="profT">Il tuo profilo</strong><button type="button" class="icon-btn" data-chiudi aria-label="Chiudi">✕</button></div>
   <div class="prof-top">
@@ -1208,6 +1381,7 @@ $('removeBtn').addEventListener('click', async () => {
 });
 function pickFile(f){
   if (!f || running) return;
+  segniRec = [];
   lsSet(JOB_DONE_KEY, null); idb.jobClear().catch(() => {}); $('resume').hidden = true;
   setSource({ kind: 'file', file: f, name: f.name });
   setStatus('Audio pronto. Premi «Trascrivi».');
@@ -1222,6 +1396,7 @@ drop.addEventListener('drop', e => pickFile(e.dataTransfer.files[0]));
 // Il testo si ricava dall'audio grezzo del microfono: niente file compressi da decodificare
 // (su iPhone la decodifica dei pezzi registrati dava trascrizioni vuote). In parallelo un
 // MediaRecorder salva il file compresso, solo per poterlo scaricare.
+var segniRec = []; // secondi dei momenti segnati con ⭐ durante la registrazione
 let stream = null, segRec = null, fullRec = null, fullParts = [], recStart = 0, segIdx = 0, recTick = null, recMime = '';
 let actx = null, proc = null, srcNode = null, pcmParts = [], pcmLen = 0, segOffset = 0, resample = null, recPeak = 0;
 $('recBtn').addEventListener('click', () => (!segRec ? startRecording() : segRec.pausa ? riprendiRecording() : pausaRecording()));
@@ -1233,6 +1408,7 @@ function recBottoni(){
   $('recBtn').classList.toggle('on', !!segRec && !p); $('recBtn').classList.toggle('pausa', p);
   $('recLabel').textContent = !segRec ? (source?.kind === 'rec' && source.segs?.length ? 'Nuova registrazione' : 'Avvia registrazione') : p ? 'Riprendi registrazione' : 'Metti in pausa';
   $('recFine').hidden = !segRec; $('recTime').classList.toggle('pausa', p);
+  $('recStella').hidden = !segRec; $('recStella').disabled = p;
 }
 function pausaRecording(){
   if (!segRec || segRec.pausa) return;
@@ -1316,6 +1492,7 @@ async function startRecording(){
   } catch (_) { fullRec = null; }
 
   recStart = Date.now(); recPrima = 0; segRec = { on: true, pausa: false };
+  segniRec = []; $('recStelle').textContent = ''; lsSet('ft:segni', null);
   recTick = setInterval(() => {
     if (segRec?.pausa) return;
     $('recTime').textContent = hms(recSecondi());
@@ -1859,9 +2036,11 @@ function progress(){
 /* ---------- Testo ---------- */
 function render(){
   const parts = [...chunks].sort((a, b) => a[0] - b[0]);
+  const stelle = segniRec || [];
+  const st = i => stelle.some(t => t >= parts[i][0] && t < (parts[i + 1] ? parts[i + 1][0] : Infinity)) ? '⭐ ' : '';
   $('out').value = $('stamps').checked
-    ? parts.map(([s, t]) => `[${hms(s)}] ${t}`).join('\n\n')
-    : parts.map(([, t]) => t).join(' ').replace(/\s+/g, ' ');
+    ? parts.map(([s, t], i) => `[${hms(s)}] ${st(i)}${t}`).join('\n\n')
+    : parts.map(([, t], i) => st(i) + t).join(' ').replace(/\s+/g, ' ');
   if (running) $('out').scrollTop = $('out').scrollHeight;
 }
 $('stamps').addEventListener('change', () => { if (chunks.size) render(); });
@@ -2228,7 +2407,7 @@ function admRender(){
   if (!box.children.length) { const p = document.createElement('p'); p.className = 'note'; p.textContent = 'Nessun utente.'; box.append(p); }
 }
 $('admCerca').addEventListener('input', admRender);
-$('adminBtn').addEventListener('click', () => { apri('admin'); admCarica(); });
+$('adminBtn').addEventListener('click', () => { apri('admin'); admCarica(); admExtra(); });
 $('esportaBtn').addEventListener('click', async () => {
   $('esportaBtn').disabled = true;
   try {
@@ -2240,13 +2419,13 @@ $('esportaBtn').addEventListener('click', async () => {
 /* ---------- Menu e profilo (in alto a destra) ---------- */
 let profDati = {}, profFoto = '';
 function apri(id){
-  ['menu', 'profilo', 'admin'].forEach(x => { $(x).hidden = x !== id; });
+  ['menu', 'profilo', 'admin', 'segnala'].forEach(x => { $(x).hidden = x !== id; });
   $('overlay').hidden = false; document.body.style.overflow = 'hidden';
   $('menuBtn').setAttribute('aria-expanded', id === 'menu'); $('profBtn').setAttribute('aria-expanded', id === 'profilo');
   $(id).querySelector('[data-chiudi]')?.focus();
 }
 function chiudi(){
-  ['menu', 'profilo', 'admin'].forEach(x => { $(x).hidden = true; });
+  ['menu', 'profilo', 'admin', 'segnala'].forEach(x => { $(x).hidden = true; });
   $('overlay').hidden = true; document.body.style.overflow = '';
   $('menuBtn').setAttribute('aria-expanded', 'false'); $('profBtn').setAttribute('aria-expanded', 'false');
 }
@@ -2324,11 +2503,11 @@ $('delAccOk').addEventListener('click', async () => {
 
 
 /* ---------- Navigazione a schede (con sotto-schede in Trascrivi e Studia) ---------- */
-const MAPPA_TAB = { lUso: ['oggi'], lOggi: ['oggi'], lTimer: ['oggi'], lNotif: ['oggi'], lOrale: ['studia', 'orale'], lMappa: ['studia', 'mappa'], l1: ['trascrivi'], l2: ['trascrivi'], l3: ['trascrivi'], lFonte: ['appunti'], l4: ['appunti'],
+const MAPPA_TAB = { lUso: ['oggi'], lOggi: ['oggi'], lTimer: ['oggi'], lNotif: ['oggi'], lOrale: ['studia', 'orale'], lEsame: ['studia', 'esame'], lOrario: ['oggi'], lMappa: ['studia', 'mappa'], l1: ['trascrivi'], l2: ['trascrivi'], l3: ['trascrivi'], lFonte: ['appunti'], l4: ['appunti'],
   lFc: ['studia', 'flashcard'], lAsk: ['studia', 'chiedi'], lGlo: ['studia', 'glossario'], lSave: ['trascrivi appunti'], lArch: ['archivio'], l5: ['trascrivi'] };
 const TITOLI_TAB = { oggi: 'Oggi', trascrivi: 'Trascrivi', studia: 'Studia', appunti: 'Appunti', archivio: 'Archivio' };
 const ORDINE_TAB = ['oggi', 'trascrivi', 'studia', 'appunti', 'archivio'];
-const ORDINE_SUB = { studia: ['flashcard', 'orale', 'mappa', 'chiedi', 'glossario'] };
+const ORDINE_SUB = { studia: ['flashcard', 'orale', 'esame', 'mappa', 'chiedi', 'glossario'] };
 for (const [id, [t, sub]] of Object.entries(MAPPA_TAB)) { const sez = $(id)?.closest('section'); if (sez) { sez.dataset.tab = t; if (sub) sez.dataset.sub = sub; } }
 const passi = document.querySelector('.steps.pub'); if (passi) passi.dataset.tab = 'trascrivi';
 document.querySelector('header.top')?.after($('segStudia'), $('contesto'));
@@ -2342,7 +2521,7 @@ function muoviIndicatori(){
   if (btn && ind && btn.offsetWidth) { ind.style.width = btn.offsetWidth + 'px'; ind.style.transform = `translateX(${btn.offsetLeft}px)`; }
   document.querySelectorAll('.segmenti').forEach(sg => {
     const sb = sg.querySelector(`[data-sub-btn="${subAttive[sg.dataset.tab]}"]`), si = sg.querySelector('.seg-ind');
-    if (sb && si && sb.offsetWidth) { si.style.width = sb.offsetWidth + 'px'; si.style.transform = `translateX(${sb.offsetLeft}px)`; }
+    if (sb && si && sb.offsetWidth) { si.style.width = sb.offsetWidth + 'px'; si.style.transform = `translateX(${sb.offsetLeft}px)`; if (sg.scrollWidth > sg.clientWidth) sg.scrollTo({ left: Math.max(0, sb.offsetLeft - (sg.clientWidth - sb.offsetWidth) / 2), behavior: 'smooth' }); }
   });
 }
 window.addEventListener('resize', muoviIndicatori);
@@ -3205,6 +3384,308 @@ $('vaiFonte').addEventListener('click', () => { fonteScegli('file'); $('fontePan
 $('vaiArchivio').addEventListener('click', () => { tabScelta = true; attivaTab('archivio'); window.scrollTo({ top: 0 }); });
 $('out').addEventListener('input', fonteInfo);
 setInterval(() => { if (tabAttiva === 'appunti' && fonteAttiva === 'trascr') fonteInfo(); }, 2000);
+
+/* ==================== Versione 3.6 ==================== */
+/* ---------- ⭐ Importante durante la registrazione ---------- */
+$('recStella').addEventListener('click', () => {
+  if (!segRec || segRec.pausa) return;
+  segniRec.push(Math.round(recSecondi()));
+  lsSet('ft:segni', JSON.stringify(segniRec));
+  $('recStelle').textContent = `(${segniRec.length})`;
+  const b = $('recStella'); b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash');
+  try { navigator.vibrate?.(30); } catch (_) {}
+  if (chunks.size) render();
+  setStatus(`⭐ Segnato a ${hms(recSecondi())}: negli appunti e nelle flashcard avrà la precedenza.`);
+});
+
+/* ---------- Simulazione dello scritto, scheda di ripasso, esercizi ---------- */
+let esCarte = [], esTimer = null, esInizio = 0, esScade = 0, schedaTesto = '';
+function esSt(t, k){ const s = $('esStatus'); s.textContent = t || ''; s.className = 'status' + (k ? ' ' + k : ''); }
+const esErr = e => e.code === 'limite-ai' ? e.message : e.status === 429 ? 'Groq è al limite per qualche minuto: riprova tra poco.' : e.message;
+function esMaterie(){
+  const sel = $('simMateria'), prima = sel.value || materiaCorrente();
+  const materie = [...new Set(archivioItems.map(i => i.materia))].sort((a, b) => a.localeCompare(b, 'it'));
+  sel.textContent = '';
+  materie.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = `${m} (${archivioItems.filter(i => i.materia === m).length})`; sel.append(o); });
+  if (!materie.length) { const o = document.createElement('option'); o.value = ''; o.textContent = 'Nessuna lezione salvata'; sel.append(o); }
+  sel.value = materie.includes(prima) ? prima : (materie[0] || '');
+  ['esInizia', 'schCrea', 'eseCrea'].forEach(id => { $(id).disabled = !sel.value; });
+  esLezioni(); caricaScheda();
+}
+function esLezioni(){
+  const m = $('simMateria').value, sel = $('esLezione'); sel.textContent = '';
+  const o = document.createElement('option'); o.value = ''; o.textContent = 'Una a caso'; sel.append(o);
+  archivioItems.filter(i => i.materia === m).sort((a, b) => b.data.localeCompare(a.data)).forEach(i => { const x = document.createElement('option'); x.value = i.id; x.textContent = `${i.titolo} (${fmtData(i.data)})`; sel.append(x); });
+}
+$('simMateria').addEventListener('change', () => { esLezioni(); caricaScheda(); $('eseLista').textContent = ''; $('esStorico').hidden = true; esSt(''); });
+$('esInizia').addEventListener('click', async () => {
+  const materia = $('simMateria').value, n = Number($('esQuante').value) || 20; if (!materia) return;
+  $('esInizia').disabled = true; esSt(`Preparo ${n} domande da tutte le lezioni di ${materia}… (circa 30 secondi)`);
+  try {
+    const r = await privApi('esame', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ materia, quante: n }) });
+    esCarte = r.carte || [];
+    if (esCarte.length < 3) throw new Error('domande non valide, riprova');
+    esSt('');
+    fcInizia(esCarte, { tipo: 'esame', materia, durata: esCarte.length * 90 });
+    fcSt(`Simulazione di ${materia}: ${esCarte.length} domande da ${r.lezioni} ${r.lezioni === 1 ? 'lezione' : 'lezioni'}. Hai ${Math.round(esCarte.length * 1.5)} minuti.`);
+  } catch (e) { esSt('Non riesco a preparare la simulazione: ' + esErr(e), 'err'); }
+  finally { $('esInizia').disabled = !$('simMateria').value; }
+});
+async function esEsito(giuste, tot){
+  const box = $('fcEsame'); box.textContent = '';
+  const voto = giuste === tot ? 31 : Math.round(giuste / tot * 30);
+  const min = Math.max(1, Math.round((Date.now() - esInizio) / 60000));
+  const v = document.createElement('div'); v.className = 'voto';
+  const b = document.createElement('b'); b.textContent = votoTesto(voto);
+  const sp = document.createElement('span'); sp.textContent = voto >= 18 ? `/30 · superato in ${min} min` : `/30 · non ancora sufficiente (${min} min)`;
+  v.append(b, sp); box.append(v);
+  // lezioni da ripassare
+  const perArg = new Map();
+  fcGiro.forEach((c, i) => { const a = c.orig?.argomento || c.argomento; if (!a) return; const x = perArg.get(a) || { g: 0, t: 0 }; x.t++; if (fcRisposte[i] === c.corretta) x.g++; perArg.set(a, x); });
+  if (perArg.size > 1) {
+    const h = document.createElement('strong'); h.textContent = 'Come sei andato per lezione'; box.append(h);
+    const lista = document.createElement('div'); lista.className = 'es-arg';
+    [...perArg].sort((a, b) => a[1].g / a[1].t - b[1].g / b[1].t).forEach(([a, x]) => {
+      const d = document.createElement('div');
+      const n = document.createElement('span'); n.textContent = a;
+      const q = document.createElement('small'); q.textContent = `${x.g}/${x.t}`;
+      const br = document.createElement('div'); br.className = 'barra'; const bi = document.createElement('span'); const pc = x.g / x.t; bi.style.width = Math.max(4, pc * 100) + '%'; if (pc < .6) bi.className = 'basso'; br.append(bi);
+      d.append(n, q, br); lista.append(d);
+    });
+    box.append(lista);
+    const deboli = [...perArg].filter(([, x]) => x.g / x.t < .6).map(([a]) => a);
+    if (deboli.length) { const p = document.createElement('p'); p.className = 'note'; p.textContent = 'Da ripassare: ' + deboli.join(', ') + '.'; box.append(p); }
+  }
+  try {
+    const r = await privApi('esame-esito', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ materia: fcCtx.materia, giuste, totale: tot, voto }) });
+    if (r.storico?.length > 1) { const p = document.createElement('p'); p.className = 'note'; p.textContent = 'I tuoi voti nelle simulazioni: ' + r.storico.map(x => votoTesto(x.voto)).join(' → '); box.append(p); $('esStorico').textContent = p.textContent; $('esStorico').hidden = false; }
+  } catch (_) {}
+}
+async function caricaScheda(){
+  const m = $('simMateria').value; schedaTesto = '';
+  $('schView').hidden = $('schInfo').hidden = $('schPdf').hidden = $('schCopia').hidden = true; $('schCrea').textContent = 'Crea la scheda';
+  if (!m) return;
+  try { const r = await privApi('scheda?materia=' + encodeURIComponent(m)); if ($('simMateria').value === m && r.testo) mostraScheda(r); } catch (_) {}
+}
+function mostraScheda(r){
+  schedaTesto = r.testo;
+  $('schView').innerHTML = mdHtml(r.testo); $('schView').hidden = false;
+  const ora = archivioItems.filter(i => i.materia === $('simMateria').value).length;
+  $('schInfo').textContent = `Creata il ${new Date(r.quando).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })} da ${r.lezioni} ${r.lezioni === 1 ? 'lezione' : 'lezioni'}` + (ora > r.lezioni ? (ora - r.lezioni === 1 ? ' · c’è una lezione nuova: rigenerala.' : ` · ci sono ${ora - r.lezioni} lezioni nuove: rigenerala.`) : '.');
+  $('schInfo').hidden = $('schPdf').hidden = $('schCopia').hidden = false; $('schCrea').textContent = 'Rigenera';
+}
+$('schCrea').addEventListener('click', async () => {
+  const materia = $('simMateria').value; if (!materia) return;
+  $('schCrea').disabled = true; esSt(`Scrivo la scheda di ${materia}… (30-60 secondi)`);
+  try { mostraScheda(await privApi('scheda', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ materia }) })); esSt('Scheda pronta.'); }
+  catch (e) { esSt('Non riesco a creare la scheda: ' + esErr(e), 'err'); }
+  finally { $('schCrea').disabled = false; }
+});
+$('schCopia').addEventListener('click', () => copy(schedaTesto, $('schCopia'), 'Copia'));
+$('schPdf').addEventListener('click', () => {
+  if (!schedaTesto) return;
+  const f = window.open('', '_blank'); if (!f) { esSt('Il browser ha bloccato la finestra: consenti i popup e riprova.', 'warn'); return; }
+  const stile = 'body{font-family:"Plus Jakarta Sans",Calibri,Arial,sans-serif;font-size:11pt;line-height:1.45;color:#10201a;max-width:720px;margin:0 auto;padding:20px}h1{font-size:18pt;color:#14573d;margin:0 0 6pt}h2{font-size:12.5pt;color:#14573d;margin:12pt 0 4pt}h3{font-size:11.5pt}ul{margin:2pt 0;padding-left:16pt}li{margin:1pt 0}p{margin:3pt 0}@media print{body{padding:0}@page{margin:14mm}}';
+  f.document.write(`<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Scheda ${$('simMateria').value}</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap"><style>${stile}</style></head><body>${mdHtml(schedaTesto)}<script>setTimeout(()=>print(),700)<\/script></body></html>`);
+  f.document.close();
+  esSt('Si è aperta la scheda: scegli «Salva come PDF» (su iPhone: Condividi → Stampa → Salva su File).');
+});
+$('eseCrea').addEventListener('click', async () => {
+  const materia = $('simMateria').value; if (!materia) return;
+  $('eseCrea').disabled = true; esSt('Creo gli esercizi con le soluzioni… (fino a un minuto)');
+  try {
+    const r = await privApi('esercizi', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ materia, lezione: $('esLezione').value || null, quanti: 5 }) });
+    const box = $('eseLista'); box.textContent = '';
+    const h = document.createElement('p'); h.className = 'note'; h.textContent = `Dalla lezione «${r.lezione}»:`; box.append(h);
+    r.esercizi.forEach((e, i) => {
+      const d = document.createElement('div'); d.className = 'ese';
+      const t = document.createElement('b'); t.textContent = `${i + 1}. ${e.titolo || 'Esercizio'}`;
+      const c = document.createElement('p'); c.textContent = e.testo;
+      const det = document.createElement('details'); const sm = document.createElement('summary'); sm.textContent = 'Mostra la soluzione';
+      const so = document.createElement('p'); so.textContent = e.soluzione; det.append(sm, so);
+      d.append(t, c, det); box.append(d);
+    });
+    esSt('');
+  } catch (e) { esSt('Non riesco a creare gli esercizi: ' + esErr(e), 'err'); }
+  finally { $('eseCrea').disabled = false; }
+});
+
+/* ---------- Orario delle lezioni ---------- */
+const GIORNI_LUNGHI = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
+let orario = [], orarioArm = null;
+const oggiIdx = () => (new Date().getDay() + 6) % 7;
+function orSt(t, k){ const s = $('orarioStatus'); s.textContent = t || ''; s.className = 'status' + (k ? ' ' + k : ''); }
+async function caricaOrario(){ try { orario = await privApi('orario'); orarioRender(); } catch (_) {} }
+async function salvaOrario(msg){
+  try { orario = await privApi('orario', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ voci: orario }) }); orarioRender(); if (msg) orSt(msg); }
+  catch (e) { orSt('Non riesco a salvare l’orario: ' + e.message, 'err'); }
+}
+function registraMateria(m){
+  $('materia').value = m; materiaUtente = Date.now(); onMateria();
+  tabScelta = true; attivaTab('trascrivi'); window.scrollTo({ top: 0 });
+  setStatus(`Lezione di ${m}: premi «Avvia registrazione» quando inizia. La materia è già impostata.`);
+}
+function orarioRender(){
+  $('orarioChip').hidden = !orario.length; $('orarioChip').textContent = `${orario.length} ${orario.length === 1 ? 'lezione' : 'lezioni'} a settimana`;
+  $('orarioNota').hidden = !!orario.length; $('orarioAgg').open = !orario.length && $('orarioAgg').open;
+  const oggi = orario.filter(v => v.g === oggiIdx()), ob = $('orarioOggi'); ob.textContent = ''; ob.hidden = !oggi.length;
+  if (oggi.length) {
+    const h = document.createElement('strong'); h.textContent = 'Oggi a lezione'; ob.append(h);
+    oggi.forEach(v => {
+      const r = document.createElement('div'); r.className = 'r';
+      const t = document.createElement('span'); t.textContent = `${v.ora} · ${v.materia}`;
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'primary'; b.textContent = '🎙️ Registra';
+      b.addEventListener('click', () => registraMateria(v.materia));
+      r.append(t, b); ob.append(r);
+    });
+  }
+  const box = $('orarioLista'); box.textContent = '';
+  for (let g = 0; g < 7; g++) {
+    const voci = orario.filter(v => v.g === g); if (!voci.length) continue;
+    const gr = document.createElement('div'); gr.className = 'orario-g';
+    const t = document.createElement('b'); t.textContent = GIORNI_LUNGHI[g] + (g === oggiIdx() ? ' (oggi)' : ''); gr.append(t);
+    voci.forEach(v => {
+      const r = document.createElement('div'); r.className = 'orario-v';
+      const h = document.createElement('span'); h.className = 'h'; h.textContent = v.ora;
+      const m = document.createElement('span'); m.className = 'm'; m.textContent = v.materia;
+      const x = document.createElement('button'); x.type = 'button'; x.className = 'danger'; x.textContent = 'Togli'; x.setAttribute('aria-label', `Togli ${v.materia} di ${GIORNI_LUNGHI[g]}`);
+      x.addEventListener('click', () => {
+        if (orarioArm !== x) { orarioArm = x; x.textContent = 'Tocca di nuovo'; setTimeout(() => { if (orarioArm === x) { orarioArm = null; x.textContent = 'Togli'; } }, 3000); return; }
+        orarioArm = null; orario = orario.filter(o => o !== v); salvaOrario(`${v.materia} di ${GIORNI_LUNGHI[g].toLowerCase()} tolta dall'orario.`);
+      });
+      r.append(h, m, x); gr.append(r);
+    });
+    box.append(gr);
+  }
+}
+$('orAggiungi').addEventListener('click', async () => {
+  const materia = $('orMateria').value.trim(), ora = $('orOra').value, g = Number($('orGiorno').value);
+  if (!materia) { orSt('Scrivi la materia.', 'warn'); $('orMateria').focus(); return; }
+  if (!/^\d\d:\d\d$/.test(ora)) { orSt('Scegli l’ora della lezione.', 'warn'); return; }
+  if (orario.some(v => v.g === g && v.ora === ora)) { orSt('A quell’ora hai già una lezione in orario.', 'warn'); return; }
+  orario.push({ g, ora, materia });
+  const attive = ($('notifChip').textContent || '').includes('attiv');
+  await salvaOrario(`${materia} aggiunta: ${GIORNI_LUNGHI[g].toLowerCase()} alle ${ora}.` + (attive ? '' : ' Attiva i promemoria qui sotto per ricevere l’avviso.'));
+  $('orMateria').value = '';
+  $('orGiorno').value = String((g + 1) % 7);
+});
+
+/* ---------- Notifiche: apertura dalla notifica ---------- */
+let urlInAttesa = location.search ? location.href : null;
+function apriDaUrl(u){
+  try {
+    const q = new URL(u, location.href).searchParams;
+    const m = q.get('registra'), t = q.get('tab');
+    if (m) registraMateria(m.slice(0, 80));
+    else if (t && ORDINE_TAB.includes(t)) { tabScelta = true; attivaTab(t); window.scrollTo({ top: 0 }); }
+    if (location.search) history.replaceState(null, '', location.pathname);
+  } catch (_) {}
+}
+navigator.serviceWorker?.addEventListener('message', e => {
+  if (e.data?.tipo !== 'apri') return;
+  if (document.body.classList.contains('locked')) urlInAttesa = e.data.url; else apriDaUrl(e.data.url);
+});
+
+/* ---------- Benvenuto ---------- */
+const BEN_KEY = 'ft:benvenuto';
+let benI = 0;
+function benVai(i){
+  benI = i;
+  document.querySelectorAll('[data-ben]').forEach(sl => { sl.hidden = Number(sl.dataset.ben) !== i; });
+  [...$('benPunti').children].forEach((p, k) => p.classList.toggle('on', k === i));
+  $('benAvanti').textContent = i === 2 ? 'Inizia' : 'Avanti';
+}
+function benMostra(){ benVai(0); $('benvenuto').hidden = false; $('benAvanti').focus(); }
+function benChiudi(inizia){
+  $('benvenuto').hidden = true; lsSet(BEN_KEY, '1');
+  if (inizia) { tabScelta = true; attivaTab('trascrivi'); window.scrollTo({ top: 0 }); }
+}
+$('benAvanti').addEventListener('click', () => benI < 2 ? benVai(benI + 1) : benChiudi(true));
+$('benSalta').addEventListener('click', () => benChiudi(false));
+$('menuGuida').addEventListener('click', () => { chiudi(); benMostra(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('benvenuto').hidden) benChiudi(false); });
+
+/* ---------- Segnalazioni ---------- */
+let segnTipo = 'problema';
+document.querySelectorAll('[data-segn]').forEach(b => b.addEventListener('click', () => {
+  segnTipo = b.dataset.segn;
+  document.querySelectorAll('[data-segn]').forEach(x => x.setAttribute('aria-checked', x === b));
+  $('segTesto').placeholder = segnTipo === 'idea' ? 'Es. mi piacerebbe poter esportare le flashcard su Anki…' : 'Es. quando premo «Crea appunti» su iPhone non succede niente…';
+}));
+$('menuSegnala').addEventListener('click', () => { apri('segnala'); $('segStatus').textContent = ''; setTimeout(() => $('segTesto').focus(), 300); });
+$('segInvia').addEventListener('click', async () => {
+  const testo = $('segTesto').value.trim(), st = $('segStatus');
+  if (testo.length < 3) { st.textContent = 'Scrivi qualcosa prima di inviare.'; st.className = 'status warn'; return; }
+  $('segInvia').disabled = true;
+  try {
+    const versione = ([...document.querySelectorAll('#profilo p.note')].pop()?.textContent.match(/versione [\d.]+/) || [''])[0];
+    await privApi('feedback', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ tipo: segnTipo, testo, info: `${versione} · scheda ${tabAttiva || ''} · ${isIOS ? 'iPhone' : isMobile ? 'telefono' : 'computer'}` }) });
+    $('segTesto').value = ''; st.textContent = 'Grazie! Segnalazione inviata.'; st.className = 'status ok';
+    setTimeout(chiudi, 1400);
+  } catch (e) { st.textContent = 'Non riesco a inviare: ' + e.message; st.className = 'status err'; }
+  finally { $('segInvia').disabled = false; }
+});
+
+/* ---------- Dopo l'accesso ---------- */
+function dopoAccesso(v){
+  $('menuSegnala').parentElement.hidden = !(v && v.utente);
+  if (urlInAttesa) { const u = urlInAttesa; urlInAttesa = null; setTimeout(() => apriDaUrl(u), 300); }
+  else if (!lsGet(BEN_KEY)) setTimeout(benMostra, 700);
+}
+
+/* ---------- Pannello amministratore: statistiche e segnalazioni ---------- */
+const NOMI_EVENTI = { lezione: 'Lezioni nuove', appunti: 'Appunti con l’AI', flashcard: 'Flashcard create', quiz: 'Quiz completati', foto: 'Foto lette', chiedi: 'Domande a Chiedi', mappa: 'Mappe', orale: 'Risposte all’orale', timer: 'Sessioni di studio', simulazione: 'Simulazioni scritto', scheda: 'Schede di ripasso', esercizi: 'Esercizi', condividi: 'Condivisioni', slide: 'Slide caricate', segnalazione: 'Segnalazioni', promemoria: 'Promemoria attivati', orario: 'Orari salvati' };
+async function admExtra(){
+  try {
+    const [st, fb] = await Promise.all([privApi('admin/statistiche'), privApi('admin/feedback')]);
+    // utenti attivi negli ultimi 14 giorni
+    const gg = $('admGiorni'); gg.textContent = '';
+    const max = Math.max(1, ...st.giorni.map(g => g.attivi));
+    for (let k = 13; k >= 0; k--) {
+      const d = new Date(Date.now() - k * 86400000).toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' });
+      const r = st.giorni.find(g => g.giorno === d);
+      const c = document.createElement('div'); c.title = `${d}: ${r ? r.attivi : 0} attivi`;
+      const i = document.createElement('i'); i.style.height = ((r ? r.attivi : 0) / max * 52) + 'px';
+      const l = document.createElement('span'); l.textContent = d.slice(8);
+      c.append(i, l); gg.append(c);
+    }
+    const box = $('admStat'); box.textContent = '';
+    const top = Math.max(1, ...st.funzioni.map(f => f.n30));
+    st.funzioni.forEach(f => {
+      const d = document.createElement('div');
+      const n = document.createElement('span'); n.textContent = NOMI_EVENTI[f.azione] || f.azione;
+      const b = document.createElement('div'); b.className = 'b'; const bi = document.createElement('span'); bi.style.width = (f.n30 / top * 100) + '%'; b.append(bi);
+      const sm = document.createElement('small'); sm.textContent = `${f.n30} · 7g ${f.n7} (${f.utenti7} ${f.utenti7 === 1 ? 'persona' : 'persone'})`;
+      d.append(n, b, sm); box.append(d);
+    });
+    if (!st.funzioni.length) { const p = document.createElement('p'); p.className = 'note'; p.textContent = 'Ancora nessun dato: si riempie man mano che usate l’app.'; box.append(p); }
+    admFbRender(fb);
+  } catch (_) {}
+}
+function admFbRender(lista){
+  const box = $('admFb'); box.textContent = '';
+  const nuove = lista.filter(f => !f.letto).length;
+  $('admFbTit').textContent = `💬 Segnalazioni` + (nuove ? ` (${nuove} ${nuove === 1 ? 'nuova' : 'nuove'})` : '');
+  if (nuove) $('admFbBox').open = true;
+  lista.forEach(f => {
+    const d = document.createElement('div'); d.className = 'fb' + (f.letto ? '' : ' nuovo');
+    const m = document.createElement('span'); m.className = 'meta';
+    m.textContent = `${f.tipo === 'idea' ? '💡 Idea' : '🐞 Problema'} · ${new Date(f.quando).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} · ${f.nome || f.email || 'utente'}${f.email && f.nome ? ' (' + f.email + ')' : ''}`;
+    const t = document.createElement('p'); t.textContent = f.testo;
+    const i = document.createElement('span'); i.className = 'meta'; i.textContent = f.info || '';
+    const row = document.createElement('div'); row.className = 'row';
+    const letto = document.createElement('button'); letto.type = 'button'; letto.textContent = f.letto ? 'Segna da leggere' : 'Segna come letta';
+    letto.addEventListener('click', async () => { try { await privApi('admin/feedback', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: f.id, letto: !f.letto }) }); f.letto = f.letto ? 0 : 1; admFbRender(lista); } catch (e) { admSt('Errore: ' + e.message, 'err'); } });
+    const via = document.createElement('button'); via.type = 'button'; via.className = 'danger'; via.textContent = 'Elimina';
+    via.addEventListener('click', async () => {
+      if (via.dataset.arm !== '1') { via.dataset.arm = '1'; via.textContent = 'Tocca di nuovo'; setTimeout(() => { via.dataset.arm = ''; via.textContent = 'Elimina'; }, 3000); return; }
+      try { await privApi('admin/feedback', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: f.id, elimina: true }) }); admFbRender(lista.filter(x => x !== f)); } catch (e) { admSt('Errore: ' + e.message, 'err'); }
+    });
+    row.append(letto, via); d.append(m, t, i, row); box.append(d);
+  });
+  if (!lista.length) { const p = document.createElement('p'); p.className = 'note'; p.textContent = 'Nessuna segnalazione per ora.'; box.append(p); }
+}
+
 /* ---------- Chiedi alle tue lezioni ---------- */
 let askStoria = [];
 function askSt(t, kind){ const s = $('askStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
@@ -3305,6 +3786,17 @@ function fcInizia(carte, ctx){
   $('fcChip').hidden = fcCtx.tipo === 'materia' || !fcCarte.length;
   fcGiro = fcMescola(carte).map(c => { const ord = fcMescola(c.opzioni.map((_, i) => i)); return { ...c, opzioni: ord.map(i => c.opzioni[i]), corretta: ord.indexOf(c.corretta), orig: c }; });
   fcPos = 0; fcRisposte = []; fcSt(''); fcVista('quiz'); fcMostra();
+  clearInterval(esTimer); esTimer = null;
+  if (fcCtx.tipo === 'esame' && !fcCtx.ripetizione) {
+    esInizio = Date.now(); esScade = esInizio + fcCtx.durata * 1000;
+    const tic = () => {
+      const r = Math.max(0, Math.round((esScade - Date.now()) / 1000));
+      $('fcChip').hidden = false; $('fcChip').className = 'chip fc-tempo' + (r < 60 ? ' poco' : '');
+      $('fcChip').textContent = `⏱ ${String(Math.floor(r / 60)).padStart(2, '0')}:${String(r % 60).padStart(2, '0')}`;
+      if (!r) { clearInterval(esTimer); esTimer = null; while (fcRisposte.length < fcGiro.length) fcRisposte.push(-1); fcFine(); fcSt('Tempo scaduto: le domande senza risposta contano come sbagliate.', 'warn'); }
+    };
+    tic(); esTimer = setInterval(tic, 1000);
+  } else $('fcChip').className = 'chip';
   $('fcPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 function fcMostra(){
@@ -3323,7 +3815,8 @@ function fcMostra(){
   });
 }
 function fcFine(){
-  fcSt('');
+  fcSt(''); const eraEsame = fcCtx?.tipo === 'esame' && !fcCtx.ripetizione; clearInterval(esTimer); esTimer = null;
+  if (fcCtx?.tipo === 'esame') { $('fcChip').className = 'chip'; $('fcChip').hidden = true; }
   const giuste = fcGiro.filter((c, i) => fcRisposte[i] === c.corretta).length, tot = fcGiro.length, sbagl = tot - giuste;
   const perc = Math.round(giuste / tot * 100);
   $('fcRing').style.setProperty('--p', perc); $('fcPerc').textContent = perc + '%';
@@ -3336,29 +3829,32 @@ function fcFine(){
   errori.forEach(({ c, r }, n) => {
     const d = document.createElement('div'); d.className = 'fc-item';
     const p = (cls, txt) => { const e = document.createElement('p'); if (cls) e.className = cls; e.textContent = txt; return e; };
-    d.append(p('', `${n + 1}. ${c.domanda}`), p('tua', 'La tua risposta: ' + c.opzioni[r]), p('giusta', 'Risposta corretta: ' + c.opzioni[c.corretta]));
+    d.append(p('', `${n + 1}. ${c.domanda}`), p('tua', r < 0 ? 'Nessuna risposta (tempo scaduto)' : 'La tua risposta: ' + c.opzioni[r]), p('giusta', 'Risposta corretta: ' + c.opzioni[c.corretta]));
     if (c.spiegazione) d.append(p('perche', c.spiegazione));
     box.append(d);
   });
   $('fcRifaiErr').hidden = !errori.length;
   $('fcRifaiErr').onclick = () => fcInizia(errori.map(x => x.c.orig), { ...fcCtx, ripetizione: true });
   fcRegistra(fcGiro.map((c, i) => ({ domanda: c.domanda, ok: fcRisposte[i] === c.corretta })));
+  $('fcEsame').hidden = !eraEsame; $('fcNuove').textContent = fcCtx?.tipo === 'esame' ? 'Nuova simulazione' : 'Crea nuove flashcard';
+  if (eraEsame) esEsito(giuste, tot);
   $('fcBar').style.width = '100%';
   fcVista('ris');
   $('fcPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 $('fcRipassa').addEventListener('click', () => fcInizia(fcCarte, { tipo: 'lezione' }));
-$('fcRifai').addEventListener('click', () => fcCtx?.tipo === 'materia' ? $('fcRipMat').click() : fcInizia(fcCarte, { tipo: 'lezione' }));
+$('fcRifai').addEventListener('click', () => fcCtx?.tipo === 'esame' ? fcInizia(esCarte, { ...fcCtx, ripetizione: false }) : fcCtx?.tipo === 'materia' ? $('fcRipMat').click() : fcInizia(fcCarte, { tipo: 'lezione' }));
 async function fcRegistra(risultati){
   $('fcStorico').hidden = true;
   const ctx = fcCtx || {};
-  const materia = ctx.tipo === 'materia' ? ctx.materia : materiaCorrente();
-  const lezione = ctx.tipo === 'materia' ? '' : currentId;
-  if (ctx.ripetizione || ctx.tipo === 'glossario' || !materia || (ctx.tipo !== 'materia' && !lezione)) return;
+  const perMateria = ctx.tipo === 'materia' || ctx.tipo === 'esame';
+  const materia = perMateria ? ctx.materia : materiaCorrente();
+  const lezione = perMateria ? '' : currentId;
+  if (ctx.ripetizione || ctx.tipo === 'glossario' || !materia || (!perMateria && !lezione)) return;
   try {
     const r = await privApi('quiz', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ materia, lezione, risultati }) });
     const st = r.storico || []; caricaOggi(); caricaSerie();
-    if (st.length > 1) {
+    if (st.length > 1 && ctx.tipo !== 'esame') {
       const fmt = q => { const d = new Date(q.quando), oggi = new Date(); return d.toDateString() === oggi.toDateString() ? 'oggi' : d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }); };
       $('fcStorico').textContent = 'I tuoi ultimi risultati' + (ctx.tipo === 'materia' ? ` in ${materia}` : ' in questa lezione') + ': ' + st.map(q => `${fmt(q)} ${Math.round(q.giuste / q.totale * 100)}%`).join(' → ');
       $('fcStorico').hidden = false;
@@ -3396,8 +3892,8 @@ $('fcRipMat').addEventListener('click', async () => {
   } catch (e) { fcSt('Non riesco a preparare il ripasso: ' + e.message, 'err'); }
   finally { $('fcRipMat').disabled = false; }
 });
-$('fcNuove').addEventListener('click', () => { fcVista('start'); $('fcCrea').click(); });
-$('fcEsci').addEventListener('click', () => { fcVista('start'); fcSt(''); });
+$('fcNuove').addEventListener('click', () => { fcVista('start'); if (fcCtx?.tipo === 'esame') { $('esamePanel').scrollIntoView({ behavior: 'smooth', block: 'start' }); $('esInizia').click(); } else $('fcCrea').click(); });
+$('fcEsci').addEventListener('click', () => { clearInterval(esTimer); esTimer = null; $('fcChip').className = 'chip'; $('fcChip').hidden = !fcCarte.length; fcVista('start'); fcSt(''); });
 fcVista('start');
 /* ---------- Area personale (/privato): password, archivio delle lezioni ---------- */
 const PW_KEY = 'trascrittore:password';
@@ -3429,7 +3925,7 @@ async function unlock(pw, silent){
     const v = await privApi('verifica');
     if (!MULTI) lsSet(PW_KEY, pw);
     document.body.classList.remove('locked'); attivaTab(tabAttiva || 'trascrivi');
-    showUsage(v); fcLimiti(v); mostraAccount(v); loadList(); caricaProfilo(); caricaOggi(); gloCaricaMaterie(); caricaSerie(); notifStato();
+    showUsage(v); fcLimiti(v); mostraAccount(v); loadList(); caricaProfilo(); caricaOggi(); gloCaricaMaterie(); caricaSerie(); notifStato(); caricaOrario(); dopoAccesso(v);
     return true;
   } catch (e) {
     privPw = null;
@@ -3555,7 +4051,7 @@ async function loadList(){
   try {
     const items = await privApi('lezioni' + (q ? '?q=' + encodeURIComponent(q) : ''));
     renderList(items);
-    if (!q) { archivioItems = items; materieArchivio = [...new Set(items.map(i => i.materia))]; aggiornaMaterie(); aggiornaSelezioni(items); gloCaricaMaterie(); }
+    if (!q) { archivioItems = items; materieArchivio = [...new Set(items.map(i => i.materia))]; aggiornaMaterie(); aggiornaSelezioni(items); gloCaricaMaterie(); esMaterie(); }
   } catch (e) { $('lista').textContent = 'Non riesco a caricare l’archivio: ' + e.message; }
 }
 let cercaTimer = null;

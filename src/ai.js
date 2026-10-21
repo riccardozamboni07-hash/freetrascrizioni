@@ -21,6 +21,7 @@ Principi:
 4. Cattura ogni concetto, definizione, classificazione, collegamento, eccezione e dettaglio che può essere chiesto all'esame. Elimina chiacchiere, avvisi organizzativi e ripetizioni. Segnala le indicazioni del professore sull'esame.
 5. Se il professore ha parlato in modo non lineare, riordina in modo coerente senza cambiare il significato.
 6. La trascrizione è automatica: correggi i termini tecnici evidentemente sbagliati. Se un numero, un nome o un dato è dubbio, non indovinare: scrivilo con [?].
+7. I passaggi che iniziano con ⭐ sono stati segnati dallo studente come IMPORTANTI durante la lezione: trattali con più cura, evidenziali con "⭐ " all'inizio del paragrafo e mettili in **grassetto** dove serve.
 Adatta la struttura alla materia: per il diritto definizioni, fonti, istituti, differenze tra figure simili e articoli citati; per l'economia aziendale definizioni, schemi e calcoli passo per passo; per la matematica definizioni, teoremi, dimostrazioni ed esercizi con i passaggi.
 
 Formato:
@@ -218,4 +219,44 @@ Rispondi SOLO con JSON: {"materia":"...","titolo":"..."}` },
   const uguale = elenco.find(m => m.toLowerCase() === materia.toLowerCase());
   if (uguale) materia = uguale;
   return { status: 200, body: { materia, titolo: String(d.titolo || '').replace(/[«»"]/g, '').trim().slice(0, 80) }, token: r.token };
+}
+
+// Testo di una materia per scheda/esame: le lezioni (appunti se ci sono, altrimenti trascrizione) divise in parti uguali
+export function testoMateria(lezioni, max) {
+  const quota = Math.max(1200, Math.floor(max / Math.max(1, lezioni.length)));
+  return lezioni.map(l => `### Lezione: ${l.titolo} (${l.data})\n` + riduci(l.appunti && l.appunti.length > 400 ? l.appunti : l.testo, quota)).join('\n\n');
+}
+
+// Scheda di ripasso di una materia: una-due pagine con l'essenziale per l'esame
+export async function creaScheda(env, { materia, lezioni }) {
+  const r = await chat(env, modelliTesto(env), [
+    { role: 'system', content: `Crea la SCHEDA DI RIPASSO di ${materia} per la mattina dell'esame, partendo dalle lezioni dello studente.
+Regole:
+- Massimo 2 pagine: solo l'essenziale che serve all'esame (definizioni chiave, classificazioni, differenze tra concetti simili, formule e passaggi, articoli o autori citati).
+- Organizza per argomenti con titoli "## " (non per lezione), in frasi brevi ed elenchi "- " compatti; **grassetto** sui termini chiave.
+- Dai priorità ai passaggi segnati con ⭐ e alle indicazioni del professore sull'esame.
+- In fondo una sezione "## Domande probabili" con 5-8 domande d'esame.
+- Usa la terminologia del professore, niente invenzioni. Scrivi in italiano. Rispondi solo con la scheda in Markdown, iniziando da "# ${materia} – scheda di ripasso".` },
+    { role: 'user', content: testoMateria(lezioni, 50000) },
+  ], { temperature: 0.3, maxOut: 4000 });
+  return r;
+}
+
+// Esercizi e casi pratici con soluzione passo per passo, da una lezione
+export async function creaEsercizi(env, { materia, titolo, testo, n }) {
+  const quanti = Math.max(3, Math.min(8, Number(n) || 5));
+  const modelli = ['openai/gpt-oss-120b', ...MODELLI.filter(m => m !== 'openai/gpt-oss-120b')];
+  const r = await chat(env, modelli, [
+    { role: 'system', content: `Sei un docente universitario di ${materia || 'una materia'}. Dalla lezione crea ${quanti} ESERCIZI da esame con la soluzione.
+- Se la materia è quantitativa (matematica, statistica, economia, ragioneria, finanza) fai esercizi numerici con dati inventati ma realistici e soluzione passo per passo con tutti i calcoli.
+- Se è teorica (diritto, storia, ecc.) fai casi pratici o domande aperte di ragionamento, con la risposta modello.
+- Difficoltà crescente. Solo argomenti trattati nella lezione. Testo in italiano, formule in testo semplice (es. x^2, sqrt(2), A^-1).
+Rispondi SOLO con JSON: {"esercizi":[{"titolo":"argomento in 2-5 parole","testo":"consegna completa","soluzione":"soluzione passo per passo"}]}` },
+    { role: 'user', content: `Lezione: ${titolo}\n\n` + riduci(testo, 24000) },
+  ], { temperature: 0.4, maxOut: 6000, json: true });
+  if (r.status !== 200) return r;
+  const d = leggiJsonAI(r.body.testo) || {};
+  const esercizi = (Array.isArray(d.esercizi) ? d.esercizi : []).map(e => ({ titolo: String(e?.titolo || '').slice(0, 80), testo: String(e?.testo || '').slice(0, 2000), soluzione: String(e?.soluzione || '').slice(0, 4000) })).filter(e => e.testo && e.soluzione).slice(0, quanti);
+  if (!esercizi.length) return { status: 502, body: { error: 'Non riesco a creare gli esercizi: riprova.' }, token: r.token };
+  return { status: 200, body: { esercizi, lezione: titolo }, token: r.token };
 }
