@@ -244,6 +244,14 @@ body.app:not(.locked) .tabbar{display:flex}
 .entra-sx{animation:daSinistra .38s cubic-bezier(.2,.85,.25,1) both}
 header h1 .ev{display:inline-block;animation:titoloSu .32s cubic-bezier(.2,.85,.25,1) both}
 @media (prefers-reduced-motion:reduce){.entra-dx,.entra-sx,header h1 .ev{animation:none}.tab-ind,.seg-ind{transition:none}}
+.field input,.field select{min-width:0;max-width:100%}
+/* iPhone: il campo data ha una larghezza minima sua e usciva dal riquadro */
+input[type=date]{display:block;-webkit-appearance:none;appearance:none;min-width:0;max-width:100%;width:100%;text-align:left}
+input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0}
+input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
+.esami-box[open] > .form{margin-top:4px}
+.esami-box[open] > .row{margin-top:16px}
+#lSave ~ .form,.panel .form + .field{margin-top:2px}
 .banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px;border-radius:18px;border:1px solid var(--warn)}
 .banner p{margin:0;flex:1 1 240px}
 .live{font-size:.78rem;font-weight:600;color:var(--rec)}
@@ -632,7 +640,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <label class="field"><span>Titolo</span><input type="text" id="titolo" placeholder="es. Le fonti del diritto"></label>
       <label class="field"><span>Data</span><input type="date" id="dataLez"></label>
     </div>
-    <label class="field"><span>I tuoi appunti (incolla qui quelli fatti con Claude)</span>
+    <label class="field"><span>Appunti della lezione</span>
       <textarea id="appunti" spellcheck="true" placeholder="Appunti, riassunto, domande d'esame…"></textarea>
     </label>
     <div class="row">
@@ -663,7 +671,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 2.4<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 2.4.1<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="segmenti" data-tab="trascrivi" id="segTrascrivi" role="tablist" aria-label="Trascrizione o appunti">
     <span class="seg-ind" aria-hidden="true"></span>
     <button type="button" data-sub-btn="trascrizione">Trascrizione</button>
