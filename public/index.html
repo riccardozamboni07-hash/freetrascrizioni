@@ -663,7 +663,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 2.3<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 2.3.1<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="segmenti" data-tab="trascrivi" id="segTrascrivi" role="tablist" aria-label="Trascrizione o appunti">
     <span class="seg-ind" aria-hidden="true"></span>
     <button type="button" data-sub-btn="trascrizione">Trascrizione</button>
@@ -2192,7 +2192,7 @@ const passi = document.querySelector('.steps.pub'); if (passi) { passi.dataset.t
 document.querySelector('header.top')?.after($('segTrascrivi'), $('segStudia'));
 // i pulsanti di una sotto-scheda sanno a quale scheda appartengono
 document.querySelectorAll('.segmenti').forEach(sg => sg.querySelectorAll('[data-sub-btn]').forEach(b => { b.dataset.perTab = sg.dataset.tab; }));
-const notaVersione = [...document.querySelectorAll('main > p.note')].pop(); if (notaVersione) notaVersione.dataset.tab = 'archivio';
+const notaVersione = [...document.querySelectorAll('main > p.note')].pop(); if (notaVersione) { notaVersione.style.marginTop = '8px'; $('profilo').append(notaVersione); }
 let tabAttiva = null, tabScelta = false;
 const subAttive = { trascrivi: 'trascrizione', studia: 'flashcard' };
 function muoviIndicatori(){
