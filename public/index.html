@@ -656,10 +656,14 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Durante la trascrizione tieni la pagina aperta e lo schermo acceso; se si interrompe, riaprendola puoi riprendere da dove eri rimasto.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 2.1<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
-  <div class="segmenti" data-tab="studia" id="segStudia" role="tablist" aria-label="Strumenti di studio">
-    <span class="seg-ind" id="segInd" aria-hidden="true"></span>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 2.2<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <div class="segmenti" data-tab="trascrivi" id="segTrascrivi" role="tablist" aria-label="Trascrizione o appunti">
+    <span class="seg-ind" aria-hidden="true"></span>
+    <button type="button" data-sub-btn="trascrizione">Trascrizione</button>
     <button type="button" data-sub-btn="appunti">Appunti</button>
+  </div>
+  <div class="segmenti" data-tab="studia" id="segStudia" role="tablist" aria-label="Strumenti di studio">
+    <span class="seg-ind" aria-hidden="true"></span>
     <button type="button" data-sub-btn="flashcard">Flashcard</button>
     <button type="button" data-sub-btn="chiedi">Chiedi</button>
     <button type="button" data-sub-btn="glossario">Glossario</button>
@@ -678,9 +682,9 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <li><button type="button" data-vai="l1"><span>🎙️</span>Registra o carica</button></li>
     <li><button type="button" data-vai="l2"><span>⚡</span>Trascrizione</button></li>
     <li><button type="button" data-vai="l3"><span>📄</span>Testo</button></li>
+    <li><button type="button" data-vai="l4"><span>✍️</span>Appunti e correzione</button></li>
     <li class="menu-sep" role="separator"></li>
     <li class="menu-gruppo">Studia con l'AI</li>
-    <li><button type="button" data-vai="l4"><span>✍️</span>Appunti e correzione</button></li>
     <li><button type="button" data-vai="lFc"><span>🃏</span>Flashcard</button></li>
     <li><button type="button" data-vai="lAsk"><span>💬</span>Chiedi alle tue lezioni</button></li>
     <li><button type="button" data-vai="lGlo"><span>📖</span>Glossario</button></li>
@@ -2170,50 +2174,57 @@ $('delAccOk').addEventListener('click', async () => {
 });
 
 
-/* ---------- Navigazione a schede ---------- */
-const MAPPA_TAB = { lOggi: ['oggi'], l1: ['trascrivi'], l2: ['trascrivi'], l3: ['trascrivi'], l4: ['studia', 'appunti'], lFc: ['studia', 'flashcard'],
-  lAsk: ['studia', 'chiedi'], lGlo: ['studia', 'glossario'], lSave: ['archivio'], lArch: ['archivio'], l5: ['archivio'] };
+/* ---------- Navigazione a schede (con sotto-schede in Trascrivi e Studia) ---------- */
+const MAPPA_TAB = { lOggi: ['oggi'], l1: ['trascrivi', 'trascrizione'], l2: ['trascrivi', 'trascrizione'], l3: ['trascrivi', 'trascrizione'], l4: ['trascrivi', 'appunti'],
+  lFc: ['studia', 'flashcard'], lAsk: ['studia', 'chiedi'], lGlo: ['studia', 'glossario'], lSave: ['archivio'], lArch: ['archivio'], l5: ['archivio'] };
 const TITOLI_TAB = { oggi: 'Oggi', trascrivi: 'Trascrivi', studia: 'Studia', archivio: 'Archivio' };
+const ORDINE_TAB = ['oggi', 'trascrivi', 'studia', 'archivio'];
+const ORDINE_SUB = { trascrivi: ['trascrizione', 'appunti'], studia: ['flashcard', 'chiedi', 'glossario'] };
 for (const [id, [t, sub]] of Object.entries(MAPPA_TAB)) { const sez = $(id)?.closest('section'); if (sez) { sez.dataset.tab = t; if (sub) sez.dataset.sub = sub; } }
-document.querySelector('.steps.pub')?.setAttribute('data-tab', 'trascrivi');
-document.querySelector('header.top')?.after($('segStudia'));
+const passi = document.querySelector('.steps.pub'); if (passi) { passi.dataset.tab = 'trascrivi'; passi.dataset.sub = 'trascrizione'; }
+document.querySelector('header.top')?.after($('segTrascrivi'), $('segStudia'));
+// i pulsanti di una sotto-scheda sanno a quale scheda appartengono
+document.querySelectorAll('.segmenti').forEach(sg => sg.querySelectorAll('[data-sub-btn]').forEach(b => { b.dataset.perTab = sg.dataset.tab; }));
 const notaVersione = [...document.querySelectorAll('main > p.note')].pop(); if (notaVersione) notaVersione.dataset.tab = 'archivio';
-let tabAttiva = null, subAttiva = 'appunti', tabScelta = false;
-const ORDINE_TAB = ['oggi', 'trascrivi', 'studia', 'archivio'], ORDINE_SUB = ['appunti', 'flashcard', 'chiedi', 'glossario'];
+let tabAttiva = null, tabScelta = false;
+const subAttive = { trascrivi: 'trascrizione', studia: 'flashcard' };
 function muoviIndicatori(){
   const btn = document.querySelector(`[data-tab-btn="${tabAttiva}"]`), ind = $('tabInd');
   if (btn && ind && btn.offsetWidth) ind.style.transform = `translateX(${btn.offsetLeft + btn.offsetWidth / 2 - ind.offsetWidth / 2}px)`;
-  const sb = document.querySelector(`[data-sub-btn="${subAttiva}"]`), si = $('segInd');
-  if (sb && si && sb.offsetWidth) { si.style.width = sb.offsetWidth + 'px'; si.style.transform = `translateX(${sb.offsetLeft}px)`; }
+  document.querySelectorAll('.segmenti').forEach(sg => {
+    const sb = sg.querySelector(`[data-sub-btn="${subAttive[sg.dataset.tab]}"]`), si = sg.querySelector('.seg-ind');
+    if (sb && si && sb.offsetWidth) { si.style.width = sb.offsetWidth + 'px'; si.style.transform = `translateX(${sb.offsetLeft}px)`; }
+  });
 }
 window.addEventListener('resize', muoviIndicatori);
 function attivaTab(tab, sub){
-  const primaTab = tabAttiva, primaSub = subAttiva;
-  if (sub) subAttiva = sub;
+  const primaTab = tabAttiva, primaSub = subAttive[tab];
+  if (sub && ORDINE_SUB[tab]?.includes(sub)) subAttive[tab] = sub;
+  const subOra = subAttive[tab];
   const cambia = tab !== tabAttiva;
   tabAttiva = tab;
   document.body.classList.add('app');
   let verso = 0;
   if (primaTab && primaTab !== tab) verso = ORDINE_TAB.indexOf(tab) > ORDINE_TAB.indexOf(primaTab) ? 1 : -1;
-  else if (primaTab === tab && primaSub !== subAttiva) verso = ORDINE_SUB.indexOf(subAttiva) > ORDINE_SUB.indexOf(primaSub) ? 1 : -1;
+  else if (primaTab === tab && primaSub !== subOra) verso = ORDINE_SUB[tab].indexOf(subOra) > ORDINE_SUB[tab].indexOf(primaSub) ? 1 : -1;
   let n = 0;
   document.querySelectorAll('main > [data-tab]').forEach(el => {
-    const on = el.dataset.tab === tab && (!el.dataset.sub || el.dataset.sub === subAttiva), era = el.classList.contains('vis');
+    const on = el.dataset.tab === tab && (!el.dataset.sub || el.dataset.sub === subOra), era = el.classList.contains('vis');
     el.classList.toggle('vis', on);
     el.classList.remove('entra-dx', 'entra-sx');
-    // scivola dentro: da destra se vai avanti, da sinistra se torni indietro (il selettore di Studia resta fermo)
-    if (on && verso && !(era && el.id === 'segStudia')) { void el.offsetWidth; el.style.animationDelay = (n++ * 45) + 'ms'; el.classList.add(verso > 0 ? 'entra-dx' : 'entra-sx'); }
+    // scivola dentro: da destra se vai avanti, da sinistra se torni indietro (il selettore delle sotto-schede resta fermo)
+    if (on && verso && !(era && el.classList.contains('segmenti'))) { void el.offsetWidth; el.style.animationDelay = (n++ * 45) + 'ms'; el.classList.add(verso > 0 ? 'entra-dx' : 'entra-sx'); }
   });
   requestAnimationFrame(muoviIndicatori);
   document.querySelectorAll('[data-tab-btn]').forEach(b => { if (b.dataset.tabBtn === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
-  document.querySelectorAll('[data-sub-btn]').forEach(b => b.setAttribute('aria-selected', b.dataset.subBtn === subAttiva));
+  document.querySelectorAll('[data-sub-btn]').forEach(b => b.setAttribute('aria-selected', b.dataset.subBtn === subAttive[b.dataset.perTab]));
   const h = document.querySelector('header.top h1');
   if (h && document.body.classList.contains('privato') && !document.body.classList.contains('locked') && h.textContent !== TITOLI_TAB[tab]) { h.textContent = ''; const ev = document.createElement('span'); ev.className = 'ev'; ev.textContent = TITOLI_TAB[tab]; h.append(ev); }
-  try { sessionStorage.setItem('ft:tab', tab); sessionStorage.setItem('ft:sub', subAttiva); } catch (_) {}
+  try { sessionStorage.setItem('ft:tab', tab); sessionStorage.setItem('ft:subs', JSON.stringify(subAttive)); } catch (_) {}
   return cambia;
 }
 document.querySelectorAll('[data-tab-btn]').forEach(b => b.addEventListener('click', () => { tabScelta = true; attivaTab(b.dataset.tabBtn); window.scrollTo({ top: 0 }); }));
-document.querySelectorAll('[data-sub-btn]').forEach(b => b.addEventListener('click', () => { tabScelta = true; attivaTab('studia', b.dataset.subBtn); window.scrollTo({ top: 0 }); }));
+document.querySelectorAll('[data-sub-btn]').forEach(b => b.addEventListener('click', () => { tabScelta = true; attivaTab(b.dataset.perTab, b.dataset.subBtn); window.scrollTo({ top: 0 }); }));
 // Quando un'azione porta a una sezione (es. "Apri" una lezione, inizia un quiz), apre prima la scheda giusta
 const _scrollIntoView = Element.prototype.scrollIntoView;
 Element.prototype.scrollIntoView = function(o){
@@ -2221,7 +2232,11 @@ Element.prototype.scrollIntoView = function(o){
   if (sez && !sez.classList.contains('vis')) { tabScelta = true; attivaTab(sez.dataset.tab, sez.dataset.sub); }
   return _scrollIntoView.call(this, o);
 };
-try { const t = sessionStorage.getItem('ft:tab'); if (t) { tabScelta = true; attivaTab(t, sessionStorage.getItem('ft:sub') || 'appunti'); } else attivaTab('trascrivi'); } catch (_) { attivaTab('trascrivi'); }
+try {
+  Object.assign(subAttive, JSON.parse(sessionStorage.getItem('ft:subs') || '{}'));
+  const t = sessionStorage.getItem('ft:tab');
+  if (t) { tabScelta = true; attivaTab(t); } else attivaTab('trascrivi');
+} catch (_) { attivaTab('trascrivi'); }
 /* ---------- Glossario per materia ---------- */
 let gloTermini = [], gloMaterie = [];
 function gloSt(t, kind){ const s = $('gloStatus'); s.textContent = t; s.className = 'status' + (kind ? ' ' + kind : ''); }
