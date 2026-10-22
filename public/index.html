@@ -426,6 +426,15 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 .ben-slide h2{margin:0;font-size:1.35rem}
 .ben-slide p{margin:0;line-height:1.5}
 .ben-ic{font-size:3rem;line-height:1.1}
+.tour{position:fixed;inset:0;z-index:85}
+.tour[hidden]{display:none}
+.tour-buco{position:fixed;border-radius:18px;box-shadow:0 0 0 3px var(--accent),0 0 0 9999px rgba(8,16,12,.62);transition:all .35s cubic-bezier(.3,.9,.3,1);pointer-events:none}
+.tour-card{position:fixed;left:50%;transform:translateX(-50%);width:min(420px,calc(100% - 24px));background:var(--surface);color:var(--fg);border-radius:22px;padding:16px;display:flex;flex-direction:column;gap:8px;box-shadow:0 20px 50px rgba(0,0,0,.3);transition:top .35s cubic-bezier(.3,.9,.3,1)}
+.tour-card strong{font-size:1.08rem}
+.tour-card p{margin:0;line-height:1.5;font-size:.95rem}
+.tour-bar{height:4px;border-radius:9px;background:var(--tenue);overflow:hidden}
+.tour-bar i{display:block;height:100%;background:var(--accent);transition:width .3s}
+@media (prefers-reduced-motion:reduce){.tour-buco,.tour-card{transition:none}}
 .ben-punti{display:flex;gap:6px;justify-content:center}
 .ben-punti i{width:8px;height:8px;border-radius:9px;background:var(--line);transition:width .3s,background .3s}
 .ben-punti i.on{width:22px;background:var(--accent)}
@@ -629,12 +638,12 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
   <section class="panel priv" aria-labelledby="lTimer" id="timerPanel">
     <div class="row between">
       <span class="label" id="lTimer">Sessione di studio</span>
-      <span class="chip" id="timerChip">Pomodoro</span>
+      <span class="chip" id="timerChip" hidden></span>
     </div>
-    <div class="timer-grande" id="timerTempo" aria-live="polite">25:00</div>
+    <div class="timer-grande" id="timerTempo" aria-live="polite">1:00:00</div>
     <p class="note" id="timerNota">Studia senza distrazioni: a fine sessione il tempo si aggiunge all'anello Studio.</p>
     <div class="form">
-      <label class="field"><span>Durata</span><select id="timerDurata"><option value="25">25 minuti</option><option value="50">50 minuti</option><option value="15">15 minuti</option></select></label>
+      <label class="field"><span>Durata</span><select id="timerDurata"><option value="30">30 minuti</option><option value="60" selected>1 ora</option><option value="90">1 ora e 30</option><option value="120">2 ore</option><option value="150">2 ore e 30</option></select></label>
       <label class="field"><span>Materia (facoltativa)</span><input type="text" id="timerMateria" list="materieList" placeholder="es. Diritto pubblico"></label>
     </div>
     <div class="row">
@@ -855,7 +864,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
 
   <section class="panel priv" aria-labelledby="lEsame" id="esamePanel">
     <div class="row between">
-      <span class="label" id="lEsame">Preparati all'esame</span>
+      <span class="label" id="lEsame">Preparati allo scritto</span>
     </div>
     <label class="field"><span>Materia</span><select id="simMateria" aria-label="Materia dell'esame"></select></label>
     <div class="es-card">
@@ -1081,7 +1090,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Se si interrompe, riapri l'app: riprende da dove era rimasta e la registrazione non si perde.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.7<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.8<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="contesto priv" id="contesto" data-tab="studia appunti">
     <span id="contestoTxt"></span>
     <span class="row" style="gap:14px"><button type="button" class="link" id="contestoBtn"></button><button type="button" class="link rimuovi" id="contestoVia" hidden>Rimuovi</button></span>
@@ -1090,7 +1099,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <span class="seg-ind" aria-hidden="true"></span>
     <button type="button" data-sub-btn="flashcard">Flashcard</button>
     <button type="button" data-sub-btn="orale">Orale</button>
-    <button type="button" data-sub-btn="esame">Esame</button>
+    <button type="button" data-sub-btn="esame">Scritto</button>
     <button type="button" data-sub-btn="mappa">Mappa</button>
     <button type="button" data-sub-btn="chiedi">Chiedi</button>
     <button type="button" data-sub-btn="glossario">Glossario</button>
@@ -1161,26 +1170,28 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
 </div>
 <div class="benvenuto" id="benvenuto" hidden role="dialog" aria-modal="true" aria-labelledby="benT">
   <div class="ben-card">
-    <div class="ben-slide" data-ben="0">
-      <div class="ben-ic">🎙️</div>
-      <h2 id="benT">Registra la lezione</h2>
-      <p>In <b>Trascrivi</b> premi «Avvia registrazione» (o carica un audio): l'app scrive tutto quello che dice il prof e salva la lezione da sola nell'archivio.</p>
-      <p class="note">Durante la lezione tocca <b>⭐ Importante</b> quando il prof dice «questo all'esame».</p>
+    <div class="ben-slide">
+      <div class="ben-ic">👋</div>
+      <h2 id="benT">Benvenuto in Freetrascrizioni</h2>
+      <p>Ti faccio vedere in un minuto <b>dove si trova ogni cosa</b>, scheda per scheda: registrare, creare appunti, studiare e prepararti all'esame.</p>
+      <p class="note">Puoi rivederlo quando vuoi da ☰ → Come funziona.</p>
     </div>
-    <div class="ben-slide" data-ben="1" hidden>
-      <div class="ben-ic">✍️</div>
-      <h2>Appunti con l'AI</h2>
-      <p>In <b>Appunti</b> l'AI trasforma la trascrizione in appunti ordinati. Puoi anche caricare un PDF, un Word, le slide o le foto degli appunti di un compagno.</p>
-    </div>
-    <div class="ben-slide" data-ben="2" hidden>
-      <div class="ben-ic">🎓</div>
-      <h2>Studia e preparati</h2>
-      <p>In <b>Studia</b> trovi flashcard, interrogazione orale, simulazione dello scritto, scheda di ripasso ed esercizi. In <b>Oggi</b> il piano di ripasso, l'orario e la tua serie 🔥.</p>
-    </div>
-    <div class="ben-punti" id="benPunti"><i class="on"></i><i></i><i></i></div>
     <div class="row between">
       <button type="button" id="benSalta">Salta</button>
-      <button type="button" class="primary" id="benAvanti">Avanti</button>
+      <button type="button" class="primary" id="benAvanti">Inizia il giro</button>
+    </div>
+  </div>
+</div>
+<div class="tour" id="tour" hidden>
+  <div class="tour-buco" id="tourBuco"></div>
+  <div class="tour-card" id="tourCard" role="dialog" aria-modal="true" aria-labelledby="tourT" aria-live="polite">
+    <div class="row between"><span class="chip" id="tourPasso"></span><button type="button" class="link" id="tourEsci">Esci dal giro</button></div>
+    <strong id="tourT"></strong>
+    <p id="tourTesto"></p>
+    <div class="tour-bar"><i id="tourBar"></i></div>
+    <div class="row between">
+      <button type="button" id="tourIndietro">Indietro</button>
+      <button type="button" class="primary" id="tourAvanti">Avanti</button>
     </div>
   </div>
 </div>
@@ -3166,6 +3177,7 @@ async function caricaSerie(){
     const s = serieDati;
     serieRender();
     anelliDati.studio = { minuti: s.minutiOggi || 0, obiettivo: OBIETTIVO_STUDIO }; disegnaAnelli();
+    $('timerChip').hidden = !s.minutiOggi; $('timerChip').textContent = `oggi ${fmtMin(s.minutiOggi || 0)}`;
     if (s.orali?.length) { $('oraleStorico').hidden = false; $('oraleStorico').textContent = 'Ultimi voti: ' + s.orali.slice(0, 6).map(o => `${o.materia} ${votoTesto(o.voto)}`).join(' · '); }
     // festa: primo studio della giornata (solo se è successo mentre l'app era aperta)
     const oggi = (s.settimana || []).find(d => d.oggi)?.g || '';
@@ -3212,7 +3224,7 @@ function festa(icona, titolo, sotto){
   setTimeout(() => f.remove(), 2700);
 }
 
-/* ---------- Timer di studio (Pomodoro) ---------- */
+/* ---------- Timer di studio ---------- */
 const TIMER_KEY = 'ft:timer';
 let timerInt = null;
 function timerLeggi(){ try { return JSON.parse(localStorage.getItem(TIMER_KEY) || 'null'); } catch (_) { return null; } }
@@ -3220,8 +3232,8 @@ function timerScrivi(t){ try { t ? localStorage.setItem(TIMER_KEY, JSON.stringif
 function timerRender(){
   const t = timerLeggi();
   const resto = t ? (t.pausa != null ? t.pausa : Math.max(0, t.fine - Date.now())) : Number($('timerDurata').value) * 60000;
-  const s = Math.ceil(resto / 1000);
-  $('timerTempo').textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  const s = Math.ceil(resto / 1000), z = v => String(v).padStart(2, '0');
+  $('timerTempo').textContent = s >= 3600 ? `${Math.floor(s / 3600)}:${z(Math.floor(s % 3600 / 60))}:${z(s % 60)}` : `${z(Math.floor(s / 60))}:${z(s % 60)}`;
   $('timerTempo').classList.toggle('attivo', !!t && t.pausa == null);
   $('timerAvvia').hidden = !!t && t.pausa == null; $('timerAvvia').textContent = t && t.pausa != null ? 'Riprendi' : 'Avvia';
   $('timerPausa').hidden = !t || t.pausa != null; $('timerFine').hidden = !t;
@@ -3234,17 +3246,18 @@ async function timerCompleta(minuti, materia, intera){
     try { await privApi('studio', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ minuti: Math.round(minuti), materia }) }); } catch (_) {}
     caricaSerie();
   }
-  $('timerNota').textContent = intera ? `Sessione completata: +${Math.round(minuti)} minuti di studio. Fai 5 minuti di pausa!` : `Sessione chiusa: +${Math.round(minuti)} minuti.`;
+  $('timerNota').textContent = intera ? `Sessione completata: +${fmtMin(minuti)} di studio. Fai ${minuti >= 90 ? '15' : '10'} minuti di pausa!` : `Sessione chiusa: +${fmtMin(minuti)} di studio.`;
   if (intera) {
     try { navigator.vibrate?.([200, 100, 200]); } catch (_) {}
-    try { if (Notification?.permission === 'granted') (await navigator.serviceWorker?.getRegistration())?.showNotification('Sessione completata ⏱️', { body: `+${Math.round(minuti)} minuti di studio. Fai una pausa!`, icon: '/icona-192.png', tag: 'timer' }); } catch (_) {}
+    try { if (Notification?.permission === 'granted') (await navigator.serviceWorker?.getRegistration())?.showNotification('Sessione completata ⏱️', { body: `+${fmtMin(minuti)} di studio. Fai una pausa!`, icon: '/icona-192.png', tag: 'timer' }); } catch (_) {}
   }
 }
+function fmtMin(m){ m = Math.round(m); return m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ' ' + (m % 60) + ' min' : ''}` : `${m} minuti`; }
 function timerTick(){ clearInterval(timerInt); timerInt = setInterval(timerRender, 1000); timerRender(); }
 $('timerAvvia').addEventListener('click', () => {
   const t = timerLeggi();
   if (t && t.pausa != null) { t.fine = Date.now() + t.pausa; t.pausa = null; timerScrivi(t); }
-  else { const d = Number($('timerDurata').value) || 25; timerScrivi({ inizio: Date.now(), fine: Date.now() + d * 60000, durata: d, materia: $('timerMateria').value.trim(), pausa: null }); }
+  else { const d = Number($('timerDurata').value) || 60; timerScrivi({ inizio: Date.now(), fine: Date.now() + d * 60000, durata: d, materia: $('timerMateria').value.trim(), pausa: null }); }
   $('timerNota').textContent = 'Concentrati: puoi chiudere l’app, il timer continua.'; timerTick();
 });
 $('timerPausa').addEventListener('click', () => { const t = timerLeggi(); if (!t) return; t.pausa = Math.max(0, t.fine - Date.now()); timerScrivi(t); timerRender(); });
@@ -3642,24 +3655,92 @@ navigator.serviceWorker?.addEventListener('message', e => {
   if (document.body.classList.contains('locked')) urlInAttesa = e.data.url; else apriDaUrl(e.data.url);
 });
 
-/* ---------- Benvenuto ---------- */
+/* ---------- Benvenuto e giro guidato ---------- */
 const BEN_KEY = 'ft:benvenuto';
-let benI = 0;
-function benVai(i){
-  benI = i;
-  document.querySelectorAll('[data-ben]').forEach(sl => { sl.hidden = Number(sl.dataset.ben) !== i; });
-  [...$('benPunti').children].forEach((p, k) => p.classList.toggle('on', k === i));
-  $('benAvanti').textContent = i === 2 ? 'Inizia' : 'Avanti';
+// ogni passo: scheda (e sotto-scheda) da aprire, elemento da evidenziare, testo
+const GIRO = [
+  { tab: 'oggi', el: '#tabbar', t: 'Le 5 schede', x: 'In basso trovi tutto: <b>Oggi</b> (il tuo piano), <b>Trascrivi</b> (registra), <b>Studia</b>, <b>Appunti</b> e <b>Archivio</b>. Ora le giriamo una per una.' },
+  { tab: 'oggi', el: '#anelli', t: 'Oggi · I tuoi cerchi', x: 'Ore trascritte, AI usata, lezioni ripassate e minuti di studio di oggi. Chiudi i cerchi ogni giorno!' },
+  { tab: 'oggi', el: '#serieBox', t: 'Oggi · La serie 🔥', x: 'Studia ogni giorno per far crescere la serie. Tocca un giorno per vedere cosa hai fatto, ❄️ è il salva-serie, e qui sotto ci sono i traguardi.' },
+  { tab: 'oggi', el: '#oggiPanel', t: 'Oggi · Piano di ripasso', x: 'Aggiungi la <b>data dell’esame</b>: ogni giorno l’app ti dice quali lezioni ripassare per arrivare pronto.' },
+  { tab: 'oggi', el: '#timerPanel', t: 'Oggi · Sessione di studio', x: 'Un timer da 30 minuti a 2 ore e mezza: il tempo studiato riempie il cerchio Studio e conta per la serie.' },
+  { tab: 'oggi', el: '#orarioPanel', t: 'Oggi · Orario delle lezioni', x: 'Inserisci il tuo orario: all’ora della lezione ti arriva l’avviso e la materia è già pronta per registrare.' },
+  { tab: 'oggi', el: '#notifPanel', t: 'Oggi · Promemoria', x: 'Attiva le notifiche per gli avvisi di lezione, ripasso e serie. Su iPhone funzionano dall’app aggiunta alla schermata Home.' },
+  { tab: 'trascrivi', el: '#recBtn', t: 'Trascrivi · Registra', x: 'Premi <b>Avvia registrazione</b> a inizio lezione. Puoi mettere in pausa e, quando il prof dice «questo all’esame», toccare <b>⭐ Importante</b>.' },
+  { tab: 'trascrivi', el: '#drop', t: 'Trascrivi · Carica un file', x: 'Hai già un audio o un video? Caricalo qui, anche di 2 ore.' },
+  { tab: 'trascrivi', el: 'section:has(#l2)', t: 'Trascrivi · Trascrizione', x: 'Premi <b>Trascrivi</b>. La materia è facoltativa: se la lasci vuota la sceglie l’AI.' },
+  { tab: 'trascrivi', el: 'section:has(#lSave)', t: 'La lezione si salva da sola', x: 'Finita la trascrizione la lezione va nell’archivio da sola, con materia e titolo. Qui puoi cambiarli quando vuoi.' },
+  { tab: 'appunti', el: '#fontePanel', t: 'Appunti · Da cosa partiamo', x: 'Parti dalla trascrizione, oppure <b>carica un file</b> (PDF, Word, slide, foto degli appunti) o <b>incolla un testo</b>.' },
+  { tab: 'appunti', el: '.aicard', t: 'Appunti · Crea gli appunti', x: 'L’AI scrive appunti ordinati, in paragrafi con i titoli. Puoi aggiungere foto della lavagna e slide, ascoltarli 🔊 e scaricarli in Word.' },
+  { tab: 'studia', sub: 'flashcard', el: '#segStudia', t: 'Studia · Gli strumenti', x: 'Qui scegli come studiare: Flashcard, Orale, Scritto, Mappa, Chiedi e Glossario. Puoi scorrere la barra di lato.' },
+  { tab: 'studia', sub: 'flashcard', el: '#fcPanel', t: 'Studia · Flashcard', x: 'Domande a risposta multipla dalla lezione: vedi i risultati solo alla fine, con gli errori spiegati.' },
+  { tab: 'studia', sub: 'orale', el: '#oralePanel', t: 'Studia · Orale', x: 'L’AI ti fa una domanda come all’esame, tu rispondi a voce e ricevi il voto con cosa mancava.' },
+  { tab: 'studia', sub: 'esame', el: '#esamePanel', t: 'Studia · Scritto', x: 'Simulazione dello scritto con timer e voto, <b>scheda di ripasso</b> della materia ed <b>esercizi</b> con la soluzione.' },
+  { tab: 'studia', sub: 'mappa', el: '#mappaPanel', t: 'Studia · Mappa', x: 'La mappa concettuale della lezione, per il ripasso veloce.' },
+  { tab: 'studia', sub: 'chiedi', el: 'section:has(#lAsk)', t: 'Studia · Chiedi', x: 'Fai una domanda e l’AI risponde usando le tue lezioni, con le fonti.' },
+  { tab: 'studia', sub: 'glossario', el: '#gloPanel', t: 'Studia · Glossario', x: 'I termini tecnici con la definizione del prof, raccolti da soli per materia.' },
+  { tab: 'archivio', el: 'section:has(#lArch)', t: 'Archivio', x: 'Tutte le tue lezioni divise per materia. Tocca una lezione per aprirla, o scarica la <b>dispensa</b> della materia in Word o PDF.' },
+  { tab: 'archivio', el: '#menuBtn', t: 'Il menu', x: 'Sessione di studio, promemoria, orario, segnalazioni e questo giro guidato.' },
+  { tab: 'archivio', el: '#profBtn', t: 'Il tuo profilo', x: 'Foto, dati, traguardi 🏅 ed esportazione dei tuoi dati. Fatto: buono studio! 🎓' },
+];
+let giroI = 0, giroAttivo = false;
+function giroPasso(i, verso = 1){
+  // salta i passi il cui elemento non c'è o è nascosto
+  while (i >= 0 && i < GIRO.length) {
+    const p = GIRO[i]; tabScelta = true; attivaTab(p.tab, p.sub);
+    const el = document.querySelector(p.el);
+    if (el && el.getClientRects().length && !el.closest('[hidden]')) break;
+    i += verso;
+  }
+  if (i < 0) i = 0;
+  if (i >= GIRO.length) { giroFine(); return; }
+  giroI = i;
+  const p = GIRO[i], el = document.querySelector(p.el);
+  $('tourPasso').textContent = `${i + 1} di ${GIRO.length}`;
+  $('tourT').textContent = p.t; $('tourTesto').innerHTML = p.x;
+  $('tourBar').style.width = ((i + 1) / GIRO.length * 100) + '%';
+  $('tourIndietro').disabled = i === 0;
+  $('tourAvanti').textContent = i === GIRO.length - 1 ? 'Fine' : 'Avanti';
+  const fisso = getComputedStyle(el).position === 'fixed' || el.closest('.tabbar, header.top');
+  if (!fisso) {
+    const r = el.getBoundingClientRect(), alto = window.innerHeight;
+    const y = window.scrollY + r.top - (r.height > alto * 0.5 ? 80 : (alto * 0.38 - r.height / 2));
+    window.scrollTo({ top: Math.max(0, y), behavior: 'auto' });
+  }
+  requestAnimationFrame(giroPosiziona);
+  setTimeout(giroPosiziona, 400);
 }
-function benMostra(){ benVai(0); $('benvenuto').hidden = false; $('benAvanti').focus(); }
-function benChiudi(inizia){
-  $('benvenuto').hidden = true; lsSet(BEN_KEY, '1');
-  if (inizia) { tabScelta = true; attivaTab('trascrivi'); window.scrollTo({ top: 0 }); }
+function giroPosiziona(){
+  if (!giroAttivo) return;
+  const el = document.querySelector(GIRO[giroI].el); if (!el) return;
+  const r = el.getBoundingClientRect(), alto = window.innerHeight, m = 6;
+  const top = Math.max(8, r.top - m), bottom = Math.min(alto - 8, r.bottom + m);
+  const b = $('tourBuco');
+  b.style.left = Math.max(6, r.left - m) + 'px'; b.style.top = top + 'px';
+  b.style.width = Math.min(window.innerWidth - 12, r.width + m * 2) + 'px'; b.style.height = Math.max(20, bottom - top) + 'px';
+  const card = $('tourCard'), h = card.offsetHeight || 220;
+  const sotto = alto - bottom, sopra = top;
+  card.style.top = (sotto >= h + 16 ? bottom + 12 : sopra >= h + 16 ? top - h - 12 : Math.max(12, alto - h - 100)) + 'px';
 }
-$('benAvanti').addEventListener('click', () => benI < 2 ? benVai(benI + 1) : benChiudi(true));
-$('benSalta').addEventListener('click', () => benChiudi(false));
-$('menuGuida').addEventListener('click', () => { chiudi(); benMostra(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('benvenuto').hidden) benChiudi(false); });
+function giroInizia(){ giroAttivo = true; $('tour').hidden = false; document.body.style.overflow = 'hidden'; giroPasso(0); $('tourAvanti').focus(); }
+function giroFine(){
+  giroAttivo = false; $('tour').hidden = true; document.body.style.overflow = ''; lsSet(BEN_KEY, '1');
+  tabScelta = true; attivaTab('trascrivi'); window.scrollTo({ top: 0 });
+}
+function benMostra(){ $('benvenuto').hidden = false; $('benAvanti').focus(); }
+function benChiudi(){ $('benvenuto').hidden = true; lsSet(BEN_KEY, '1'); }
+$('benAvanti').addEventListener('click', () => { $('benvenuto').hidden = true; giroInizia(); });
+$('benSalta').addEventListener('click', benChiudi);
+$('tourAvanti').addEventListener('click', () => giroI >= GIRO.length - 1 ? giroFine() : giroPasso(giroI + 1, 1));
+$('tourIndietro').addEventListener('click', () => giroPasso(giroI - 1, -1));
+$('tourEsci').addEventListener('click', giroFine);
+window.addEventListener('resize', giroPosiziona);
+$('menuGuida').addEventListener('click', () => { chiudi(); giroInizia(); });
+document.addEventListener('keydown', e => {
+  if (!$('benvenuto').hidden && e.key === 'Escape') benChiudi();
+  if (!giroAttivo) return;
+  if (e.key === 'Escape') giroFine(); else if (e.key === 'ArrowRight') $('tourAvanti').click(); else if (e.key === 'ArrowLeft' && giroI > 0) $('tourIndietro').click();
+});
 
 /* ---------- Segnalazioni ---------- */
 let segnTipo = 'problema';
