@@ -557,7 +557,11 @@ const app = {
     }
     const store = () => env.STORE.get(env.STORE.idFromName(utente ? 'u:' + utente.id : 'principale'));
     const entrato = multi ? !!utente : autorizzato(request, env);
-    const oreSett = utente && utente.oreLimite != null ? utente.oreLimite : (Number(env.ORE_SETTIMANA_UTENTE) || 10);
+    // ore a settimana: limite scelto dall'admin per quell'utente, altrimenti ORE_SETTIMANA_UTENTE ("0" = nessun limite settimanale)
+    const oreSett = utente && utente.oreLimite != null ? utente.oreLimite
+      : (env.ORE_SETTIMANA_UTENTE != null && env.ORE_SETTIMANA_UTENTE !== '' ? Number(env.ORE_SETTIMANA_UTENTE) || 0 : 10);
+    // nessun limite settimanale solo se lo dice la variabile; un limite 0 messo dall'admin a un utente continua a bloccarlo
+    const settLibera = !(utente && utente.oreLimite != null) && oreSett === 0;
     const admins = String(env.ADMIN_EMAIL || '').toLowerCase().split(/[,\s]+/).filter(Boolean);
     const admin = !!(utente && admins.includes(utente.email));
     const tokenGiorno = Number(env.TOKEN_GIORNO_UTENTE) || 150000;
@@ -604,7 +608,7 @@ const app = {
     if (url.pathname === '/api/trascrivi') {
       if (request.method === 'POST') {
         if (!entrato) return json(401, { error: multi ? 'Accedi per trascrivere.' : 'Password mancante o errata.' });
-        if (multi && await store().usoSettimana() >= oreSett * 3600) return json(429, { error: `Hai usato le ${oreSett} ore di questa settimana.`, code: 'limite-utente' });
+        if (multi && !settLibera && await store().usoSettimana() >= oreSett * 3600) return json(429, { error: `Hai usato le ${oreSett} ore di questa settimana.`, code: 'limite-utente' });
         if (multi && env.GROQ_API_KEY) {
           const sec = secondiAudio(request);
           if (oreGiorno && (await store().usoOggi()).privato >= oreGiorno * 3600)
@@ -879,7 +883,7 @@ const app = {
         if (azione === 'admin/utenti' && request.method === 'GET') {
           const utenti = await auth().elencoUtenti();
           const dettagli = await Promise.all(utenti.map(u => Promise.resolve().then(() => env.STORE.get(env.STORE.idFromName('u:' + u.id)).riepilogo()).catch(() => ({}))));
-          const def = Number(env.ORE_SETTIMANA_UTENTE) || 10, settimana = Date.now() - 7 * 86400000;
+          const def = env.ORE_SETTIMANA_UTENTE != null && env.ORE_SETTIMANA_UTENTE !== '' ? Number(env.ORE_SETTIMANA_UTENTE) || 0 : 10, settimana = Date.now() - 7 * 86400000;
           return json(200, {
             utenti: utenti.map((u, i) => ({ ...u, ...dettagli[i], limite: u.oreLimite != null ? u.oreLimite : def })),
             totali: { utenti: utenti.length, attivi7: utenti.filter(u => u.ultimo > settimana).length, oggi: await auth().usoOggi(), segnalazioni: await auth().feedbackNuovi(), errori: (await auth().elencoErrori()).length },
