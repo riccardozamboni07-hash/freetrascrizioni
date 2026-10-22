@@ -565,6 +565,15 @@ body.locked main > :not(header):not(#lock):not(#setup):not(.landing){display:non
 .landing{display:none!important}
 body.locked.multi .landing{display:flex!important}
 body.locked.multi header.top > p{display:none}
+body.locked.multi header.top{padding-right:0;text-align:center}
+body.locked.multi header.top h1{text-align:center;width:100%}
+body.locked.multi #lock{width:100%;max-width:560px;margin-left:auto;margin-right:auto;align-self:center;box-sizing:border-box}
+body.locked.multi .hero{align-items:center;text-align:center}
+body.locked.multi .hero .badge{align-self:center}
+body.locked.multi .hero-sub{max-width:60ch}
+body.locked.multi .hero-cta{width:100%;max-width:560px}
+body.locked.multi .demo-app{width:100%;max-width:560px;box-sizing:border-box;text-align:left}
+body.locked.multi #lock .label{align-self:center}
 body.privato:not(.locked) #lock{display:none}
 #lock{max-width:420px}
 .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
@@ -1216,7 +1225,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Se si interrompe, riapri l'app: riprende da dove era rimasta e la registrazione non si perde.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 4.1<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 4.1.1<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="contesto priv" id="contesto" data-tab="studia appunti">
     <span id="contestoTxt"></span>
     <span class="row" style="gap:14px"><button type="button" class="link" id="contestoBtn"></button><button type="button" class="link rimuovi" id="contestoVia" hidden>Rimuovi</button></span>
