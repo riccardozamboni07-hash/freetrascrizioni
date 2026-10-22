@@ -9,7 +9,8 @@ La stessa app, ma con **registrazione e accesso** (email e password oppure Googl
 | `ORE_SETTIMANA_UTENTE` | variabile | ore di trascrizione a settimana per utente (predefinito 10) |
 | `ORE_GIORNO_UTENTE` | variabile (in `wrangler.jsonc`) | ore di trascrizione al giorno per utente (ora 1.5; 0 = nessun limite) |
 | `ORE_GIORNO_TOTALE` | variabile (in `wrangler.jsonc`) | tetto di ore al giorno per tutta l'app (ora 7.5, sotto le 8 h gratis di Groq). Oltre le ~1 h 55 min nella stessa ora l'app mette in pausa le trascrizioni e riprende da sola all'ora successiva |
-| `TOKEN_GIORNO_UTENTE` | variabile | limite giornaliero dell'AI per utente (predefinito 150000) |
+| `TOKEN_GIORNO_UTENTE` | variabile (in `wrangler.jsonc`) | limite giornaliero dell'AI per utente (ora 120000, circa 4 appunti) |
+| `TOKEN_GIORNO_TOTALE` | variabile (in `wrangler.jsonc`) | tetto giornaliero dell'AI per tutta l'app (ora 380000; 0 = nessun tetto) |
 | `GROQ_API_KEY` | segreto | la tua chiave Groq (meglio a pagamento, con un tetto di spesa) |
 | `CODICE_INVITO` | segreto, facoltativo | se c'è, per registrarsi serve questo codice |
 | `ADMIN_EMAIL` | segreto | email (anche più di una, separate da virgola) che vedono il **Pannello amministratore** nel profilo |

@@ -565,8 +565,17 @@ const app = {
     const oreGiorno = Number(env.ORE_GIORNO_UTENTE) || 0;            // 0 = nessun limite giornaliero per utente
     const oreTotali = Number(env.ORE_GIORNO_TOTALE) || 7.5;
     const SEC_ORA_MAX = 2 * 3600 - 300;                              // un po' di margine sotto le 2 h all'ora di Groq
-    const limiteAi = async () => multi && (await store().usoOggi()).flashcardToken >= tokenGiorno
-      ? json(429, { error: 'Hai usato tutta l’intelligenza artificiale di oggi: riprova domani.', code: 'limite-ai' }) : null;
+    const tokenTotali = Number(env.TOKEN_GIORNO_TOTALE) || 0;        // 0 = nessun tetto globale dell'AI
+    const limiteAi = async () => {
+      if (!multi) return null;
+      if ((await store().usoOggi()).flashcardToken >= tokenGiorno)
+        return json(429, { error: 'Hai usato tutta l’intelligenza artificiale di oggi: riprova domani.', code: 'limite-ai' });
+      if (tokenTotali && (await auth().usoOggi()).flashcardToken >= tokenTotali)
+        return json(429, { error: 'Oggi Astra Note ha finito l’intelligenza artificiale per tutti (siamo in prova gratuita): riprova domani.', code: 'limite-ai' });
+      return null;
+    };
+    // token usati: nel conto dell'utente e, nell'app pubblica, nel conto di tutta l'app
+    const contaToken = async (n) => { await store().usaToken(n); if (multi) await auth().usaToken(n); };
 
     // pagina pubblica, in sola lettura, degli appunti condivisi
     if (url.pathname.startsWith('/c/')) {
@@ -645,7 +654,7 @@ const app = {
         const b = await request.json().catch(() => null);
         if (!b || typeof b.testo !== 'string' || b.testo.trim().length < 200) return json(400, { error: 'Il testo è troppo corto per creare flashcard.' });
         const r = await generaFlashcard(env, { testo: b.testo.slice(0, 1_500_000), materia: String(b.materia || '').slice(0, 80), quante: b.quante });
-        if (r.token) await store().usaToken(r.token);
+        if (r.token) await contaToken(r.token);
         if (r.status === 200) r.body.uso = await store().usoOggi();
         return json(r.status, r.body);
       }
@@ -658,13 +667,13 @@ const app = {
           materia: String(b.materia || '').slice(0, 80), data: String(b.data || '').slice(0, 40),
           parte: Number(b.parte) || 1, totale: Number(b.totale) || 1, lavagna: String(b.lavagna || '').slice(0, 8000), materiale: String(b.materiale || '').slice(0, 9000),
         });
-        if (r.token) await store().usaToken(r.token);
+        if (r.token) await contaToken(r.token);
         if (r.status === 200) r.body.uso = await store().usoOggi();
         return json(r.status, r.body);
       }
       // ---------- slide/PDF, mappa, orale, studio, serie ----------
       const corpo = async () => request.json().catch(() => null);
-      const conToken = async (r) => { if (r.token) await store().usaToken(r.token); return r; };
+      const conToken = async (r) => { if (r.token) await contaToken(r.token); return r; };
       // ---------- strumenti d'esame: simulazione dello scritto, scheda di ripasso, esercizi ----------
       if (azione === 'esame' && request.method === 'POST') {
         const b = await corpo();
@@ -837,7 +846,7 @@ const app = {
         // al salvataggio automatico non rifà il glossario se la lezione è cambiata poco (risparmia AI)
         if (b.auto && l.glo_len && Math.abs(testo.length - l.glo_len) < Math.max(400, l.glo_len * 0.15)) return json(200, { nuovi: 0, aggiornati: 0, materia: l.materia, saltato: true });
         const r = await estraiGlossario(env, { testo, materia: l.materia, esistenti: await store().terminiMateria(l.materia) });
-        if (r.token) await store().usaToken(r.token);
+        if (r.token) await contaToken(r.token);
         if (r.status !== 200) return json(r.status, r.body);
         const esito = await store().salvaTermini(l.materia, l, r.body.termini);
         await store().segnaGlossario(l.id, testo.length);
@@ -930,7 +939,7 @@ const app = {
         const imm = Array.isArray(b?.immagini) ? b.immagini.filter(x => typeof x === 'string' && x.startsWith('data:image/')).slice(0, 3) : [];
         if (!imm.length) return json(400, { error: 'Nessuna foto.' });
         const r = await leggiLavagna(env, { immagini: imm, materia: String(b.materia || '').slice(0, 80) });
-        if (r.token) await store().usaToken(r.token);
+        if (r.token) await contaToken(r.token);
         return json(r.status, r.body);
       }
       if (azione === 'flashcard-materia' && request.method === 'GET') {
@@ -952,7 +961,7 @@ const app = {
         const parole = paroleChiave(domanda + ' ' + (Array.isArray(b.storia) ? b.storia.filter(m => m.ruolo === 'io').slice(-1).map(m => m.testo).join(' ') : ''));
         const passaggi = parole.length ? await store().cerca(materia, parole) : [];
         const r = await rispondi(env, { domanda, passaggi, storia: Array.isArray(b.storia) ? b.storia : [] });
-        if (r.token) await store().usaToken(r.token);
+        if (r.token) await contaToken(r.token);
         if (r.status === 200) r.body.fonti = passaggi.map(p => ({ titolo: p.titolo, materia: p.materia, data: p.data, tipo: p.tipo }));
         return json(r.status, r.body);
       }
