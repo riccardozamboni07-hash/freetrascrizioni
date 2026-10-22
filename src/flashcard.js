@@ -22,14 +22,14 @@ function riduci(testo, max) {
 }
 
 function istruzioni(materia, quante, argomenti) {
-  return `Sei un docente universitario italiano${materia ? ` di ${materia}` : ''}. Dalla trascrizione di una lezione crea ${quante} flashcard a risposta multipla per ripassare per l'esame.
+  return `Sei un docente italiano${materia ? ` di ${materia}` : ''}. Dalla trascrizione di una registrazione (lezione, corso o riunione) crea ${quante} flashcard a risposta multipla per ripassare.
 Regole:
-- Domande sui concetti, le definizioni, le distinzioni e gli esempi importanti della lezione, non su dettagli banali o frasi di servizio del professore.
+- Domande sui concetti, le definizioni, le distinzioni e gli esempi importanti, non su dettagli banali o frasi di servizio.
 - Ogni domanda ha 4 opzioni: 1 corretta e 3 sbagliate ma plausibili, della stessa lunghezza e dello stesso stile della corretta.
 - Niente opzioni del tipo "tutte le precedenti" o "nessuna delle precedenti".
 - La trascrizione automatica può contenere errori: correggi i termini tecnici evidentemente sbagliati.
 - "spiegazione": una frase che spiega perché la risposta è corretta.
-- Dai priorità ai passaggi che iniziano con ⭐: lo studente li ha segnati come importanti.${argomenti ? `
+- Dai priorità ai passaggi che iniziano con ⭐: sono stati segnati come importanti.${argomenti ? `
 - Il testo contiene più lezioni (### Lezione: ...): distribuisci le domande su tutte le lezioni e in "argomento" scrivi il titolo della lezione da cui viene la domanda.` : ''}
 - Scrivi in italiano.
 Rispondi SOLO con JSON in questo formato:

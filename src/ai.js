@@ -10,19 +10,20 @@ function istruzioniAppunti(materia, data, parte, totale) {
   const pezzo = totale > 1
     ? `Ricevi la PARTE ${parte} di ${totale} della lezione: scrivi gli appunti solo di questa parte, senza titolo generale, senza introduzione e senza conclusione, come se continuassero la parte precedente.`
     : 'Ricevi la lezione intera.';
-  return `Sei uno studente universitario modello. Trasformi la trascrizione automatica di una lezione in appunti perfetti per studiare e preparare l'esame.
-Materia: ${materia || 'non indicata'}. Data: ${data}.
+  return `Sei un ottimo prendi-appunti. Trasformi la trascrizione automatica di una registrazione (di solito una lezione o un corso, a volte una conferenza o una riunione) in appunti perfetti da studiare e riutilizzare.
+Materia o argomento: ${materia || 'non indicato'}. Data: ${data}.
 ${pezzo}
 
 Principi:
-1. Fedeltà al professore: usa la sua terminologia e le sue definizioni, senza sinonimi tuoi.
+1. Fedeltà a chi parla: usa la sua terminologia e le sue definizioni, senza sinonimi tuoi.
 2. Nessuna invenzione: non aggiungere contenuti, dati, articoli o formule che non sono nella lezione. Un tuo chiarimento va in una riga che inizia con "Nota:".
-3. Includi tutti gli esempi del professore accanto al concetto che illustrano.
-4. Cattura ogni concetto, definizione, classificazione, collegamento, eccezione e dettaglio che può essere chiesto all'esame. Elimina chiacchiere, avvisi organizzativi e ripetizioni. Segnala le indicazioni del professore sull'esame.
-5. Se il professore ha parlato in modo non lineare, riordina in modo coerente senza cambiare il significato.
+3. Includi tutti gli esempi accanto al concetto che illustrano.
+4. Cattura ogni concetto, definizione, classificazione, collegamento, eccezione e dettaglio che può essere chiesto all'esame. Elimina chiacchiere, avvisi organizzativi e ripetizioni. Segnala le indicazioni sull'esame, se ci sono.
+5. Se chi parla è andato in modo non lineare, riordina in modo coerente senza cambiare il significato.
 6. La trascrizione è automatica: correggi i termini tecnici evidentemente sbagliati. Se un numero, un nome o un dato è dubbio, non indovinare: scrivilo con [?].
-7. I passaggi che iniziano con ⭐ sono stati segnati dallo studente come IMPORTANTI durante la lezione: trattali con più cura, evidenziali con "⭐ " all'inizio del paragrafo e mettili in **grassetto** dove serve.
+7. I passaggi che iniziano con ⭐ sono stati segnati come IMPORTANTI durante la registrazione: trattali con più cura, evidenziali con "⭐ " all'inizio del paragrafo e mettili in **grassetto** dove serve.
 Adatta la struttura alla materia: per il diritto definizioni, fonti, istituti, differenze tra figure simili e articoli citati; per l'economia aziendale definizioni, schemi e calcoli passo per passo; per la matematica definizioni, teoremi, dimostrazioni ed esercizi con i passaggi.
+Se è una RIUNIONE o una chiamata di lavoro (persone che discutono, decidono, si dividono compiti): scrivi un breve riepilogo, poi gli argomenti discussi, e alla fine le sezioni "## Decisioni" e "## Cose da fare" ("- chi: cosa, entro quando" se detto).
 
 Formato:
 - Un titolo "## " per ogni argomento, eventuali sottotitoli "### ".
@@ -34,11 +35,11 @@ Scrivi in italiano.`;
 }
 
 function istruzioniAggiusta(materia) {
-  return `Correggi la trascrizione automatica di una lezione universitaria${materia ? ` di ${materia}` : ''}.
+  return `Correggi la trascrizione automatica di una registrazione (lezione, corso, conferenza o riunione)${materia ? ` su ${materia}` : ''}.
 1. Correggi gli errori di riconoscimento vocale (parole sbagliate, nomi, termini tecnici) in base al contesto.
 2. Sistema punteggiatura e maiuscole e dividi il testo in paragrafi leggibili.
 3. Togli solo intercalari e ripetizioni inutili ("allora", "diciamo", "ok", parole ripetute).
-4. NON riassumere, NON accorciare i contenuti, NON aggiungere niente: deve restare la lezione completa, con le parole del professore.
+4. NON riassumere, NON accorciare i contenuti, NON aggiungere niente: deve restare tutto il contenuto, con le parole di chi parla.
 Restituisci solo il testo corretto, senza titoli, commenti o introduzioni.`;
 }
 
@@ -97,7 +98,7 @@ ${materiale}
 
 // Legge le foto della lavagna (massimo 5 per volta) e le trascrive in testo
 export async function leggiLavagna(env, { immagini, materia }) {
-  const content = [{ type: 'text', text: `Sono foto della lavagna di una lezione universitaria${materia ? ` di ${materia}` : ''}. Trascrivi fedelmente in testo tutto quello che c'è scritto: titoli, definizioni, schemi (come elenchi puntati con rientri), tabelle, formule e calcoli passo per passo, numeri esatti. Una sezione "Foto N" per ogni foto. Se una parte è illeggibile scrivi [illeggibile], non indovinare. Rispondi solo con la trascrizione, in italiano.` }];
+  const content = [{ type: 'text', text: `Sono foto di una lavagna, di slide o di appunti${materia ? ` su ${materia}` : ''}. Trascrivi fedelmente in testo tutto quello che c'è scritto: titoli, definizioni, schemi (come elenchi puntati con rientri), tabelle, formule e calcoli passo per passo, numeri esatti. Una sezione "Foto N" per ogni foto. Se una parte è illeggibile scrivi [illeggibile], non indovinare. Rispondi solo con la trascrizione, in italiano.` }];
   for (const url of immagini) content.push({ type: 'image_url', image_url: { url } });
   return chat(env, env.GROQ_MODELLO_VISTA ? [env.GROQ_MODELLO_VISTA, ...MODELLI_VISTA] : MODELLI_VISTA, [{ role: 'user', content }], { temperature: 0.1, maxOut: 4000 });
 }
@@ -105,7 +106,7 @@ export async function leggiLavagna(env, { immagini, materia }) {
 // Risponde a una domanda usando solo i passaggi delle lezioni trovati nell'archivio
 export async function rispondi(env, { domanda, passaggi, storia }) {
   const fonti = passaggi.map((p, i) => `[${i + 1}] ${p.titolo} · ${p.materia} · ${p.data} (${p.tipo})\n${p.testo}`).join('\n\n---\n\n');
-  const messages = [{ role: 'system', content: `Sei un tutor universitario. Rispondi alle domande dello studente usando SOLO i brani delle sue lezioni qui sotto (trascrizioni e appunti). Regole:
+  const messages = [{ role: 'system', content: `Sei un tutor. Rispondi alle domande usando SOLO i brani delle registrazioni dell'utente qui sotto (trascrizioni e appunti). Regole:
 - Rispondi in italiano, in modo chiaro e completo ma senza giri di parole, in prosa; elenchi solo se servono.
 - Dopo ogni informazione indica da dove viene con il numero del brano tra parentesi quadre, es. [2].
 - Se i brani non contengono la risposta, dillo chiaramente ("Nelle tue lezioni non trovo…") e non inventare. Puoi aggiungere una tua spiegazione generale solo se la segnali come "Fuori dalle lezioni:".
@@ -132,7 +133,7 @@ function riduci(testo, max) {
 export async function estraiGlossario(env, { testo, materia, esistenti }) {
   const gia = (esistenti || []).slice(0, 300).join('; ');
   const r = await chat(env, modelliTesto(env), [
-    { role: 'system', content: `Sei un docente universitario${materia ? ` di ${materia}` : ''}. Dal testo di una lezione estrai il GLOSSARIO: i termini tecnici, gli istituti, i concetti e le sigle che uno studente deve saper definire all'esame.
+    { role: 'system', content: `Sei un docente${materia ? ` di ${materia}` : ''}. Dal testo di una registrazione (lezione, corso o riunione) estrai il GLOSSARIO: i termini tecnici, i concetti e le sigle che bisogna saper definire.
 Regole:
 - Da 5 a 25 termini, solo quelli davvero spiegati o usati in modo importante nella lezione; niente parole comuni.
 - "definizione": 1-3 frasi chiare, fedeli a come li spiega il professore, senza inventare.
@@ -161,7 +162,7 @@ function leggiJsonAI(t) {
 // Simulazione dell'esame orale: una domanda alla volta sul materiale di una lezione della materia
 export async function domandaOrale(env, { materia, titolo, testo, gia }) {
   const r = await chat(env, modelliTesto(env), [
-    { role: 'system', content: `Sei un professore universitario di ${materia || 'questa materia'} che interroga uno studente all'esame orale.
+    { role: 'system', content: `Sei un professore di ${materia || 'questa materia'} che interroga uno studente all'esame orale.
 Dal materiale della lezione qui sotto fai UNA domanda d'esame, come la farebbe un professore: chiara, su un concetto importante, che richieda una risposta di 1-2 minuti (definizione + spiegazione o esempio, oppure un confronto tra due istituti/concetti).
 Non fare domande già fatte: ${(gia || []).slice(-10).join(' | ') || '(nessuna)'}.
 Rispondi SOLO con JSON: {"domanda":"...","punti":["punto che una buona risposta deve toccare", "..."]} con 3-5 punti.` },
@@ -175,7 +176,7 @@ Rispondi SOLO con JSON: {"domanda":"...","punti":["punto che una buona risposta 
 
 export async function valutaOrale(env, { materia, titolo, testo, domanda, punti, risposta }) {
   const r = await chat(env, modelliTesto(env), [
-    { role: 'system', content: `Sei un professore universitario di ${materia || 'questa materia'}, giusto ma esigente. Valuti la risposta orale di uno studente (trascritta automaticamente: ignora gli errori di trascrizione e le esitazioni).
+    { role: 'system', content: `Sei un professore di ${materia || 'questa materia'}, giusto ma esigente. Valuti la risposta orale di uno studente (trascritta automaticamente: ignora gli errori di trascrizione e le esitazioni).
 Basati sul materiale della lezione e sui punti attesi. Voto in trentesimi da 0 a 30 (30 e lode = 31), come all'università italiana; sotto 18 è insufficiente.
 Rispondi SOLO con JSON: {"voto":24,"giudizio":"una frase","bene":["cosa ha detto bene"],"mancava":["cosa mancava o era sbagliato"],"modello":"una risposta da 30 in 4-6 frasi, con la terminologia del professore"}` },
     { role: 'user', content: `Lezione: ${titolo}\n\nMateriale:\n${riduci(testo, 16000)}\n\nDomanda: ${domanda}\nPunti attesi: ${(punti || []).join('; ')}\n\nRisposta dello studente:\n${String(risposta || '').slice(0, 6000) || '(nessuna risposta)'}` },
@@ -190,7 +191,7 @@ Rispondi SOLO con JSON: {"voto":24,"giudizio":"una frase","bene":["cosa ha detto
 // Mappa concettuale della lezione: albero di concetti (massimo 3 livelli)
 export async function creaMappa(env, { materia, titolo, testo }) {
   const r = await chat(env, modelliTesto(env), [
-    { role: 'system', content: `Crea la MAPPA CONCETTUALE di una lezione universitaria${materia ? ` di ${materia}` : ''} per il ripasso veloce.
+    { role: 'system', content: `Crea la MAPPA CONCETTUALE di una registrazione (lezione, corso o riunione)${materia ? ` su ${materia}` : ''} per il ripasso veloce.
 Regole: un concetto centrale; 3-7 rami principali; ogni ramo con 0-5 sotto-concetti; al massimo 3 livelli. Etichette brevi (max 6 parole). "nota": max 15 parole, facoltativa, solo dove aiuta (definizione lampo, esempio, collegamento). Usa la terminologia del professore, niente invenzioni.
 Rispondi SOLO con JSON: {"titolo":"concetto centrale","rami":[{"titolo":"...","nota":"...","rami":[{"titolo":"...","nota":"..."}]}]}` },
     { role: 'user', content: `Lezione: ${titolo}\n\n` + riduci(testo, 30000) },
@@ -207,9 +208,9 @@ Rispondi SOLO con JSON: {"titolo":"concetto centrale","rami":[{"titolo":"...","n
 export async function indovinaLezione(env, { testo, materie }) {
   const elenco = (materie || []).filter(Boolean).slice(0, 40);
   const r = await chat(env, modelliTesto(env), [
-    { role: 'system', content: `Ricevi l'inizio del testo di una lezione universitaria italiana (trascrizione o appunti).
-1. "materia": l'insegnamento a cui appartiene. ${elenco.length ? `Se corrisponde a una di queste materie dello studente usa ESATTAMENTE quel nome: ${elenco.map(m => '«' + m + '»').join(', ')}. Altrimenti` : 'Scrivi'} il nome di un insegnamento universitario plausibile (es. "Diritto pubblico", "Economia aziendale", "Algebra lineare"), con la maiuscola iniziale.
-2. "titolo": l'argomento principale della lezione in 2-6 parole (es. "Le fonti del diritto"), senza la parola "lezione".
+    { role: 'system', content: `Ricevi l'inizio del testo di una registrazione in italiano (lezione, corso, conferenza o riunione; trascrizione o appunti).
+1. "materia": la materia o l'argomento. ${elenco.length ? `Se corrisponde a uno di questi già usati dall'utente usa ESATTAMENTE quel nome: ${elenco.map(m => '«' + m + '»').join(', ')}. Altrimenti` : 'Scrivi'} un nome breve e generale (es. "Diritto pubblico", "Algebra lineare", "Marketing", "Riunioni di progetto"), con la maiuscola iniziale.
+2. "titolo": l'argomento principale in 2-6 parole (es. "Le fonti del diritto", "Piano lancio prodotto"), senza le parole "lezione" o "riunione".
 Rispondi SOLO con JSON: {"materia":"...","titolo":"..."}` },
     { role: 'user', content: riduci(testo, 6000) },
   ], { temperature: 0.1, maxOut: 120, json: true });
@@ -230,7 +231,7 @@ export function testoMateria(lezioni, max) {
 // Scheda di ripasso di una materia: una-due pagine con l'essenziale per l'esame
 export async function creaScheda(env, { materia, lezioni }) {
   const r = await chat(env, modelliTesto(env), [
-    { role: 'system', content: `Crea la SCHEDA DI RIPASSO di ${materia} per la mattina dell'esame, partendo dalle lezioni dello studente.
+    { role: 'system', content: `Crea la SCHEDA DI RIPASSO di ${materia} per la mattina dell'esame, partendo dalle registrazioni dell'utente.
 Regole:
 - Massimo 2 pagine: solo l'essenziale che serve all'esame (definizioni chiave, classificazioni, differenze tra concetti simili, formule e passaggi, articoli o autori citati).
 - Organizza per argomenti con titoli "## " (non per lezione), in frasi brevi ed elenchi "- " compatti; **grassetto** sui termini chiave.
@@ -247,10 +248,10 @@ export async function creaEsercizi(env, { materia, titolo, testo, n }) {
   const quanti = Math.max(3, Math.min(8, Number(n) || 5));
   const modelli = ['openai/gpt-oss-120b', ...MODELLI.filter(m => m !== 'openai/gpt-oss-120b')];
   const r = await chat(env, modelli, [
-    { role: 'system', content: `Sei un docente universitario di ${materia || 'una materia'}. Dalla lezione crea ${quanti} ESERCIZI da esame con la soluzione.
+    { role: 'system', content: `Sei un docente di ${materia || 'una materia'}. Dalla registrazione crea ${quanti} ESERCIZI da esame con la soluzione.
 - Se la materia è quantitativa (matematica, statistica, economia, ragioneria, finanza) fai esercizi numerici con dati inventati ma realistici e soluzione passo per passo con tutti i calcoli.
 - Se è teorica (diritto, storia, ecc.) fai casi pratici o domande aperte di ragionamento, con la risposta modello.
-- Difficoltà crescente. Solo argomenti trattati nella lezione. Testo in italiano, formule in testo semplice (es. x^2, sqrt(2), A^-1).
+- Difficoltà crescente. Solo argomenti trattati nella registrazione. Testo in italiano, formule in testo semplice (es. x^2, sqrt(2), A^-1).
 Rispondi SOLO con JSON: {"esercizi":[{"titolo":"argomento in 2-5 parole","testo":"consegna completa","soluzione":"soluzione passo per passo"}]}` },
     { role: 'user', content: `Lezione: ${titolo}\n\n` + riduci(testo, 24000) },
   ], { temperature: 0.4, maxOut: 6000, json: true });

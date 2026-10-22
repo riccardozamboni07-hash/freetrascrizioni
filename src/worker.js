@@ -646,7 +646,7 @@ const app = {
         const b = await corpo();
         const materia = String(b?.materia || '').slice(0, 80);
         const lez = materia ? await store().lezioniMateria(materia) : [];
-        if (!lez.length) return json(400, { error: 'Non ci sono lezioni di questa materia.' });
+        if (!lez.length) return json(400, { error: 'Non ci sono registrazioni di questa materia.' });
         const r = await conToken(await generaFlashcard(env, { testo: testoMateria(lez, 55000), materia, quante: Math.min(30, Math.max(5, Number(b.quante) || 20)), argomenti: lez.length > 1 }));
         if (r.status === 200) r.body.lezioni = lez.length;
         return json(r.status, r.body);
@@ -662,7 +662,7 @@ const app = {
         const k = 'scheda:' + materia;
         if (request.method === 'GET') { const v = await store().impostazione(k); return json(200, v ? JSON.parse(v) : {}); }
         const lez = await store().lezioniMateria(materia);
-        if (!lez.length) return json(400, { error: 'Non ci sono lezioni di questa materia.' });
+        if (!lez.length) return json(400, { error: 'Non ci sono registrazioni di questa materia.' });
         const r = await conToken(await creaScheda(env, { materia, lezioni: lez }));
         if (r.status !== 200) return json(r.status, r.body);
         const out = { testo: r.body.testo, quando: Date.now(), lezioni: lez.length };
@@ -672,7 +672,7 @@ const app = {
       if (azione === 'esercizi' && request.method === 'POST') {
         const b = await corpo();
         const l = b?.lezione ? await store().leggi(String(b.lezione).slice(0, 64)) : await store().lezioneCasuale(String(b?.materia || '').slice(0, 80));
-        if (!l) return json(400, { error: 'Non ci sono lezioni di questa materia.' });
+        if (!l) return json(400, { error: 'Non ci sono registrazioni di questa materia.' });
         const r = await conToken(await creaEsercizi(env, { materia: l.materia || b.materia, titolo: l.titolo, testo: [l.appunti && l.appunti.length > 400 ? l.appunti : l.testo, l.materiale ? '\n\nSlide:\n' + l.materiale.slice(0, 8000) : ''].join(''), n: b.quanti }));
         return json(r.status, r.body);
       }
@@ -708,7 +708,7 @@ const app = {
           const b = await corpo();
           if (!b || typeof b.id !== 'string' || typeof b.testo !== 'string' || !b.testo.trim()) return json(400, { error: 'Nessun testo trovato nel file.' });
           const r = await store().salvaMateriale(b.id.slice(0, 64), String(b.nome || 'Materiale').slice(0, 120), b.testo.slice(0, 300000));
-          return r ? json(200, r) : json(404, { error: 'Salva prima la lezione.' });
+          return r ? json(200, r) : json(404, { error: 'Salva prima la registrazione.' });
         }
         if (request.method === 'DELETE') return json(200, await store().togliMateriale(String(url.searchParams.get('id') || '').slice(0, 64)));
       }
@@ -723,7 +723,7 @@ const app = {
       if (azione === 'mappa' && request.method === 'POST') {
         const b = await corpo();
         const l = b && typeof b.id === 'string' ? await store().leggi(b.id.slice(0, 64)) : null;
-        if (!l) return json(404, { error: 'Salva prima la lezione.' });
+        if (!l) return json(404, { error: 'Salva prima la registrazione.' });
         const testo = [(l.appunti && l.appunti.length > 500 ? l.appunti : l.testo), l.materiale ? '\n\nSlide del professore:\n' + l.materiale.slice(0, 12000) : ''].join('');
         const r = await conToken(await creaMappa(env, { materia: l.materia, titolo: l.titolo, testo }));
         if (r.status === 200) await store().salvaMappa(l.id, r.body.mappa);
@@ -733,7 +733,7 @@ const app = {
         const b = await corpo();
         const materia = String(b?.materia || '').trim().slice(0, 80);
         const l = materia ? await store().lezioneCasuale(materia) : null;
-        if (!l) return json(404, { error: 'Non ci sono lezioni salvate di questa materia.' });
+        if (!l) return json(404, { error: 'Non ci sono registrazioni salvate di questa materia.' });
         const testo = [(l.appunti && l.appunti.length > 500 ? l.appunti : l.testo), l.materiale ? '\n\n' + l.materiale.slice(0, 8000) : ''].join('');
         const r = await conToken(await domandaOrale(env, { materia, titolo: l.titolo, testo, gia: Array.isArray(b.gia) ? b.gia.map(String) : [] }));
         if (r.status === 200) r.body.lezione = { id: l.id, titolo: l.titolo, data: l.data };
@@ -780,7 +780,7 @@ const app = {
       if (azione === 'push-prova' && request.method === 'POST') {
         const chiavi = await chiaviVapid(); let ok = 0;
         for (const sub of await store().iscrizioni(null)) {
-          await globale().salvaNotifica(await sha(sub.endpoint), { titolo: 'Promemoria attivi ✅', testo: 'Le notifiche funzionano: ti avviso per lezioni e ripassi.', url: '/?tab=oggi' });
+          await globale().salvaNotifica(await sha(sub.endpoint), { titolo: 'Promemoria attivi ✅', testo: 'Le notifiche funzionano: ti avviso per orario e ripassi.', url: '/?tab=oggi' });
           const r = await inviaPush(sub, chiavi, env.CONTATTO_EMAIL && 'mailto:' + env.CONTATTO_EMAIL); if (r === 'ok') ok++; if (r === 'scaduta') await store().disiscriviPush(sub.endpoint); }
         return json(200, { inviate: ok });
       }
@@ -789,7 +789,7 @@ const app = {
         if (request.method === 'POST') {
           const b = await corpo();
           const l = b && typeof b.id === 'string' ? await store().leggi(b.id.slice(0, 64)) : null;
-          if (!l) return json(404, { error: 'Salva prima la lezione.' });
+          if (!l) return json(404, { error: 'Salva prima la registrazione.' });
           if (l.condiviso) return json(200, { token: l.condiviso, url: url.origin + '/c/' + l.condiviso });
           const token = nuovoToken().slice(0, 22);
           await globale().creaCondivisione(token, utente ? utente.id : '', l.id);
@@ -807,9 +807,9 @@ const app = {
       if (azione === 'glossario-estrai' && request.method === 'POST') {
         const b = await request.json().catch(() => null);
         const l = b && typeof b.id === 'string' ? await store().leggi(b.id.slice(0, 64)) : null;
-        if (!l) return json(404, { error: 'Salva prima la lezione.' });
+        if (!l) return json(404, { error: 'Salva prima la registrazione.' });
         const testo = (l.appunti && l.appunti.length > 500 ? l.appunti : l.testo) || '';
-        if (testo.length < 300) return json(400, { error: 'La lezione è troppo corta per un glossario.' });
+        if (testo.length < 300) return json(400, { error: 'La registrazione è troppo corta per un glossario.' });
         // al salvataggio automatico non rifà il glossario se la lezione è cambiata poco (risparmia AI)
         if (b.auto && l.glo_len && Math.abs(testo.length - l.glo_len) < Math.max(400, l.glo_len * 0.15)) return json(200, { nuovi: 0, aggiornati: 0, materia: l.materia, saltato: true });
         const r = await estraiGlossario(env, { testo, materia: l.materia, esistenti: await store().terminiMateria(l.materia) });
@@ -838,7 +838,7 @@ const app = {
       }
       if (azione === 'ripassata' && request.method === 'POST') {
         const b = await request.json().catch(() => null);
-        if (!b || typeof b.id !== 'string') return json(400, { error: 'Manca la lezione.' });
+        if (!b || typeof b.id !== 'string') return json(400, { error: 'Manca la registrazione.' });
         return json(200, await store().segnaRipasso(b.id.slice(0, 64)));
       }
       if (azione.startsWith('admin/')) {
@@ -959,7 +959,7 @@ const app = {
         }
         if (request.method === 'DELETE') {
           const id = url.searchParams.get('id');
-          return id ? json(200, await store().elimina(id)) : json(400, { error: 'Manca la lezione da eliminare.' });
+          return id ? json(200, await store().elimina(id)) : json(400, { error: 'Manca la registrazione da eliminare.' });
         }
       }
       return json(404, { error: 'Richiesta sconosciuta.' });
@@ -992,7 +992,7 @@ const app = {
       let msg = null, subs = tutte;
       if (lezioni.length) {
         const l = lezioni[0];
-        msg = { titolo: `Alle ${l.ora}: ${l.materia} 🎙️`, testo: 'Tocca per aprire l’app e registrare la lezione.', url: '/?registra=' + encodeURIComponent(l.materia) };
+        msg = { titolo: `Alle ${l.ora}: ${l.materia} 🎙️`, testo: 'Tocca per aprire l’app e registrare.', url: '/?registra=' + encodeURIComponent(l.materia) };
       } else {
         // 2) promemoria di ripasso all'ora scelta
         subs = await st.iscrizioni(ora);
@@ -1001,7 +1001,7 @@ const app = {
         const ripasso = await st.daRipassareOggi();
         if (!ripasso && !(serie.serie >= 2 && !serie.oggiFatto)) continue;
         msg = ripasso
-          ? { titolo: 'È ora di ripassare 📚', testo: `Hai ${ripasso} ${ripasso === 1 ? 'lezione' : 'lezioni'} da ripassare oggi. Tocca per vedere il piano.`, url: '/?tab=oggi' }
+          ? { titolo: 'È ora di ripassare 📚', testo: `Hai ${ripasso} ${ripasso === 1 ? 'registrazione' : 'registrazioni'} da ripassare oggi. Tocca per vedere il piano.`, url: '/?tab=oggi' }
           : { titolo: `La tua serie di ${serie.serie} giorni ti aspetta 🔥`, testo: 'Basta un ripasso, un quiz o 10 minuti di studio per non perderla.', url: '/?tab=oggi' };
       }
       for (const sub of subs) {

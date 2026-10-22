@@ -1,24 +1,18 @@
 # Freetrascrizioni
 
-La tua app personale per **trascrivere le lezioni**, anche di 2 ore, in pochi minuti — da iPhone, Android o computer.
+L'app per **registrare e trascrivere lezioni, corsi e riunioni**, anche di 2 ore, in pochi minuti, e trasformarle in appunti e materiale di studio — da iPhone, Android o computer.
 
-- **Trascrizione veloce** con Whisper (tramite Groq), oppure **sul dispositivo** senza internet
-- **Scegli la materia** prima di trascrivere: i termini tecnici vengono riconosciuti meglio
-- **Archivio delle lezioni** diviso per materia, con filtri, ricerca, i tuoi appunti e **download di tutti gli appunti di una materia**
-- Pulsanti per **correggere la trascrizione** o farne **appunti con Claude**, con istruzioni adatte alla materia e gli appunti delle lezioni precedenti
-- **Flashcard** a risposta multipla create dalla lezione: punteggio finale, risposte sbagliate con quella corretta, salvate nell'archivio
-- **Appunti e trascrizione corretta creati nell'app**, anche con le **foto della lavagna**, da salvare nella lezione o scaricare come file Word
-- **Ripasso per materia** con le flashcard di tutte le lezioni e lo storico dei risultati
-- **Glossario per materia** creato da solo a ogni lezione salvata, con flashcard e download in Word
-- **Esami e sezione Oggi**: conto alla rovescia, lezioni da ripassare ogni giorno, esportazione nel calendario
-- **Simulazione dell'orale**: domande a voce o per iscritto, voto in trentesimi e risposta da 30
-- **Mappe concettuali**, **slide e PDF del professore** usati dall'AI, **dispensa** della materia in Word o PDF
-- **Serie di giorni**, **timer di studio** e **promemoria** con notifiche (su iPhone dall'app sulla schermata Home)
-- **Condividi gli appunti** con un link in sola lettura
-- **Menu** per spostarsi tra le sezioni e **profilo** con foto, dati, uscita ed eliminazione dei dati
-- **Chiedi alle tue lezioni**: domande con risposte prese dalle tue lezioni, con le fonti
-- **Versione pubblica** con registrazione (email o Google) e archivio per ogni utente: vedi [PUBBLICA.md](PUBBLICA.md)
-- **Tutto nei tuoi account**: nessuno, nemmeno chi ti ha installato l'app, vede le tue lezioni
+Per chi la usa: studenti di ogni tipo (scuola, università, concorsi, lingue), chi si forma per lavoro (corsi, webinar, certificazioni) e chi deve tenere traccia delle riunioni.
+
+- **Registra** con pausa, ripresa e il tasto **⭐ Importante**, oppure **carica** un audio o un video; trascrizione veloce con Whisper (Groq) o sul dispositivo
+- **Si salva da sola** nell'archivio: argomento e titolo li sceglie l'AI
+- **Appunti con l'AI** in paragrafi con i titoli; per le riunioni anche **decisioni e cose da fare**. Si parte anche da **PDF, Word, slide, foto** o testo incollato
+- **Studia**: flashcard, interrogazione **orale**, simulazione dello **scritto** con voto, **scheda di ripasso**, **esercizi** con soluzione, **mappa**, **Chiedi** alle tue registrazioni, **glossario** automatico
+- **Oggi**: piano di ripasso verso l'esame, cerchi giornalieri, serie 🔥 con salva-serie e traguardi, timer di studio, **orario settimanale** con avvisi
+- **Promemoria** con notifiche (su iPhone dall'app sulla schermata Home), **🔊 ascolta** gli appunti, funziona **anche offline**
+- **Archivio** per materia o argomento, ricerca, **dispensa** in Word o PDF, **condivisione** in sola lettura
+- **Versione pubblica** con registrazione (email o Google), pannello amministratore con statistiche, segnalazioni ed errori: vedi [PUBBLICA.md](PUBBLICA.md)
+- **Tutto nei tuoi account**: nessuno, nemmeno chi ti ha installato l'app, vede le tue registrazioni
 
 Usa i piani gratuiti di Cloudflare e Groq: con Groq gratis trascrivi circa **8 ore di audio al giorno**. Resta gratuita finché lo restano questi servizi.
 
@@ -61,7 +55,7 @@ Usa i piani gratuiti di Cloudflare e Groq: con Groq gratis trascrivi circa **8 o
 ## Domande frequenti
 
 - **Quanto costa?** Niente, finché resti nei limiti gratuiti di Groq (~8 ore di audio al giorno, 2 all'ora) e Cloudflare.
-- **Chi vede le mie lezioni?** Solo tu: sono salvate nel tuo account Cloudflare.
+- **Chi vede le mie registrazioni?** Solo tu: sono salvate nel tuo account Cloudflare.
 - **Ho dimenticato la password.** Su Cloudflare: [Workers & Pages](https://dash.cloudflare.com/?to=/:account/workers-and-pages) → freetrascrizioni → Settings → Variables and Secrets → modifica `PASSWORD`.
 
 ---

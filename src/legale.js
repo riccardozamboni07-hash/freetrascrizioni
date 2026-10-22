@@ -54,18 +54,18 @@ export function privacy(env) {
 <h2>Cookie</h2>
 <p>L'app usa solo un <strong>cookie tecnico</strong> per tenerti connesso (e uno temporaneo durante l'accesso con Google). Non ci sono cookie di profilazione o di statistica, quindi non serve il tuo consenso.</p>
 <h2>Età</h2>
-<p>Il servizio è pensato per studenti universitari: per usarlo devi avere almeno 14 anni.</p>`);
+<p>Il servizio è pensato per chi studia e per chi lavora: per usarlo devi avere almeno 14 anni.</p>`);
 }
 
 export function condizioni(env) {
   const c = contatto(env);
   return pagina('Condizioni d’uso', `<h1>Condizioni d'uso</h1><p class="muted">Ultimo aggiornamento: ${aggiornata}</p>
 <h2>Il servizio</h2>
-<p>Freetrascrizioni trascrive le lezioni e aiuta a studiarle con l'intelligenza artificiale (appunti, flashcard, domande). In questa fase è una <strong>versione di prova (beta)</strong> gratuita, su invito.</p>
+<p>Freetrascrizioni trascrive lezioni, corsi e riunioni e aiuta a studiarli e riutilizzarli con l'intelligenza artificiale (appunti, flashcard, domande). In questa fase è una <strong>versione di prova (beta)</strong> gratuita, su invito.</p>
 <h2>Limiti</h2>
 <p>Ogni account ha un limite di ore di trascrizione a settimana e un limite giornaliero di intelligenza artificiale, indicati nell'app. Possono cambiare durante la beta.</p>
 <h2>Cosa puoi registrare</h2>
-<p>Sei responsabile di quello che registri e carichi. Prima di registrare una lezione assicurati di poterlo fare: chiedi il permesso al docente quando serve e rispetta il regolamento del tuo ateneo. Usa le registrazioni e le trascrizioni solo per lo studio personale e non diffonderle senza autorizzazione.</p>
+<p>Sei responsabile di quello che registri e carichi. Prima di registrare assicurati di poterlo fare: chiedi il permesso a chi parla (docente, relatore, colleghi in riunione) e rispetta le regole della tua scuola, università o azienda. Non diffondere registrazioni e trascrizioni senza autorizzazione.</p>
 <h2>Uso corretto</h2>
 <p>Non usare l'app per contenuti illegali, per caricare dati di altre persone senza titolo o per aggirare i limiti (ad esempio creando più account). In questi casi l'account può essere sospeso.</p>
 <h2>Intelligenza artificiale</h2>
@@ -95,8 +95,8 @@ function mdHtml(md) {
 export function paginaCondivisa(l, origineApp) {
   if (!l) return pagina('Link non valido', '<h1>Link non valido</h1><p>Questi appunti non sono più condivisi, oppure il link è sbagliato.</p>');
   const data = (() => { try { return new Date(l.data + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }); } catch (_) { return l.data; } })();
-  const corpo = l.appunti && l.appunti.trim() ? mdHtml(l.appunti) : '<p class="muted">Trascrizione della lezione:</p>' + String(l.testo || '').split(/\n{2,}/).map(p => '<p>' + esc(p) + '</p>').join('');
-  const invito = origineApp ? `<p><a href="${esc(origineApp)}">Prova Freetrascrizioni</a>: registra le lezioni e ottieni appunti, flashcard e ripasso.</p>` : '';
+  const corpo = l.appunti && l.appunti.trim() ? mdHtml(l.appunti) : '<p class="muted">Trascrizione:</p>' + String(l.testo || '').split(/\n{2,}/).map(p => '<p>' + esc(p) + '</p>').join('');
+  const invito = origineApp ? `<p><a href="${esc(origineApp)}">Prova Freetrascrizioni</a>: registra lezioni, corsi e riunioni e ottieni appunti, flashcard e ripasso.</p>` : '';
   return pagina(esc(l.titolo), `<h1>${esc(l.titolo)}</h1><p class="muted">${esc(l.materia)} · ${esc(data)}</p>${corpo}
 <hr style="border:none;border-top:1px solid var(--line);margin:24px 0 12px"><p class="muted">Appunti creati con Freetrascrizioni.</p>${invito}`).replace('<p class="muted"><a href="/">← Torna all\'app</a></p>', '');
 }

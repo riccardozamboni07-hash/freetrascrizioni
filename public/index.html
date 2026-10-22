@@ -571,7 +571,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <button type="button" class="avatar" id="profBtn" aria-label="Il tuo profilo" aria-controls="profilo" aria-expanded="false"><span id="avatarTxt">👤</span></button>
     </div>
     <h1>Freetrascrizioni</h1>
-    <p>Registra o carica una lezione, anche di 2 ore, e ottieni il testo e il riassunto in pochi minuti. Gratis.</p>
+    <p>Registra o carica un audio, anche di 2 ore (lezioni, corsi, riunioni), e ottieni il testo e gli appunti in pochi minuti.</p>
   </header>
 
   <section class="panel" id="setup" aria-labelledby="setupT" style="flex-direction:column" hidden>
@@ -612,7 +612,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
   </section>
 
   <ol class="steps pub" aria-label="Come funziona">
-    <li><div><strong>Registra o carica</strong><span>Registra la lezione dal telefono o scegli un file audio.</span></div></li>
+    <li><div><strong>Registra o carica</strong><span>Registra dal telefono o scegli un file audio.</span></div></li>
     <li><div><strong>Trascrivi</strong><span>Premi «Trascrivi»: il testo compare man mano.</span></div></li>
     <li><div><strong>Riassumi</strong><span>Correggi il testo o fanne appunti con Claude, oppure scaricalo.</span></div></li>
   </ol>
@@ -638,7 +638,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <span class="chip" id="oggiData"></span>
     </div>
     <div id="oggiLista" class="oggi-lista"></div>
-    <p class="note" id="oggiVuoto">Aggiungi la data di un esame: ogni giorno l'app ti dice quali lezioni ripassare.</p>
+    <p class="note" id="oggiVuoto">Aggiungi la data di un esame: ogni giorno l'app ti dice quali registrazioni ripassare.</p>
     <details class="esami-box" id="esamiBox">
       <summary>Gestisci esami</summary>
       <div class="esami-lista" id="esamiLista"></div>
@@ -675,18 +675,18 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
 
   <section class="panel priv" aria-labelledby="lOrario" id="orarioPanel">
     <div class="row between">
-      <span class="label" id="lOrario">Orario delle lezioni</span>
+      <span class="label" id="lOrario">Il tuo orario</span>
       <span class="chip" id="orarioChip" hidden></span>
     </div>
     <div class="orario-oggi" id="orarioOggi" hidden></div>
-    <p class="note" id="orarioNota">Tocca un giorno per aggiungere le tue lezioni: all'ora della lezione ti arriva un avviso e la materia è già pronta per registrare.</p>
+    <p class="note" id="orarioNota">Tocca un giorno per aggiungere lezioni, corsi o riunioni fisse: all'ora giusta ti arriva un avviso e l'argomento è già pronto per registrare.</p>
     <div class="or-griglia" id="orGriglia" role="group" aria-label="Orario della settimana"></div>
     <div class="or-giorno" id="orGiornoBox" hidden>
       <div class="row between"><strong id="orGiornoT"></strong><button type="button" class="link" id="orGiornoChiudi">Chiudi</button></div>
       <div class="or-giorno-lista" id="orGiornoLista"></div>
       <div class="or-agg">
         <input type="text" id="orMateria" list="materieList" autocomplete="off" placeholder="Materia, es. Diritto pubblico" aria-label="Materia">
-        <input type="time" id="orOra" value="09:00" step="300" aria-label="Ora della lezione">
+        <input type="time" id="orOra" value="09:00" step="300" aria-label="Ora di inizio">
         <button type="button" class="primary" id="orAggiungi">Aggiungi</button>
       </div>
     </div>
@@ -698,7 +698,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <span class="label" id="lNotif">Promemoria</span>
       <span class="chip" id="notifChip">spenti</span>
     </div>
-    <p class="note" id="notifNota">Una notifica al giorno quando hai lezioni da ripassare o rischi di perdere la serie, più l'avviso all'inizio delle lezioni del tuo orario.</p>
+    <p class="note" id="notifNota">Una notifica al giorno quando hai qualcosa da ripassare o rischi di perdere la serie, più l'avviso all'inizio di ogni impegno del tuo orario.</p>
     <div class="row">
       <label class="field" style="flex:0 0 auto"><span>Ora</span>
         <select id="notifOra"><option value="8">8:00</option><option value="13">13:00</option><option value="17">17:00</option><option value="18" selected>18:00</option><option value="19">19:00</option><option value="20">20:00</option><option value="21">21:00</option></select>
@@ -756,12 +756,12 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
 
   <section class="panel" aria-labelledby="l2">
     <span class="label" id="l2">2. Trascrizione</span>
-    <label class="field"><span>Materia <small class="facolt">facoltativa</small></span>
+    <label class="field"><span>Materia o argomento <small class="facolt">facoltativo</small></span>
       <input type="text" id="materia" list="materieList" autocomplete="off" placeholder="Se la sai: aiuta con i termini tecnici">
     </label>
     <datalist id="materieList"></datalist>
-    <p class="note" id="materiaNote">Se la lasci vuota la sceglie l'AI quando salva la lezione.</p>
-    <label class="check"><input type="checkbox" id="live"> Trascrivi mentre registri: a fine lezione il testo è quasi pronto</label>
+    <p class="note" id="materiaNote">Se lo lasci vuoto lo sceglie l'AI quando salva la registrazione.</p>
+    <label class="check"><input type="checkbox" id="live"> Trascrivi mentre registri: quando finisci il testo è quasi pronto</label>
     <details class="avanzate" id="avanzate">
     <summary>Opzioni avanzate</summary>
     <div class="opts">
@@ -841,7 +841,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <span class="label" id="l4">2. Appunti e correzione</span>
     <div class="aicard">
       <h3>Crea qui nell'app</h3>
-      <p class="note">L'intelligenza artificiale scrive gli <strong>appunti</strong> della lezione o <strong>corregge la trascrizione</strong> direttamente qui. Si salvano da soli nella lezione e puoi scaricarli come file Word. Una lezione di 2 ore richiede 1-3 minuti.</p>
+      <p class="note">L'intelligenza artificiale scrive gli <strong>appunti</strong> della registrazione o <strong>corregge la trascrizione</strong> direttamente qui. Si salvano da soli nella registrazione e puoi scaricarli come file Word. Una registrazione di 2 ore richiede 1-3 minuti.</p>
       <details class="lav" id="supporto">
         <summary>+ Aggiungi materiale di supporto <small>(foto della lavagna, slide)</small></summary>
         <div class="row">
@@ -851,7 +851,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
         </div>
         <div class="thumbs" id="lavThumbs" hidden></div>
         <div class="row">
-          <label class="btn" for="matIn">📎 Slide o PDF del professore</label>
+          <label class="btn" for="matIn">📎 Slide o PDF</label>
           <input type="file" id="matIn" accept=".pdf,.pptx,.docx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain">
           <span class="note" id="matNota">Facoltativi: l'AI li usa per appunti, flashcard, orale e Chiedi.</span>
         </div>
@@ -887,7 +887,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <label class="field"><span>Materia</span><select id="simMateria" aria-label="Materia dell'esame"></select></label>
     <div class="es-card">
       <h3>📝 Simulazione dello scritto</h3>
-      <p class="note">Domande da tutte le lezioni della materia, con il tempo che scorre e il voto in trentesimi alla fine. Ti dice anche quali lezioni ripassare.</p>
+      <p class="note">Domande da tutte le registrazioni della materia, con il tempo che scorre e il voto in trentesimi alla fine. Ti dice anche quali registrazioni ripassare.</p>
       <div class="row">
         <label class="field" style="flex:0 0 auto"><span>Domande</span>
           <select id="esQuante"><option value="10">10 (15 min)</option><option value="20" selected>20 (30 min)</option><option value="30">30 (45 min)</option></select>
@@ -910,9 +910,9 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     </div>
     <div class="es-card">
       <h3>🧮 Esercizi con soluzione</h3>
-      <p class="note">Esercizi numerici o casi pratici sugli argomenti di una lezione, con la soluzione passo per passo nascosta finché non la vuoi vedere.</p>
+      <p class="note">Esercizi numerici o casi pratici sugli argomenti di una registrazione, con la soluzione passo per passo nascosta finché non la vuoi vedere.</p>
       <div class="row">
-        <label class="field" style="flex:1 1 180px"><span>Da quale lezione</span><select id="esLezione"></select></label>
+        <label class="field" style="flex:1 1 180px"><span>Da quale registrazione</span><select id="esLezione"></select></label>
         <button type="button" class="primary" id="eseCrea" style="align-self:flex-end">Crea esercizi</button>
       </div>
       <div class="ese-lista" id="eseLista"></div>
@@ -926,7 +926,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <span class="chip" id="fcChip" hidden></span>
     </div>
     <div id="fcStart" class="fc-start" style="display:flex;flex-direction:column;gap:12px">
-      <p class="note">Crea domande a risposta multipla dalla lezione e mettiti alla prova. Scopri cosa hai sbagliato solo alla fine, con il punteggio e le risposte corrette. Se la lezione è salvata, le flashcard restano nell'archivio.</p>
+      <p class="note">Crea domande a risposta multipla dalla registrazione e mettiti alla prova. Scopri cosa hai sbagliato solo alla fine, con il punteggio e le risposte corrette. Se la registrazione è salvata, le flashcard restano nell'archivio.</p>
       <div class="row">
         <label class="field" style="flex:0 0 auto"><span>Quante domande</span>
           <select id="fcQuante"><option>10</option><option selected>15</option><option>20</option><option>30</option></select>
@@ -937,7 +937,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <p class="note" id="fcLimiti"></p>
       <div class="fc-mat" id="fcMatBox" hidden>
         <strong>Ripasso per materia</strong>
-        <p class="note">Mescola le flashcard di tutte le lezioni salvate di una materia e ti ripropone più spesso quelle che sbagli.</p>
+        <p class="note">Mescola le flashcard di tutte le registrazioni salvate di una materia e ti ripropone più spesso quelle che sbagli.</p>
         <div class="row">
           <select id="fcMateria" aria-label="Materia da ripassare"></select>
           <button type="button" id="fcRipMat">Ripassa la materia</button>
@@ -973,7 +973,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
   <section class="panel priv" aria-labelledby="lOrale" id="oralePanel">
     <span class="label" id="lOrale">Simulazione dell'orale</span>
     <div id="oraleStart" style="display:flex;flex-direction:column;gap:12px">
-      <p class="note">L'AI ti interroga sulle lezioni salvate di una materia. Rispondi a voce o per iscritto: ricevi un voto in trentesimi, cosa hai detto bene, cosa mancava e la risposta da 30.</p>
+      <p class="note">L'AI ti interroga sulle registrazioni salvate di una materia. Rispondi a voce o per iscritto: ricevi un voto in trentesimi, cosa hai detto bene, cosa mancava e la risposta da 30.</p>
       <div class="row">
         <select id="oraleMateria" aria-label="Materia dell'orale"></select>
         <select id="oraleN" aria-label="Numero di domande"><option value="3">3 domande</option><option value="5" selected>5 domande</option><option value="8">8 domande</option></select>
@@ -1014,7 +1014,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <span class="label" id="lMappa">Mappa concettuale</span>
       <span class="chip" id="mappaLez" hidden></span>
     </div>
-    <p class="note" id="mappaNota">Apri una lezione dall'archivio: l'AI disegna la mappa dei concetti e dei collegamenti, per il ripasso veloce.</p>
+    <p class="note" id="mappaNota">Apri una registrazione dall'archivio: l'AI disegna la mappa dei concetti e dei collegamenti, per il ripasso veloce.</p>
     <div class="mappa" id="mappaBox"></div>
     <div class="row">
       <button type="button" class="primary" id="mappaCrea" disabled>Crea mappa</button>
@@ -1025,16 +1025,16 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
 
   <section class="panel priv" aria-labelledby="lAsk">
     <div class="row between">
-      <span class="label" id="lAsk">Chiedi alle tue lezioni</span>
+      <span class="label" id="lAsk">Chiedi alle tue registrazioni</span>
       <button type="button" id="askNuova" hidden>Nuova chat</button>
     </div>
-    <p class="note">Fai una domanda: l'AI cerca nelle lezioni e negli appunti salvati e risponde indicando da quale lezione viene ogni informazione.</p>
+    <p class="note">Fai una domanda: l'AI cerca nelle registrazioni e negli appunti salvati e risponde indicando da quale registrazione viene ogni informazione.</p>
     <div class="ask-log" id="askLog" hidden></div>
     <div class="row">
       <select id="askMateria" aria-label="Dove cercare"><option value="">Tutte le materie</option></select>
     </div>
     <div class="ask-in">
-      <textarea id="askIn" rows="2" placeholder="es. Cosa ha detto il prof sulla riserva di legge?"></textarea>
+      <textarea id="askIn" rows="2" placeholder="es. Cosa si è detto sulla riserva di legge?"></textarea>
       <button type="button" class="primary" id="askGo">Chiedi</button>
     </div>
     <div class="status" id="askStatus" role="status"></div>
@@ -1045,7 +1045,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <span class="label" id="lGlo">Glossario</span>
       <span class="chip" id="gloConta" hidden></span>
     </div>
-    <p class="note">Si crea da solo quando salvi una lezione: i termini tecnici con la definizione del professore, divisi per materia.</p>
+    <p class="note">Si crea da solo quando salvi una registrazione: i termini tecnici con la loro definizione, divisi per materia o argomento.</p>
     <div class="row">
       <select id="gloMateria" aria-label="Materia del glossario"></select>
       <input type="search" id="gloCerca" placeholder="Cerca un termine" aria-label="Cerca nel glossario" style="flex:1 1 180px;width:auto">
@@ -1054,36 +1054,36 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <div class="row">
       <button type="button" class="primary" id="gloQuiz" hidden>Flashcard dal glossario</button>
       <button type="button" id="gloWord" hidden>Scarica Word</button>
-      <button type="button" id="gloAggiorna" hidden>Aggiorna dalla lezione aperta</button>
+      <button type="button" id="gloAggiorna" hidden>Aggiorna dalla registrazione aperta</button>
     </div>
     <div class="status" id="gloStatus" role="status"></div>
   </section>
 
   <section class="panel priv" aria-labelledby="lSave" style="flex-direction:column">
     <div class="row between">
-      <span class="label" id="lSave">La lezione</span>
+      <span class="label" id="lSave">La registrazione</span>
       <span class="chip" id="currentChip">Non ancora salvata</span>
     </div>
-    <p class="note" id="salvaInfo">Si salva da sola nell'archivio. Materia e titolo sono facoltativi: se li lasci vuoti li sceglie l'AI.</p>
+    <p class="note" id="salvaInfo">Si salva da sola nell'archivio. Argomento e titolo sono facoltativi: se li lasci vuoti li sceglie l'AI.</p>
     <span id="materiaEco" hidden></span>
-    <p class="note" id="salvaVuoto">Non c'è ancora testo da salvare: registra una lezione in <button type="button" class="link" id="vaiTrascrivi">Trascrivi</button>, carica un file in <button type="button" class="link" id="vaiFonte">Appunti</button> o apri una lezione dall'<button type="button" class="link" id="vaiArchivio">Archivio</button>.</p>
-    <label class="field"><span>Materia</span><input type="text" id="materia2" list="materieList" autocomplete="off" placeholder="Facoltativa"></label>
+    <p class="note" id="salvaVuoto">Non c'è ancora testo da salvare: registra in <button type="button" class="link" id="vaiTrascrivi">Trascrivi</button>, carica un file in <button type="button" class="link" id="vaiFonte">Appunti</button> o apri una registrazione dall'<button type="button" class="link" id="vaiArchivio">Archivio</button>.</p>
+    <label class="field"><span>Materia o argomento</span><input type="text" id="materia2" list="materieList" autocomplete="off" placeholder="Facoltativa"></label>
     <div class="form">
       <label class="field"><span>Titolo</span><input type="text" id="titolo" placeholder="Facoltativo"></label>
       <label class="field"><span>Data</span><input type="date" id="dataLez"></label>
     </div>
-    <label class="field"><span>Appunti della lezione</span>
+    <label class="field"><span>Appunti della registrazione</span>
       <textarea id="appunti" spellcheck="true" placeholder="Appunti, riassunto, domande d'esame…"></textarea>
     </label>
     <button type="button" id="lezAscolta" hidden style="align-self:flex-start">🔊 Ascolta gli appunti</button>
     <div class="row">
-      <button type="button" class="primary" id="saveLesson" hidden>Salva lezione</button>
-      <button type="button" id="newLesson">Nuova lezione</button>
+      <button type="button" class="primary" id="saveLesson" hidden>Salva registrazione</button>
+      <button type="button" id="newLesson">Ricomincia da zero</button>
       <button type="button" id="condBtn" hidden>🔗 Condividi appunti</button>
       <button type="button" id="delLesson" class="danger" hidden>Elimina</button>
     </div>
     <div class="cond-box" id="condBox" hidden>
-      <p class="note">Chi ha il link vede gli appunti di questa lezione in sola lettura (mai l'audio).</p>
+      <p class="note">Chi ha il link vede gli appunti di questa registrazione in sola lettura (mai l'audio).</p>
       <div class="row"><input type="text" id="condUrl" readonly aria-label="Link di condivisione" style="flex:1 1 220px;width:auto">
         <button type="button" id="condCopia">Copia</button><button type="button" class="danger" id="condStop">Smetti di condividere</button></div>
     </div>
@@ -1092,13 +1092,13 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
 
   <section class="panel priv" aria-labelledby="lArch" style="flex-direction:column">
     <div class="row between">
-      <span class="label" id="lArch">Le tue lezioni</span>
+      <span class="label" id="lArch">Le tue registrazioni</span>
       <span class="usage" id="usage" hidden></span>
     </div>
-    <input type="search" id="cerca" placeholder="Cerca per titolo, materia o parola della lezione" aria-label="Cerca nelle lezioni">
+    <input type="search" id="cerca" placeholder="Cerca per titolo, materia o parola della registrazione" aria-label="Cerca nelle registrazioni">
     <div class="filters" id="filtri" role="group" aria-label="Filtra per materia" hidden></div>
     <div class="status" id="archStatus" role="status"></div>
-    <div class="lesson-list" id="lista"><p class="note">Le lezioni che salvi compaiono qui, divise per materia.</p></div>
+    <div class="lesson-list" id="lista"><p class="note">Le registrazioni che salvi compaiono qui, divise per materia.</p></div>
   </section>
 
   <section class="panel" aria-labelledby="l5">
@@ -1108,7 +1108,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Se si interrompe, riapri l'app: riprende da dove era rimasta e la registrazione non si perde.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.9<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 4.0<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="contesto priv" id="contesto" data-tab="studia appunti">
     <span id="contestoTxt"></span>
     <span class="row" style="gap:14px"><button type="button" class="link" id="contestoBtn"></button><button type="button" class="link rimuovi" id="contestoVia" hidden>Rimuovi</button></span>
@@ -1132,7 +1132,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <li><button type="button" data-vai="lTimer"><span>⏱️</span>Sessione di studio</button></li>
     <li><button type="button" data-vai="lNotif"><span>🔔</span>Promemoria</button></li>
     <li><button type="button" data-vai="lOggi"><span>📅</span>Date degli esami</button></li>
-    <li><button type="button" data-vai="lOrario"><span>🗓️</span>Orario delle lezioni</button></li>
+    <li><button type="button" data-vai="lOrario"><span>🗓️</span>Il tuo orario</button></li>
     <li class="menu-sep" role="separator"></li>
     <li><button type="button" data-vai="l5"><span>💡</span>Consigli</button></li>
     <li><button type="button" id="menuProf"><span>👤</span>Profilo e traguardi</button></li>
@@ -1182,7 +1182,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <button type="button" class="link" id="invMai">Non chiedere più</button>
   </div>
 </div>
-<div class="offline-bar" id="offlineBar" hidden role="status">📴 Sei offline: vedi le lezioni salvate su questo dispositivo. Le modifiche si salvano quando torna la rete.</div>
+<div class="offline-bar" id="offlineBar" hidden role="status">📴 Sei offline: vedi le registrazioni salvate su questo dispositivo. Le modifiche si salvano quando torna la rete.</div>
 <div class="lettore" id="lettore" hidden role="region" aria-label="Lettura ad alta voce">
   <div class="lt-info"><strong id="ltTitolo">Ascolta</strong><span id="ltStato"></span></div>
   <div class="lt-bar"><i id="ltBar"></i></div>
@@ -1199,7 +1199,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <div class="ben-slide">
       <div class="ben-ic">👋</div>
       <h2 id="benT">Benvenuto in Freetrascrizioni</h2>
-      <p>Ti faccio vedere in un minuto <b>dove si trova ogni cosa</b>, scheda per scheda: registrare, creare appunti, studiare e prepararti all'esame.</p>
+      <p>Ti faccio vedere in un minuto <b>dove si trova ogni cosa</b>, scheda per scheda: registrare lezioni, corsi o riunioni, creare appunti, studiare e ripassare.</p>
       <p class="note">Puoi rivederlo quando vuoi da ☰ → Come funziona.</p>
     </div>
     <div class="row between">
@@ -1237,7 +1237,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
   </div>
   <label class="field"><span>Email</span><input type="email" id="pEmail" autocomplete="email"></label>
   <label class="field"><span>Telefono</span><input type="tel" id="pTel" autocomplete="tel"></label>
-  <label class="field"><span>Professione</span><input type="text" id="pProf" placeholder="es. Studente di Economia"></label>
+  <label class="field"><span>Professione</span><input type="text" id="pProf" placeholder="es. Studente, consulente, insegnante"></label>
   <button type="button" class="primary" id="profSalva">Salva profilo</button>
   <div class="status" id="profStatus" role="status"></div>
   <div class="prof-sez" id="trgSez">
@@ -1259,7 +1259,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <button type="button" id="logoutBtn">Esci da questo dispositivo</button>
     <button type="button" class="danger" id="delAccBtn">Elimina account</button>
     <div id="delAccBox" hidden style="display:flex;flex-direction:column;gap:8px">
-      <p class="note" id="delAccTxt">Verranno cancellati <strong>per sempre</strong> tutte le lezioni, gli appunti, le flashcard, le statistiche e il profilo. L'app resta installata e la password resta la stessa. Scrivi <strong>ELIMINA</strong> per confermare.</p>
+      <p class="note" id="delAccTxt">Verranno cancellati <strong>per sempre</strong> tutte le registrazioni, gli appunti, le flashcard, le statistiche e il profilo. L'app resta installata e la password resta la stessa. Scrivi <strong>ELIMINA</strong> per confermare.</p>
       <input type="text" id="delAccIn" autocomplete="off" aria-label="Scrivi ELIMINA per confermare">
       <button type="button" class="danger" id="delAccOk" disabled>Elimina tutto per sempre</button>
     </div>
@@ -1508,7 +1508,7 @@ function pausaRecording(){
   try { if (fullRec?.state === 'recording') fullRec.pause(); } catch (_) {}
   try { actx?.suspend?.(); } catch (_) {}
   recBottoni(); $('recTime').textContent = hms(recPrima);
-  setStatus('Registrazione in pausa. Premi «Riprendi registrazione» per continuare o «Termina registrazione» se la lezione è finita.');
+  setStatus('Registrazione in pausa. Premi «Riprendi registrazione» per continuare o «Termina registrazione» quando hai finito.');
   track('registrazione-pausa');
 }
 function riprendiRecording(){
@@ -1590,14 +1590,14 @@ async function startRecording(){
     if (actx && actx.state === 'suspended') actx.resume?.().catch(() => {});
     if (live) liveStatus();
     else if (Date.now() - recStart > 8000 && recPeak < 0.003) setStatus('Non sento la voce: controlla che il microfono non sia coperto o disattivato.', 'warn');
-    else if (!running) setStatus('Registrazione in corso… Puoi metterla in pausa; a fine lezione premi «Termina registrazione».');
+    else if (!running) setStatus('Registrazione in corso… Puoi metterla in pausa; quando hai finito premi «Termina registrazione».');
   }, 1000);
   recBottoni();
   requestWake();
   live = $('live').checked;
   track('registrazione-avviata', live ? 'con trascrizione in diretta' : 'senza diretta');
   if (live) { beginRun(); recNext = 0; ensureModel().catch(err => failRun(err)); }
-  else setStatus('Registrazione in corso… Puoi metterla in pausa; a fine lezione premi «Termina registrazione».');
+  else setStatus('Registrazione in corso… Puoi metterla in pausa; quando hai finito premi «Termina registrazione».');
 }
 
 function finishSegment(){
@@ -2230,7 +2230,7 @@ async function comprimiFoto(file){
 $('lavIn').addEventListener('change', async e => {
   const files = [...e.target.files].slice(0, 10 - lavFoto.length); e.target.value = '';
   for (const f of files) { try { lavFoto.push(await comprimiFoto(f)); } catch (_) { aiSt('Non riesco a leggere una delle foto.', 'warn'); } }
-  if (lavFoto.length >= 10) aiSt('Massimo 10 foto per lezione.', 'warn');
+  if (lavFoto.length >= 10) aiSt('Massimo 10 foto per registrazione.', 'warn');
   lavRender();
 });
 // chiamata all'AI con attesa automatica quando Groq è al limite
@@ -2250,7 +2250,7 @@ async function aiChiama(path, body, cosa){
 }
 async function aiRun(tipo){
   const testo = $('out').value.trim();
-  if (testo.length < 200) { aiSt('Prima trascrivi una lezione o aprila dall’archivio: il testo è troppo corto.', 'warn'); return; }
+  if (testo.length < 200) { aiSt('Prima trascrivi una registrazione o aprila dall’archivio: il testo è troppo corto.', 'warn'); return; }
   if (running) { aiSt('Aspetta che finisca la trascrizione.', 'warn'); return; }
   if (aiBusy) return;
   aiBusy = true; aiStop = false; aiTipo = tipo;
@@ -2285,18 +2285,18 @@ async function aiRun(tipo){
     let finale;
     if (tipo === 'aggiusta') finale = fatti.join('\n\n');
     else {
-      const titolo = ($('titolo').value || '').trim() || 'Lezione';
+      const titolo = ($('titolo').value || '').trim() || 'Registrazione';
       finale = `# ${titolo}\n${materia || 'Materia non indicata'} · ${data}\n\n` + fatti.join('\n\n')
         + (verifica.length ? '\n\n## Da verificare\n' + verifica.map(x => '- ' + x).join('\n') : '');
     }
     $('aiOut').value = finale; aiRender(); aiModifica(false);
-    $('aiTitolo').textContent = tipo === 'aggiusta' ? 'Trascrizione corretta' : 'Appunti della lezione';
+    $('aiTitolo').textContent = tipo === 'aggiusta' ? 'Trascrizione corretta' : 'Appunti della registrazione';
     $('aiUsa').textContent = 'Usa come trascrizione';
     $('aiUsa').hidden = tipo !== 'aggiusta';
     if (tipo !== 'aggiusta') { $('appunti').value = finale; autoSalva(); }
     $('aiRis').hidden = false; $('aiRis').style.display = 'flex';
     const parz = aiStop || fatti.length < parti.length;
-    aiSt(parz ? `Interrotto: pronte ${fatti.length} parti su ${parti.length}.` : (tipo === 'aggiusta' ? 'Trascrizione corretta pronta: controllala e tocca «Usa come trascrizione».' : 'Appunti pronti e salvati nella lezione: puoi modificarli o scaricarli.'), parz ? 'warn' : '');
+    aiSt(parz ? `Interrotto: pronte ${fatti.length} parti su ${parti.length}.` : (tipo === 'aggiusta' ? 'Trascrizione corretta pronta: controllala e tocca «Usa come trascrizione».' : 'Appunti pronti e salvati nella registrazione: puoi modificarli o scaricarli.'), parz ? 'warn' : '');
   } catch (e) {
     const msg = e.code === 'chiave-groq' ? 'La chiave Groq non è valida: controlla GROQ_API_KEY su Cloudflare.'
       : e.code === 'fondi-esauriti' ? 'Hai raggiunto il tetto di spesa che hai impostato su Groq.'
@@ -2317,7 +2317,7 @@ $('aiUsa').addEventListener('click', async () => {
   if (aiTipo === 'aggiusta') { $('out').value = t; aggiornaContesto(); }
   else $('appunti').value = t;
   await autoSalva();
-  aiSt(aiTipo === 'aggiusta' ? 'Trascrizione sostituita e salvata nella lezione.' : 'Appunti salvati nella lezione.');
+  aiSt(aiTipo === 'aggiusta' ? 'Trascrizione sostituita e salvata nella registrazione.' : 'Appunti salvati nella registrazione.');
 });
 function aiNome(){
   const base = ($('titolo').value || materiaCorrente() || 'lezione').trim().replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, '_').slice(0, 60) || 'lezione';
@@ -2380,7 +2380,7 @@ function preparaMulti(st){
   MULTI = true; statoApp = st;
   $('authBox').hidden = false; $('lockForm').style.display = 'none'; $('lockNota').hidden = true;
   $('linkLegali').hidden = false;
-  document.querySelector('header p').textContent = 'Registra le lezioni, ottieni la trascrizione in pochi minuti e studia con appunti, flashcard e domande create dall’intelligenza artificiale.';
+  document.querySelector('header p').textContent = 'Registra lezioni, corsi e riunioni: trascrizione in pochi minuti, appunti con l’AI, flashcard e strumenti per studiare e ripassare.';
   document.title = 'Freetrascrizioni';
   $('googleBtn').hidden = !st.google; $('oppure').hidden = !st.google;
   authModo(false);
@@ -2426,7 +2426,7 @@ function mostraAccount(v){
   $('pwAttBox').hidden = !utenteInfo.conPassword;
   $('logoutBtn').textContent = 'Esci';
   $('adminBtn').hidden = !utenteInfo.admin;
-  $('delAccTxt').innerHTML = 'Verranno cancellati <strong>per sempre</strong> il tuo account e tutti i tuoi dati: lezioni, appunti, flashcard e statistiche. Scrivi <strong>ELIMINA</strong> per confermare.';
+  $('delAccTxt').innerHTML = 'Verranno cancellati <strong>per sempre</strong> il tuo account e tutti i tuoi dati: registrazioni, appunti, flashcard e statistiche. Scrivi <strong>ELIMINA</strong> per confermare.';
   if (v.settimana) {
     const h = x => (x / 3600).toFixed(1).replace('.', ',');
     $('limInfo').hidden = false;
@@ -2461,7 +2461,7 @@ function admRender(){
     const e = document.createElement('span'); e.className = 'meta'; e.textContent = u.email + (u.conGoogle ? ' · Google' : '');
     chi.append(n, e);
     const meta = document.createElement('div'); meta.className = 'meta';
-    meta.textContent = `Iscritto ${quando(u.creato)} · ultimo accesso ${quando(u.ultimo)} · ${u.lezioni || 0} lezioni · AI oggi ${Math.round((u.tokenOggi || 0) / 1000)}k token`;
+    meta.textContent = `Iscritto ${quando(u.creato)} · ultimo accesso ${quando(u.ultimo)} · ${u.lezioni || 0} registrazioni · AI oggi ${Math.round((u.tokenOggi || 0) / 1000)}k token`;
     const usate = u.settimana || 0, lim = u.limite * 3600;
     const lab = document.createElement('div'); lab.className = 'meta'; lab.textContent = `Questa settimana: ${h(usate)} h su ${String(u.limite).replace('.', ',')} h`;
     const bar = document.createElement('div'); bar.className = 'adm-bar'; const bi = document.createElement('i'); bi.style.width = Math.min(100, lim ? usate / lim * 100 : 100) + '%'; bar.append(bi);
@@ -2480,7 +2480,7 @@ function admRender(){
     const elimina = document.createElement('button'); elimina.type = 'button'; elimina.className = 'danger'; elimina.textContent = 'Elimina';
     const conf = document.createElement('div'); conf.className = 'adm-conf'; conf.hidden = true;
     const avv = document.createElement('p'); avv.className = 'meta';
-    avv.textContent = `Verranno cancellati per sempre l'account di ${u.email} e tutti i suoi dati (lezioni, appunti, flashcard, link condivisi). Scrivi la sua email per confermare.`;
+    avv.textContent = `Verranno cancellati per sempre l'account di ${u.email} e tutti i suoi dati (registrazioni, appunti, flashcard, link condivisi). Scrivi la sua email per confermare.`;
     const ci = document.createElement('input'); ci.type = 'email'; ci.placeholder = u.email; ci.autocomplete = 'off'; ci.setAttribute('aria-label', 'Email da confermare');
     const ok = document.createElement('button'); ok.type = 'button'; ok.className = 'danger'; ok.textContent = 'Elimina per sempre'; ok.disabled = true;
     ci.addEventListener('input', () => { ok.disabled = ci.value.trim().toLowerCase() !== u.email; });
@@ -2739,13 +2739,13 @@ function gloRender(){
     via.addEventListener('click', async () => { try { await privApi('glossario?chiave=' + encodeURIComponent(t.chiave), { method: 'DELETE' }); gloTermini = gloTermini.filter(x => x !== t); gloRender(); gloCaricaMaterie($('gloMateria').value); } catch (_) {} });
     tt.append(sx, via);
     const p = document.createElement('p'); p.textContent = t.definizione;
-    const sm = document.createElement('small'); sm.textContent = `Dalla lezione: ${t.lezione_titolo} · ${fmtData(t.lezione_data)}` + (t.aggiornato > t.creato + 60000 ? ' · arricchito dopo' : '');
+    const sm = document.createElement('small'); sm.textContent = `Dalla registrazione: ${t.lezione_titolo} · ${fmtData(t.lezione_data)}` + (t.aggiornato > t.creato + 60000 ? ' · arricchito dopo' : '');
     d.append(tt, p, sm); box.append(d);
   }
   if (!gloTermini.length) {
     const m = $('gloMateria').value, lez = archivioItems.filter(i => i.materia === m);
     const p = document.createElement('p'); p.className = 'note';
-    p.textContent = !m ? 'Il glossario è vuoto: salva una lezione e i termini compariranno qui.' : lez.length ? `Il glossario di ${m} è ancora vuoto.` : `Nessuna lezione di ${m} nell'archivio.`;
+    p.textContent = !m ? 'Il glossario è vuoto: salva una registrazione e i termini compariranno qui.' : lez.length ? `Il glossario di ${m} è ancora vuoto.` : `Nessuna registrazione di ${m} nell'archivio.`;
     box.append(p);
     if (lez.length) {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'primary'; b.id = 'gloCrea';
@@ -2763,7 +2763,7 @@ $('gloMateria').addEventListener('change', gloCarica);
 $('gloCerca').addEventListener('input', gloRender);
 async function gloEstrai(id, silenzioso){
   if (!id) return;
-  if (!silenzioso) { $('gloAggiorna').disabled = true; gloSt('Aggiorno il glossario dalla lezione…'); }
+  if (!silenzioso) { $('gloAggiorna').disabled = true; gloSt('Aggiorno il glossario dalla registrazione…'); }
   try {
     const r = await privApi('glossario-estrai', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, auto: !!silenzioso }) });
     if (r.saltato) return;
@@ -2778,9 +2778,9 @@ async function gloCreaMateria(m, lez){
   const b = $('gloCrea'); if (b) b.disabled = true;
   let nuovi = 0, errori = 0;
   for (const [k, l] of lez.entries()) {
-    gloSt(`Leggo le lezioni di ${m} (${k + 1} di ${lez.length})…`);
+    gloSt(`Leggo le registrazioni di ${m} (${k + 1} di ${lez.length})…`);
     try { const r = await privApi('glossario-estrai', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: l.id }) }); nuovi += r.nuovi || 0; }
-    catch (e) { if (e.code === 'limite-ai') { gloSt('Hai finito l’AI di oggi: continuo domani dalle lezioni mancanti.', 'warn'); break; } errori++; }
+    catch (e) { if (e.code === 'limite-ai') { gloSt('Hai finito l’AI di oggi: continuo domani dalle registrazioni mancanti.', 'warn'); break; } errori++; }
   }
   if (!$('gloStatus').className.includes('warn')) gloSt(`Glossario di ${m}: ${nuovi} ${nuovi === 1 ? 'termine' : 'termini'}` + (errori ? ` (${errori} ${errori === 1 ? 'lezione troppo corta o non letta' : 'lezioni troppo corte o non lette'}).` : '.'), errori && !nuovi ? 'warn' : '');
   await gloCaricaMaterie(m);
@@ -2790,7 +2790,7 @@ $('gloQuiz').addEventListener('click', () => {
   const carte = fcMescola(pool).slice(0, n).map(t => {
     const altre = fcMescola(pool.filter(x => x !== t)).slice(0, 3).map(x => x.definizione);
     const opzioni = fcMescola([t.definizione, ...altre]);
-    return { domanda: `Cosa significa «${t.termine}»?`, opzioni, corretta: opzioni.indexOf(t.definizione), spiegazione: `Dalla lezione: ${t.lezione_titolo} · ${fmtData(t.lezione_data)}` };
+    return { domanda: `Cosa significa «${t.termine}»?`, opzioni, corretta: opzioni.indexOf(t.definizione), spiegazione: `Dalla registrazione: ${t.lezione_titolo} · ${fmtData(t.lezione_data)}` };
   });
   fcInizia(carte, { tipo: 'glossario', materia: $('gloMateria').value });
   fcSt(`Glossario di ${$('gloMateria').value}: ${n} termini.`);
@@ -2834,7 +2834,7 @@ function oggiRender(piani){
     const info = document.createElement('p'); info.className = 'note';
     info.textContent = `${fmtData(p.esame.data)} · ${p.totaleLezioni} ${p.totaleLezioni === 1 ? 'lezione' : 'lezioni'}, ${p.daRipassare} da ripassare` + (p.deboli ? ` · ${p.deboli} flashcard da rinforzare` : '');
     c.append(top, info);
-    if (!p.totaleLezioni) { const n = document.createElement('p'); n.className = 'note'; n.textContent = 'Non ci sono ancora lezioni salvate di questa materia.'; c.append(n); }
+    if (!p.totaleLezioni) { const n = document.createElement('p'); n.className = 'note'; n.textContent = 'Non ci sono ancora registrazioni salvate di questa materia.'; c.append(n); }
     else if (p.finale) {
       const n = document.createElement('p'); n.textContent = p.giorni === 0 ? 'In bocca al lupo! Un ultimo giro veloce:' : 'Ultimi giorni: ripasso generale di tutta la materia.'; c.append(n);
       const r = document.createElement('div'); r.className = 'row';
@@ -2953,8 +2953,8 @@ function riduciTesto(t, max){
 function matRender(){
   const box = $('matLista'); box.textContent = '';
   const voci = [];
-  if (matLezione) voci.push({ t: `Slide e PDF salvati con la lezione · ${Math.round(matLezione.length / 1000)}k caratteri`, via: async () => { try { await privApi('materiale?id=' + encodeURIComponent(currentId), { method: 'DELETE' }); matLezione = ''; matRender(); } catch (_) {} } });
-  matPending.forEach((m, i) => voci.push({ t: `${m.nome} · ${m.info} · da salvare con la lezione`, via: () => { matPending.splice(i, 1); matRender(); } }));
+  if (matLezione) voci.push({ t: `Slide e PDF salvati con la registrazione · ${Math.round(matLezione.length / 1000)}k caratteri`, via: async () => { try { await privApi('materiale?id=' + encodeURIComponent(currentId), { method: 'DELETE' }); matLezione = ''; matRender(); } catch (_) {} } });
+  matPending.forEach((m, i) => voci.push({ t: `${m.nome} · ${m.info} · da salvare con la registrazione`, via: () => { matPending.splice(i, 1); matRender(); } }));
   for (const v of voci) {
     const r = document.createElement('div'); r.className = 'row';
     const sp = document.createElement('span'); sp.className = 'note'; sp.textContent = v.t;
@@ -2971,8 +2971,8 @@ $('matIn').addEventListener('change', async e => {
     if (testo.replace(/\[(pagina|slide) \d+\]/g, '').trim().length < 50) { aiSt('Non trovo testo nel file: se il PDF è fatto di immagini scansionate, usa «Foto della lavagna».', 'warn'); return; }
     if (currentId) {
       await privApi('materiale', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: currentId, nome: f.name, testo }) });
-      matLezione = (matLezione + `\n\n=== ${f.name} ===\n` + testo).trim(); aiSt(`«${f.name}» aggiunto alla lezione (${info}).`);
-    } else { matPending.push({ nome: f.name, testo, info }); aiSt(`«${f.name}» pronto (${info}): verrà salvato con la lezione.`); }
+      matLezione = (matLezione + `\n\n=== ${f.name} ===\n` + testo).trim(); aiSt(`«${f.name}» aggiunto alla registrazione (${info}).`);
+    } else { matPending.push({ nome: f.name, testo, info }); aiSt(`«${f.name}» pronto (${info}): verrà salvato con la registrazione.`); }
     matRender();
   } catch (err) { aiSt(err.message === 'connessione' ? 'Serve la connessione per leggere il file.' : 'Non riesco a leggere il file: ' + err.message, 'err'); }
 });
@@ -2995,12 +2995,12 @@ async function oraleProssima(){
   $('oraleDomanda').textContent = 'Il professore sta preparando la domanda…'; $('oraleFonte').textContent = '';
   try {
     const d = await privApi('orale-domanda', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ materia: st.materia, gia: st.risultati.map(r => r.domanda) }) });
-    st.cur = d; $('oraleDomanda').textContent = d.domanda; $('oraleFonte').textContent = `Dalla lezione: ${d.lezione.titolo} · ${fmtData(d.lezione.data)}`;
+    st.cur = d; $('oraleDomanda').textContent = d.domanda; $('oraleFonte').textContent = `Dalla registrazione: ${d.lezione.titolo} · ${fmtData(d.lezione.data)}`;
   } catch (e) { $('oraleDomanda').textContent = ''; oraleSt(e.code === 'limite-ai' ? e.message : 'Non riesco a preparare la domanda: ' + e.message, 'err'); }
 }
 $('oraleInizia').addEventListener('click', () => {
   const materia = $('oraleMateria').value;
-  if (!materia) { oraleSt('Salva almeno una lezione per avere una materia su cui essere interrogato.', 'warn'); return; }
+  if (!materia) { oraleSt('Salva almeno una registrazione per avere una materia su cui essere interrogato.', 'warn'); return; }
   oraleStato = { materia, n: Number($('oraleN').value) || 5, risultati: [], cur: null }; oraleSt(''); oraleVista('q'); oraleProssima();
 });
 $('oraleEsci').addEventListener('click', () => { if (mr) mr.stop(); oraleVista('start'); oraleSt(''); });
@@ -3056,7 +3056,7 @@ $('oraleAvanti').addEventListener('click', () => {
   const media = st.risultati.reduce((n, r) => n + Math.min(30, r.voto), 0) / st.risultati.length;
   $('oraleMedia').textContent = media >= 29.5 && st.risultati.every(r => r.voto >= 30) ? '30L' : Math.round(media);
   $('oraleMedia').parentElement.classList.toggle('basso', media < 18);
-  $('oraleCommento').textContent = media >= 28 ? 'Eccellente: sei pronto per l’esame.' : media >= 24 ? 'Buona preparazione: rivedi i punti mancanti.' : media >= 18 ? 'Sufficiente: ripassa le lezioni con i voti più bassi.' : 'Non ancora sufficiente: ripassa e riprova.';
+  $('oraleCommento').textContent = media >= 28 ? 'Eccellente: sei pronto per l’esame.' : media >= 24 ? 'Buona preparazione: rivedi i punti mancanti.' : media >= 18 ? 'Sufficiente: ripassa le registrazioni con i voti più bassi.' : 'Non ancora sufficiente: ripassa e riprova.';
   const box = $('oraleRiepilogo'); box.textContent = '';
   st.risultati.forEach((r, i) => { const d = document.createElement('div'); d.className = 'fc-item'; const p1 = document.createElement('p'); p1.textContent = `${i + 1}. ${r.domanda}`; const p2 = document.createElement('p'); p2.className = r.voto < 18 ? 'tua' : 'giusta'; p2.textContent = `Voto: ${votoTesto(r.voto)}/30 · ${r.lezione}`; d.append(p1, p2); box.append(d); });
   oraleVista('fine');
@@ -3071,7 +3071,7 @@ function mappaDa(l){
   $('mappaCrea').disabled = !l; $('mappaCrea').textContent = mappaDati ? 'Rigenera mappa' : 'Crea mappa';
   $('mappaLez').hidden = !l; $('mappaLez').textContent = l ? l.titolo : '';
   $('mappaNota').hidden = !!mappaDati;
-  $('mappaNota').textContent = l ? 'Crea la mappa dei concetti e dei collegamenti di questa lezione, per il ripasso veloce.' : 'Apri una lezione dall’archivio: l’AI disegna la mappa dei concetti e dei collegamenti, per il ripasso veloce.';
+  $('mappaNota').textContent = l ? 'Crea la mappa dei concetti e dei collegamenti di questa registrazione, per il ripasso veloce.' : 'Apri una registrazione dall’archivio: l’AI disegna la mappa dei concetti e dei collegamenti, per il ripasso veloce.';
   mappaRender();
 }
 function mappaRender(){
@@ -3113,7 +3113,7 @@ async function dispensa(materia, formato, btn){
   btn.disabled = true;
   try {
     const [items, glo] = await Promise.all([privApi('appunti?materia=' + encodeURIComponent(materia)), privApi('glossario?materia=' + encodeURIComponent(materia)).catch(() => [])]);
-    if (!items.length) { st.textContent = `Nessuna lezione di ${materia} ha ancora appunti: creali nella scheda Appunti.`; st.className = 'status warn'; finestra?.close(); return; }
+    if (!items.length) { st.textContent = `Nessuna registrazione di ${materia} ha ancora appunti: creali nella scheda Appunti.`; st.className = 'status warn'; finestra?.close(); return; }
     const esc = x => String(x).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
     const senzaTitolo = a => a.trim().replace(/^#\s+.*\n(.*·.*\n)?/, '');
     let corpo = `<div class="copertina"><h1>${esc(materia)}</h1><p>Dispensa · ${items.length} ${items.length === 1 ? 'lezione' : 'lezioni'}${glo.length ? ' · glossario di ' + glo.length + ' termini' : ''}</p><p>Aggiornata al ${esc(fmtData(todayISO()))}</p></div>`;
@@ -3128,7 +3128,7 @@ h1{font-size:20pt;color:#14573d;margin:0 0 4pt}h2{font-size:14pt;color:#14573d;m
     if (formato === 'word') {
       const doc = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>${esc(nome)}</title><style>${stile}</style></head><body>${corpo}</body></html>`;
       await saveFile(new Blob(['﻿', doc], { type: 'application/msword' }), nome + '.doc');
-      st.textContent = `Dispensa di ${materia} pronta (${items.length} lezioni).`;
+      st.textContent = `Dispensa di ${materia} pronta (${items.length} registrazioni).`;
     } else {
       finestra.document.write(`<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(nome)}</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap"><style>${stile}</style></head><body>${corpo}<script>setTimeout(()=>print(),700)<\/script></body></html>`);
       finestra.document.close();
@@ -3353,7 +3353,7 @@ $('condBtn').addEventListener('click', async () => {
   try {
     const r = await privApi('condividi', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: currentId }) });
     $('condUrl').value = r.url; $('condBox').hidden = false;
-    if (isMobile && navigator.share) { try { await navigator.share({ title: $('titolo').value || 'Appunti', text: 'Ecco gli appunti della lezione', url: r.url }); } catch (_) {} }
+    if (isMobile && navigator.share) { try { await navigator.share({ title: $('titolo').value || 'Appunti', text: 'Ecco gli appunti della registrazione', url: r.url }); } catch (_) {} }
     else privStatus('Link pronto: copialo e mandalo ai compagni.');
   } catch (e) { privStatus('Non riesco a creare il link: ' + e.message, 'err'); }
 });
@@ -3369,13 +3369,13 @@ function aggiornaContesto(){
   const t = $('contestoTxt'), b = $('contestoBtn');
   t.textContent = '';
   if (testo.length > 50) {
-    const x = document.createElement('span'); x.textContent = 'Lezione: ';
+    const x = document.createElement('span'); x.textContent = 'Registrazione: ';
     const y = document.createElement('b'); y.textContent = titolo || (currentId ? 'senza titolo' : 'non ancora salvata');
     t.append(x, y); if (materia) t.append(' · ' + materia);
     b.textContent = 'Cambia'; b.dataset.dove = 'lArch';
     $('contestoVia').hidden = false;
   } else {
-    t.textContent = 'Nessuna lezione aperta.'; b.textContent = 'Apri dall’archivio'; b.dataset.dove = 'lArch';
+    t.textContent = 'Nessuna registrazione aperta.'; b.textContent = 'Apri dall’archivio'; b.dataset.dove = 'lArch';
     $('contestoVia').hidden = true; disarmVia();
   }
   $('dopoTesto').hidden = testo.length < 200;
@@ -3396,7 +3396,7 @@ $('contestoVia').addEventListener('click', async () => {
   try { localStorage.removeItem(LS); } catch (_) {}
   $('aiRis').hidden = true; aiSt('');
   aggiornaContesto(); fonteInfo(); loadList();
-  privStatus(tit ? `«${tit}» rimossa da qui: la trovi sempre nell’archivio.` : 'Lezione rimossa da qui: la trovi sempre nell’archivio.');
+  privStatus(tit ? `«${tit}» rimossa da qui: la trovi sempre nell’archivio.` : 'Registrazione rimossa da qui: la trovi sempre nell’archivio.');
 });
 $('vaiAppunti').addEventListener('click', () => $('l4').scrollIntoView({ behavior: 'smooth', block: 'start' }));
 $('vaiTrascrivi').addEventListener('click', () => $('l1').scrollIntoView({ behavior: 'smooth', block: 'start' }));
@@ -3504,7 +3504,7 @@ function esMaterie(){
   const materie = [...new Set(archivioItems.map(i => i.materia))].sort((a, b) => a.localeCompare(b, 'it'));
   sel.textContent = '';
   materie.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = `${m} (${archivioItems.filter(i => i.materia === m).length})`; sel.append(o); });
-  if (!materie.length) { const o = document.createElement('option'); o.value = ''; o.textContent = 'Nessuna lezione salvata'; sel.append(o); }
+  if (!materie.length) { const o = document.createElement('option'); o.value = ''; o.textContent = 'Nessuna registrazione salvata'; sel.append(o); }
   sel.value = materie.includes(prima) ? prima : (materie[0] || '');
   ['esInizia', 'schCrea', 'eseCrea'].forEach(id => { $(id).disabled = !sel.value; });
   esLezioni(); caricaScheda();
@@ -3517,7 +3517,7 @@ function esLezioni(){
 $('simMateria').addEventListener('change', () => { esLezioni(); caricaScheda(); $('eseLista').textContent = ''; $('esStorico').hidden = true; esSt(''); });
 $('esInizia').addEventListener('click', async () => {
   const materia = $('simMateria').value, n = Number($('esQuante').value) || 20; if (!materia) return;
-  $('esInizia').disabled = true; esSt(`Preparo ${n} domande da tutte le lezioni di ${materia}… (circa 30 secondi)`);
+  $('esInizia').disabled = true; esSt(`Preparo ${n} domande da tutte le registrazioni di ${materia}… (circa 30 secondi)`);
   try {
     const r = await privApi('esame', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ materia, quante: n }) });
     esCarte = r.carte || [];
@@ -3540,7 +3540,7 @@ async function esEsito(giuste, tot){
   const perArg = new Map();
   fcGiro.forEach((c, i) => { const a = c.orig?.argomento || c.argomento; if (!a) return; const x = perArg.get(a) || { g: 0, t: 0 }; x.t++; if (fcRisposte[i] === c.corretta) x.g++; perArg.set(a, x); });
   if (perArg.size > 1) {
-    const h = document.createElement('strong'); h.textContent = 'Come sei andato per lezione'; box.append(h);
+    const h = document.createElement('strong'); h.textContent = 'Come sei andato per registrazione'; box.append(h);
     const lista = document.createElement('div'); lista.className = 'es-arg';
     [...perArg].sort((a, b) => a[1].g / a[1].t - b[1].g / b[1].t).forEach(([a, x]) => {
       const d = document.createElement('div');
@@ -3568,7 +3568,7 @@ function mostraScheda(r){
   schedaTesto = r.testo;
   $('schView').innerHTML = mdHtml(r.testo); $('schView').hidden = false;
   const ora = archivioItems.filter(i => i.materia === $('simMateria').value).length;
-  $('schInfo').textContent = `Creata il ${new Date(r.quando).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })} da ${r.lezioni} ${r.lezioni === 1 ? 'lezione' : 'lezioni'}` + (ora > r.lezioni ? (ora - r.lezioni === 1 ? ' · c’è una lezione nuova: rigenerala.' : ` · ci sono ${ora - r.lezioni} lezioni nuove: rigenerala.`) : '.');
+  $('schInfo').textContent = `Creata il ${new Date(r.quando).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })} da ${r.lezioni} ${r.lezioni === 1 ? 'lezione' : 'lezioni'}` + (ora > r.lezioni ? (ora - r.lezioni === 1 ? ' · c’è una registrazione nuova: rigenerala.' : ` · ci sono ${ora - r.lezioni} registrazioni nuove: rigenerala.`) : '.');
   $('schInfo').hidden = $('schPdf').hidden = $('schCopia').hidden = false; $('schAscolta').hidden = !PARLA; $('schCrea').textContent = 'Rigenera';
 }
 $('schCrea').addEventListener('click', async () => {
@@ -3593,7 +3593,7 @@ $('eseCrea').addEventListener('click', async () => {
   try {
     const r = await privApi('esercizi', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ materia, lezione: $('esLezione').value || null, quanti: 5 }) });
     const box = $('eseLista'); box.textContent = '';
-    const h = document.createElement('p'); h.className = 'note'; h.textContent = `Dalla lezione «${r.lezione}»:`; box.append(h);
+    const h = document.createElement('p'); h.className = 'note'; h.textContent = `Dalla registrazione «${r.lezione}»:`; box.append(h);
     r.esercizi.forEach((e, i) => {
       const d = document.createElement('div'); d.className = 'ese';
       const t = document.createElement('b'); t.textContent = `${i + 1}. ${e.titolo || 'Esercizio'}`;
@@ -3620,7 +3620,7 @@ async function salvaOrario(msg){
 function registraMateria(m){
   $('materia').value = m; materiaUtente = Date.now(); onMateria();
   tabScelta = true; attivaTab('trascrivi'); window.scrollTo({ top: 0 });
-  setStatus(`Lezione di ${m}: premi «Avvia registrazione» quando inizia. La materia è già impostata.`);
+  setStatus(`${m}: premi «Avvia registrazione» quando inizia. L’argomento è già impostato.`);
 }
 let orSel = null;
 const coloreMateria = m => { let h = 0; for (const c of m) h = (h * 31 + c.charCodeAt(0)) % 360; return `hsl(${h} 52% 38%)`; };
@@ -3630,7 +3630,7 @@ function orarioRender(){
   $('orarioNota').hidden = !!orario.length;
   const oggi = orario.filter(v => v.g === oggiIdx()), ob = $('orarioOggi'); ob.textContent = ''; ob.hidden = !oggi.length;
   if (oggi.length) {
-    const h = document.createElement('strong'); h.textContent = 'Oggi a lezione'; ob.append(h);
+    const h = document.createElement('strong'); h.textContent = 'Oggi in programma'; ob.append(h);
     oggi.forEach(v => {
       const r = document.createElement('div'); r.className = 'r';
       const t = document.createElement('span'); t.textContent = `${v.ora} · ${v.materia}`;
@@ -3644,7 +3644,7 @@ function orarioRender(){
     const col = document.createElement('button'); col.type = 'button';
     col.className = 'or-col' + (g === oggiIdx() ? ' oggi' : '') + (g === orSel ? ' sel' : '');
     const voci = orario.filter(v => v.g === g);
-    col.setAttribute('aria-label', GIORNI_LUNGHI[g] + ': ' + (voci.length ? voci.map(v => `${v.ora} ${v.materia}`).join(', ') : 'nessuna lezione'));
+    col.setAttribute('aria-label', GIORNI_LUNGHI[g] + ': ' + (voci.length ? voci.map(v => `${v.ora} ${v.materia}`).join(', ') : 'niente in programma'));
     const t = document.createElement('b'); t.textContent = GIORNI_BREVI[g]; col.append(t);
     voci.forEach(v => {
       const c = document.createElement('span'); c.className = 'or-chip'; c.style.setProperty('--c', coloreMateria(v.materia)); c.title = `${v.ora} ${v.materia}`;
@@ -3669,15 +3669,15 @@ function orarioRender(){
     });
     r.append(h, m, x); lista.append(r);
   });
-  if (!lista.children.length) { const p = document.createElement('p'); p.className = 'note'; p.style.margin = '0'; p.textContent = 'Nessuna lezione: aggiungila qui sotto.'; lista.append(p); }
+  if (!lista.children.length) { const p = document.createElement('p'); p.className = 'note'; p.style.margin = '0'; p.textContent = 'Niente in programma: aggiungi qui sotto.'; lista.append(p); }
 }
 $('orGiornoChiudi').addEventListener('click', () => { orSel = null; orarioRender(); });
 $('orAggiungi').addEventListener('click', async () => {
   const materia = $('orMateria').value.trim(), ora = $('orOra').value, g = orSel;
   if (g === null) return;
   if (!materia) { orSt('Scrivi la materia.', 'warn'); $('orMateria').focus(); return; }
-  if (!/^\d\d:\d\d$/.test(ora)) { orSt('Scegli l’ora della lezione.', 'warn'); return; }
-  if (orario.some(v => v.g === g && v.ora === ora)) { orSt('A quell’ora hai già una lezione.', 'warn'); return; }
+  if (!/^\d\d:\d\d$/.test(ora)) { orSt('Scegli l’ora di inizio.', 'warn'); return; }
+  if (orario.some(v => v.g === g && v.ora === ora)) { orSt('A quell’ora hai già qualcosa in programma.', 'warn'); return; }
   orario.push({ g, ora, materia });
   await salvaOrario(`${materia} aggiunta: ${GIORNI_LUNGHI[g].toLowerCase()} alle ${ora}.` + (notifAttivi ? '' : ' Attiva i promemoria per ricevere l’avviso.'));
   $('orMateria').value = '';
@@ -3699,7 +3699,7 @@ function invitoNotif(){
   if (!notifSupporto && !ios) return;
   $('invT').innerHTML = ios
     ? '<b>🔔 Vuoi un avviso?</b> Su iPhone i promemoria funzionano dall’app sulla schermata Home: tocca Condividi → «Aggiungi alla schermata Home» e aprila da lì.'
-    : '<b>🔔 Vuoi un avviso?</b> Ti ricordo quando ripassare questa lezione, l’inizio delle lezioni del tuo orario e quando la serie è a rischio.';
+    : '<b>🔔 Vuoi un avviso?</b> Ti ricordo quando ripassare, l’inizio degli impegni del tuo orario e quando la serie è a rischio.';
   $('invAttiva').hidden = ios; $('invNonOra').textContent = ios ? 'Ho capito' : 'Non ora';
   $('invTasti').hidden = false; $('invitoNotif').hidden = false;
 }
@@ -3739,26 +3739,26 @@ const BEN_KEY = 'ft:benvenuto';
 // ogni passo: scheda (e sotto-scheda) da aprire, elemento da evidenziare, testo
 const GIRO = [
   { tab: 'oggi', el: '#tabbar', t: 'Le 5 schede', x: 'In basso trovi tutto: <b>Oggi</b> (il tuo piano), <b>Trascrivi</b> (registra), <b>Studia</b>, <b>Appunti</b> e <b>Archivio</b>. Ora le giriamo una per una.' },
-  { tab: 'oggi', el: '#anelli', t: 'Oggi · I tuoi cerchi', x: 'Ore trascritte, AI usata, lezioni ripassate e minuti di studio di oggi. Chiudi i cerchi ogni giorno!' },
+  { tab: 'oggi', el: '#anelli', t: 'Oggi · I tuoi cerchi', x: 'Ore trascritte, AI usata, registrazioni ripassate e minuti di studio di oggi. Chiudi i cerchi ogni giorno!' },
   { tab: 'oggi', el: '#serieBox', t: 'Oggi · La serie 🔥', x: 'Studia ogni giorno per far crescere la serie. Tocca un giorno per vedere cosa hai fatto, ❄️ è il salva-serie, e qui sotto ci sono i traguardi.' },
-  { tab: 'oggi', el: '#oggiPanel', t: 'Oggi · Piano di ripasso', x: 'Aggiungi la <b>data dell’esame</b>: ogni giorno l’app ti dice quali lezioni ripassare per arrivare pronto.' },
+  { tab: 'oggi', el: '#oggiPanel', t: 'Oggi · Piano di ripasso', x: 'Aggiungi la <b>data dell’esame</b>: ogni giorno l’app ti dice quali registrazioni ripassare per arrivare pronto.' },
   { tab: 'oggi', el: '#timerPanel', t: 'Oggi · Sessione di studio', x: 'Un timer da 30 minuti a 2 ore e mezza: il tempo studiato riempie il cerchio Studio e conta per la serie.' },
-  { tab: 'oggi', el: '#orarioPanel', t: 'Oggi · Orario delle lezioni', x: 'La tua settimana: tocca un giorno per aggiungere le lezioni. All’ora della lezione ti arriva l’avviso e la materia è già pronta per registrare.' },
-  { tab: 'oggi', el: '#notifPanel', t: 'Oggi · Promemoria', x: 'Attiva le notifiche per gli avvisi di lezione, ripasso e serie. Su iPhone funzionano dall’app aggiunta alla schermata Home.' },
-  { tab: 'trascrivi', el: '#recBtn', t: 'Trascrivi · Registra', x: 'Premi <b>Avvia registrazione</b> a inizio lezione. Puoi mettere in pausa e, quando il prof dice «questo all’esame», toccare <b>⭐ Importante</b>.' },
+  { tab: 'oggi', el: '#orarioPanel', t: 'Oggi · Il tuo orario', x: 'La tua settimana: tocca un giorno per aggiungere lezioni, corsi o riunioni fisse. All’ora giusta ti arriva l’avviso e l’argomento è già pronto per registrare.' },
+  { tab: 'oggi', el: '#notifPanel', t: 'Oggi · Promemoria', x: 'Attiva le notifiche per gli avvisi dell’orario, del ripasso e della serie. Su iPhone funzionano dall’app aggiunta alla schermata Home.' },
+  { tab: 'trascrivi', el: '#recBtn', t: 'Trascrivi · Registra', x: 'Premi <b>Avvia registrazione</b> quando inizia la lezione o la riunione. Puoi mettere in pausa e, quando senti qualcosa di importante («questo all’esame», una decisione), toccare <b>⭐ Importante</b>.' },
   { tab: 'trascrivi', el: '#drop', t: 'Trascrivi · Carica un file', x: 'Hai già un audio o un video? Caricalo qui, anche di 2 ore.' },
-  { tab: 'trascrivi', el: 'section:has(#l2)', t: 'Trascrivi · Trascrizione', x: 'Premi <b>Trascrivi</b>. La materia è facoltativa: se la lasci vuota la sceglie l’AI.' },
-  { tab: 'trascrivi', el: 'section:has(#lSave)', t: 'La lezione si salva da sola', x: 'Finita la trascrizione la lezione va nell’archivio da sola, con materia e titolo. Qui puoi cambiarli quando vuoi.' },
+  { tab: 'trascrivi', el: 'section:has(#l2)', t: 'Trascrivi · Trascrizione', x: 'Premi <b>Trascrivi</b>. L’argomento è facoltativo: se lo lasci vuoto lo sceglie l’AI.' },
+  { tab: 'trascrivi', el: 'section:has(#lSave)', t: 'La registrazione si salva da sola', x: 'Finita la trascrizione la registrazione va nell’archivio da sola, con argomento e titolo. Qui puoi cambiarli quando vuoi.' },
   { tab: 'appunti', el: '#fontePanel', t: 'Appunti · Da cosa partiamo', x: 'Parti dalla trascrizione, oppure <b>carica un file</b> (PDF, Word, slide, foto degli appunti) o <b>incolla un testo</b>.' },
-  { tab: 'appunti', el: '.aicard', t: 'Appunti · Crea gli appunti', x: 'L’AI scrive appunti ordinati, in paragrafi con i titoli. Puoi aggiungere foto della lavagna e slide, ascoltarli 🔊 e scaricarli in Word.' },
+  { tab: 'appunti', el: '.aicard', t: 'Appunti · Crea gli appunti', x: 'L’AI scrive appunti ordinati, in paragrafi con i titoli (per le riunioni anche decisioni e cose da fare). Puoi aggiungere foto della lavagna e slide, ascoltarli 🔊 e scaricarli in Word.' },
   { tab: 'studia', sub: 'flashcard', el: '#segStudia', t: 'Studia · Gli strumenti', x: 'Qui scegli come studiare: Flashcard, Orale, Scritto, Mappa, Chiedi e Glossario. Puoi scorrere la barra di lato.' },
-  { tab: 'studia', sub: 'flashcard', el: '#fcPanel', t: 'Studia · Flashcard', x: 'Domande a risposta multipla dalla lezione: vedi i risultati solo alla fine, con gli errori spiegati.' },
+  { tab: 'studia', sub: 'flashcard', el: '#fcPanel', t: 'Studia · Flashcard', x: 'Domande a risposta multipla dalla registrazione: vedi i risultati solo alla fine, con gli errori spiegati.' },
   { tab: 'studia', sub: 'orale', el: '#oralePanel', t: 'Studia · Orale', x: 'L’AI ti fa una domanda come all’esame, tu rispondi a voce e ricevi il voto con cosa mancava.' },
   { tab: 'studia', sub: 'esame', el: '#esamePanel', t: 'Studia · Scritto', x: 'Simulazione dello scritto con timer e voto, <b>scheda di ripasso</b> della materia ed <b>esercizi</b> con la soluzione.' },
-  { tab: 'studia', sub: 'mappa', el: '#mappaPanel', t: 'Studia · Mappa', x: 'La mappa concettuale della lezione, per il ripasso veloce.' },
-  { tab: 'studia', sub: 'chiedi', el: 'section:has(#lAsk)', t: 'Studia · Chiedi', x: 'Fai una domanda e l’AI risponde usando le tue lezioni, con le fonti.' },
-  { tab: 'studia', sub: 'glossario', el: '#gloPanel', t: 'Studia · Glossario', x: 'I termini tecnici con la definizione del prof, raccolti da soli per materia.' },
-  { tab: 'archivio', el: 'section:has(#lArch)', t: 'Archivio', x: 'Tutte le tue lezioni divise per materia. Tocca una lezione per aprirla, o scarica la <b>dispensa</b> della materia in Word o PDF.' },
+  { tab: 'studia', sub: 'mappa', el: '#mappaPanel', t: 'Studia · Mappa', x: 'La mappa concettuale della registrazione, per il ripasso veloce.' },
+  { tab: 'studia', sub: 'chiedi', el: 'section:has(#lAsk)', t: 'Studia · Chiedi', x: 'Fai una domanda e l’AI risponde usando le tue registrazioni, con le fonti.' },
+  { tab: 'studia', sub: 'glossario', el: '#gloPanel', t: 'Studia · Glossario', x: 'I termini tecnici con la loro definizione, raccolti da soli per materia o argomento.' },
+  { tab: 'archivio', el: 'section:has(#lArch)', t: 'Archivio', x: 'Tutte le tue registrazioni divise per materia o argomento. Tocca una registrazione per aprirla, o scarica la <b>dispensa</b> della materia in Word o PDF.' },
   { tab: 'archivio', el: '#menuBtn', t: 'Il menu', x: 'Sessione di studio, promemoria, orario, segnalazioni e questo giro guidato.' },
   { tab: 'archivio', el: '#profBtn', t: 'Il tuo profilo', x: 'Foto, dati, traguardi 🏅 ed esportazione dei tuoi dati. Fatto: buono studio! 🎓' },
 ];
@@ -3851,7 +3851,7 @@ function dopoAccesso(v){
 }
 
 /* ---------- Pannello amministratore: statistiche e segnalazioni ---------- */
-const NOMI_EVENTI = { lezione: 'Lezioni nuove', appunti: 'Appunti con l’AI', flashcard: 'Flashcard create', quiz: 'Quiz completati', foto: 'Foto lette', chiedi: 'Domande a Chiedi', mappa: 'Mappe', orale: 'Risposte all’orale', timer: 'Sessioni di studio', simulazione: 'Simulazioni scritto', scheda: 'Schede di ripasso', esercizi: 'Esercizi', condividi: 'Condivisioni', slide: 'Slide caricate', segnalazione: 'Segnalazioni', promemoria: 'Promemoria attivati', orario: 'Orari salvati' };
+const NOMI_EVENTI = { lezione: 'Registrazioni nuove', appunti: 'Appunti con l’AI', flashcard: 'Flashcard create', quiz: 'Quiz completati', foto: 'Foto lette', chiedi: 'Domande a Chiedi', mappa: 'Mappe', orale: 'Risposte all’orale', timer: 'Sessioni di studio', simulazione: 'Simulazioni scritto', scheda: 'Schede di ripasso', esercizi: 'Esercizi', condividi: 'Condivisioni', slide: 'Slide caricate', segnalazione: 'Segnalazioni', promemoria: 'Promemoria attivati', orario: 'Orari salvati' };
 async function admExtra(){
   try {
     const [st, fb, er] = await Promise.all([privApi('admin/statistiche'), privApi('admin/feedback'), privApi('admin/errori').catch(() => [])]);
@@ -3986,7 +3986,7 @@ $('ltChiudi').addEventListener('click', () => { ltFerma(); $('lettore').hidden =
 if (PARLA) { try { speechSynthesis.getVoices(); speechSynthesis.addEventListener?.('voiceschanged', () => {}); } catch (_) {} }
 else { $('aiAscolta').hidden = true; }
 $('aiAscolta').addEventListener('click', () => ascolta($('aiTitolo').textContent || 'Appunti', $('aiOut').value));
-$('lezAscolta').addEventListener('click', () => ascolta($('titolo').value.trim() || 'Appunti della lezione', $('appunti').value));
+$('lezAscolta').addEventListener('click', () => ascolta($('titolo').value.trim() || 'Appunti della registrazione', $('appunti').value));
 $('schAscolta').addEventListener('click', () => ascolta('Scheda di ' + $('simMateria').value, schedaTesto));
 
 /* ---------- Pannello amministratore: errori ---------- */
@@ -4028,7 +4028,7 @@ function askMsg(ruolo, testo, fonti){
 }
 async function askGo(){
   const domanda = $('askIn').value.trim(); if (!domanda) return;
-  $('askGo').disabled = true; askMsg('io', domanda); $('askIn').value = ''; askSt('Cerco nelle tue lezioni…');
+  $('askGo').disabled = true; askMsg('io', domanda); $('askIn').value = ''; askSt('Cerco nelle tue registrazioni…');
   try {
     const r = await privApi('chiedi', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ domanda, materia: $('askMateria').value, storia: askStoria }) });
     askMsg('ai', r.testo, r.fonti); askStoria.push({ ruolo: 'io', testo: domanda }, { ruolo: 'ai', testo: r.testo }); askSt('');
@@ -4083,7 +4083,7 @@ async function fcSalva(){
 }
 $('fcCrea').addEventListener('click', async () => {
   const testo = $('out').value.trim();
-  if (testo.length < 200) { fcSt('Prima trascrivi una lezione o aprila dall’archivio: il testo è troppo corto.', 'warn'); return; }
+  if (testo.length < 200) { fcSt('Prima trascrivi una registrazione o aprila dall’archivio: il testo è troppo corto.', 'warn'); return; }
   if (running) { fcSt('Aspetta che finisca la trascrizione.', 'warn'); return; }
   $('fcCrea').disabled = true; fcSt('Creo le flashcard… di solito ci vogliono 10-40 secondi.');
   try {
@@ -4092,7 +4092,7 @@ $('fcCrea').addEventListener('click', async () => {
     fcSet(r.carte, true);
     if (r.uso && fcUso) { fcUso.uso = r.uso; fcLimiti(); }
     const salvate = await fcSalva();
-    fcSt(`${r.carte.length} flashcard pronte.` + (salvate ? ' Salvate nella lezione.' : ' Salva la lezione per tenerle nell’archivio.'));
+    fcSt(`${r.carte.length} flashcard pronte.` + (salvate ? ' Salvate nella registrazione.' : ' Salva la registrazione per tenerle nell’archivio.'));
     fcInizia(fcCarte, { tipo: 'lezione' });
   } catch (e) {
     const msg = e.code === 'chiave-groq' ? 'La chiave Groq non è valida: controlla GROQ_API_KEY su Cloudflare.'
@@ -4180,7 +4180,7 @@ async function fcRegistra(risultati){
     const st = r.storico || []; caricaOggi(); caricaSerie();
     if (st.length > 1 && ctx.tipo !== 'esame') {
       const fmt = q => { const d = new Date(q.quando), oggi = new Date(); return d.toDateString() === oggi.toDateString() ? 'oggi' : d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }); };
-      $('fcStorico').textContent = 'I tuoi ultimi risultati' + (ctx.tipo === 'materia' ? ` in ${materia}` : ' in questa lezione') + ': ' + st.map(q => `${fmt(q)} ${Math.round(q.giuste / q.totale * 100)}%`).join(' → ');
+      $('fcStorico').textContent = 'I tuoi ultimi risultati' + (ctx.tipo === 'materia' ? ` in ${materia}` : ' in questa registrazione') + ': ' + st.map(q => `${fmt(q)} ${Math.round(q.giuste / q.totale * 100)}%`).join(' → ');
       $('fcStorico').hidden = false;
     }
   } catch (_) {}
@@ -4189,7 +4189,7 @@ function aggiornaSelezioni(items){
   const om = $('oraleMateria'), primaO = om.value || materiaCorrente();
   om.textContent = ''; [...new Set(items.map(i => i.materia))].sort((a, b) => a.localeCompare(b, 'it')).forEach(m => { const o = document.createElement('option'); o.value = o.textContent = m; om.append(o); });
   if ([...om.options].some(o => o.value === primaO)) om.value = primaO;
-  if (!om.options.length) { const o = document.createElement('option'); o.value = ''; o.textContent = 'Nessuna lezione salvata'; om.append(o); }
+  if (!om.options.length) { const o = document.createElement('option'); o.value = ''; o.textContent = 'Nessuna registrazione salvata'; om.append(o); }
   $('oraleInizia').disabled = !om.value;
   const conFc = [...new Set(items.filter(i => i.conFlashcard).map(i => i.materia))].sort((a, b) => a.localeCompare(b, 'it'));
   const sel = $('fcMateria'), prima = sel.value || materiaCorrente();
@@ -4317,7 +4317,7 @@ function renderList(items){
   const materie = [...groups.keys()].sort((a, b) => a.localeCompare(b, 'it'));
   renderFiltri(materie);
   if (!items.length) {
-    box.append(el('p', 'note', $('cerca').value.trim() ? 'Nessuna lezione trovata.' : 'Le lezioni che salvi compaiono qui, divise per materia.'));
+    box.append(el('p', 'note', $('cerca').value.trim() ? 'Nessuna registrazione trovata.' : 'Le registrazioni che salvi compaiono qui, divise per materia.'));
     return;
   }
   const cercando = !!$('cerca').value.trim();
@@ -4363,7 +4363,7 @@ async function scaricaAppunti(materia, btn){
   const st = $('archStatus'); st.className = 'status'; st.textContent = '';
   try {
     const items = await privApi('appunti?materia=' + encodeURIComponent(materia));
-    if (!items.length) { st.textContent = `Nessuna lezione di ${materia} ha ancora appunti: incollali nel campo «I tuoi appunti» e salva.`; st.className = 'status warn'; return; }
+    if (!items.length) { st.textContent = `Nessuna registrazione di ${materia} ha ancora appunti: incollali nel campo «I tuoi appunti» e salva.`; st.className = 'status warn'; return; }
     const testo = `${materia.toUpperCase()} · APPUNTI COMPLETI\n${items.length} ${items.length === 1 ? 'lezione' : 'lezioni'}, aggiornati al ${fmtData(todayISO())}\n\n` +
       items.map(i => `==============================\n${i.titolo}\n${fmtData(i.data)}\n==============================\n\n${i.appunti.trim()}`).join('\n\n\n');
     const nome = materia.replace(/[\\/:*?"<>|]/g, '').trim().replace(/\s+/g, '_') || 'materia';
@@ -4404,7 +4404,7 @@ async function openLesson(id){
     privStatus(`Aperta: ${l.titolo} (${l.materia}).`);
     loadList(); fonteScegli('trascr');
     tabScelta = true; attivaTab('appunti'); window.scrollTo({ top: 0, behavior: 'smooth' });
-  } catch (e) { privStatus('Non riesco ad aprire la lezione: ' + e.message, 'err'); }
+  } catch (e) { privStatus('Non riesco ad aprire la registrazione: ' + e.message, 'err'); }
 }
 /* ---------- Salvataggio automatico ---------- */
 // La lezione si salva da sola: a fine trascrizione, quando carichi un file o incolli un testo,
@@ -4440,7 +4440,7 @@ async function salvaOra(){
   if (!materiaCorrente()) { $('materia').value = 'Senza materia'; onMateria(); }
   try {
     const l = await privApi('lezioni', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
-      id: currentId, materia: materiaCorrente(), titolo: $('titolo').value.trim() || 'Lezione del ' + fmtData($('dataLez').value || todayISO()),
+      id: currentId, materia: materiaCorrente(), titolo: $('titolo').value.trim() || 'Registrazione del ' + fmtData($('dataLez').value || todayISO()),
       data: $('dataLez').value || todayISO(), durata: Math.round(doneSec || totalSec || 0), testo: $('out').value, appunti: $('appunti').value,
     }) });
     const appuntiPrima = (ultimoSalvato && JSON.parse(ultimoSalvato)[2]) || '';
@@ -4455,7 +4455,7 @@ async function salvaOra(){
     } else if (Math.abs(($('appunti').value || '').length - appuntiPrima.length) > 300) gloEstrai(l.id, true);
     caricaOggi(); aggiornaContesto(); loadList();
   } catch (e) {
-    if (e.code === 'offline') { chipSalva('Da salvare', ''); privStatus('Sei offline: salvo la lezione appena torna la rete.', 'warn'); return; }
+    if (e.code === 'offline') { chipSalva('Da salvare', ''); privStatus('Sei offline: salvo la registrazione appena torna la rete.', 'warn'); return; }
     chipSalva('Non salvata', '');
     privStatus(e.status === 401 ? 'La password non è più valida: ricarica la pagina e reinseriscila.' : 'Non riesco a salvare (' + e.message + '): riprovo alla prossima modifica.', 'err');
   }
@@ -4487,7 +4487,7 @@ $('delLesson').addEventListener('click', async () => {
   try {
     await privApi('lezioni?id=' + encodeURIComponent(currentId), { method: 'DELETE' });
     privNewRun(); chunks = new Map(); $('out').value = ''; doneSec = 0;
-    privStatus('Lezione eliminata.'); loadList();
+    privStatus('Registrazione eliminata.'); loadList();
   } catch (e) { privStatus('Non riesco a eliminare: ' + e.message, 'err'); }
 });
 function privAfterRun(){
@@ -4498,7 +4498,7 @@ function privAfterRun(){
 }
 if (PRIVATE) {
   document.body.classList.add('privato', 'locked');
-  document.querySelector('header p').textContent = 'La tua app personale: trascrivi le lezioni in pochi minuti e tieni l’archivio diviso per materia, con i tuoi appunti.';
+  document.querySelector('header p').textContent = 'Registra lezioni, corsi e riunioni: trascrizione in pochi minuti, appunti con l’AI e strumenti per studiare e ripassare.';
   $('dataLez').value = todayISO();
   onMateria();
   $('lockForm').addEventListener('submit', e => { e.preventDefault(); const v = $('pw').value.trim(); if (v) unlock(v); });

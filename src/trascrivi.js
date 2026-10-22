@@ -24,11 +24,11 @@ const VOCABOLARIO = [
 ];
 function suggerimento(lang, materiaGrezza) {
   const materia = String(materiaGrezza || '').replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
-  if (lang !== 'it') return materia ? `University lecture: ${materia}.` : 'University lecture.';
-  if (!materia) return 'Lezione universitaria in italiano.';
+  if (lang !== 'it') return materia ? `Topic: ${materia}.` : '';
+  if (!materia) return 'Registrazione in italiano.';
   const m = materia.toLowerCase();
   const voce = VOCABOLARIO.find(([k]) => m.includes(k));
-  return `Lezione universitaria di ${materia}.` + (voce ? ` Termini: ${voce[1]}.` : '');
+  return `Argomento: ${materia}.` + (voce ? ` Termini: ${voce[1]}.` : '');
 }
 export { suggerimento };
 

@@ -1,7 +1,7 @@
 {
   "name": "Freetrascrizioni",
   "short_name": "Freetrascrizioni",
-  "description": "Trascrivi le lezioni e studia con appunti, flashcard e ripasso.",
+  "description": "Registra e trascrivi lezioni, corsi e riunioni: appunti con l’AI, flashcard e ripasso.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
