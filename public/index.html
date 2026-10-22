@@ -532,6 +532,13 @@ button.grande{min-height:54px;font-size:1.05rem;border-radius:18px}
 .cta-fine b{font-size:1.15rem}
 @media (min-width:760px){.feat{grid-template-columns:repeat(3,1fr)}.hero-cta{flex-direction:row;align-items:center}.hero-cta .link{align-self:center}}
 @media (prefers-reduced-motion:reduce){.demo-onda i,.demo-dot{animation:none}}
+#avvio{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:var(--bg);transition:opacity .28s ease,visibility .28s}
+body:not(.avvio) #avvio{opacity:0;visibility:hidden;pointer-events:none}
+body.avvio main,body.avvio .tabbar{visibility:hidden}
+.avvio-logo{display:flex;flex-direction:column;align-items:center;gap:10px;font-size:1.6rem;letter-spacing:-.02em;color:var(--fg)}
+.avvio-stella{font-size:2.6rem;animation:avvioPulsa 1.1s ease-in-out infinite}
+@keyframes avvioPulsa{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.15);opacity:1}}
+@media (prefers-reduced-motion:reduce){.avvio-stella{animation:none}}
 .fonti{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .fonti button{flex-direction:column;gap:4px;min-height:72px;padding:10px 4px;border-radius:16px;font-size:1.3rem;border:1.5px solid var(--line);background:var(--surface)}
 .fonti button span{font-size:.8rem;font-weight:600}
@@ -621,6 +628,8 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
 </style>
 </head>
 <body>
+<script>document.body.classList.add('privato', 'locked', 'avvio');</script>
+<div id="avvio" aria-hidden="true"><div class="avvio-logo"><span class="avvio-stella">⭐</span><b>Astra Note</b></div></div>
 <main>
   <header class="top">
     <div class="topbar">
@@ -1228,7 +1237,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Se si interrompe, riapri l'app: riprende da dove era rimasta e la registrazione non si perde.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Astra Note · versione 4.2<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Astra Note · versione 4.2.1<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="contesto priv" id="contesto" data-tab="studia appunti">
     <span id="contestoTxt"></span>
     <span class="row" style="gap:14px"><button type="button" class="link" id="contestoBtn"></button><button type="button" class="link rimuovi" id="contestoVia" hidden>Rimuovi</button></span>
@@ -4384,16 +4393,19 @@ function showUsage(v){
     : `Restano circa ${h(restaGiorno)} oggi (${h(restaOra)} in quest’ora) · usate oggi ${h(tot)}`;
   $('usage').title = 'Stima: il limite gratuito di Groq è di circa 8 ore al giorno e 2 ore all’ora, per tutti insieme. Il conteggio giornaliero si azzera alle 2 di notte (ora italiana).';
 }
+// schermata di avvio: resta finché non si sa se mostrare l'app o la pagina di accesso (niente lampo del login)
+function fineAvvio(){ document.body.classList.remove('avvio'); }
+setTimeout(fineAvvio, 8000);
 async function unlock(pw, silent){
   privPw = pw;
   try {
     const v = await privApi('verifica');
     if (!MULTI) lsSet(PW_KEY, pw);
-    document.body.classList.remove('locked'); attivaTab(tabAttiva || 'trascrivi');
+    document.body.classList.remove('locked'); attivaTab(tabAttiva || 'trascrivi'); fineAvvio();
     showUsage(v); fcLimiti(v); mostraAccount(v); loadList(); caricaProfilo(); caricaOggi(); gloCaricaMaterie(); caricaSerie(); notifStato(); caricaOrario(); dopoAccesso(v);
     return true;
   } catch (e) {
-    privPw = null;
+    privPw = null; fineAvvio();
     if (e.status === 401) lsSet(PW_KEY, null);
     if (!silent) {
       const st = $('lockStatus');
@@ -4653,7 +4665,8 @@ if (PRIVATE) {
     const ul = $('setupList'); ul.textContent = '';
     for (const [k, d] of missing) { const li = document.createElement('li'); const c = document.createElement('code'); c.textContent = k; li.append(c, ' — ' + d); ul.append(li); }
     if (MULTI) unlock('', true);
-    else if (!missing.some(m => m[0] === 'PASSWORD')) { const saved = lsGet(PW_KEY); if (saved) unlock(saved, true); }
+    else if (!missing.some(m => m[0] === 'PASSWORD') && lsGet(PW_KEY)) unlock(lsGet(PW_KEY), true);
+    else fineAvvio();
   }
   $('setupRetry').addEventListener('click', checkSetup);
   checkSetup();
