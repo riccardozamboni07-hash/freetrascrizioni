@@ -400,7 +400,26 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 .orario-v .m{flex:1;min-width:0}
 .orario-v button{min-height:32px;padding:.2rem .6rem}
 .orario-oggi button{flex-direction:row;flex:0 0 auto;min-height:40px}
-.orario-form{grid-template-columns:1fr 1fr}
+.or-griglia{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.or-col{display:flex;flex-direction:column;align-items:stretch;gap:3px;min-height:74px;padding:5px 2px;border:1px solid var(--line);border-radius:12px;background:var(--surface);min-width:0;justify-content:flex-start;font-size:.7rem}
+.or-col>b{font-size:.74rem;color:var(--muted);text-align:center}
+.or-col.oggi{border-color:var(--accent)}
+.or-col.oggi>b{color:var(--accent-text)}
+.or-col.sel{background:var(--accent-soft);border-color:var(--accent)}
+.or-chip{display:block;border-radius:7px;padding:2px 1px;background:var(--c);color:#fff;font-weight:700;font-size:.66rem;letter-spacing:-.02em;line-height:1.15;text-align:center;overflow:hidden;white-space:nowrap}
+.or-chip small{display:block;font-weight:600;font-size:.62rem;opacity:.92;overflow:hidden;text-overflow:ellipsis}
+.or-piu{color:var(--muted);text-align:center;font-size:1rem;opacity:.5;margin-top:6px}
+.or-giorno{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:16px;background:var(--tenue)}
+.or-giorno[hidden]{display:none}
+.or-giorno-lista{display:flex;flex-direction:column;gap:6px}
+.or-agg{display:grid;grid-template-columns:1fr auto;gap:6px}
+.or-agg #orMateria{grid-column:1/-1}
+.or-agg input{min-width:0}
+.invito{position:fixed;z-index:40;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:min(480px,calc(100% - 24px));background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:14px;display:flex;flex-direction:column;gap:10px;box-shadow:0 16px 44px rgba(0,0,0,.2);animation:pop .4s cubic-bezier(.3,1.4,.5,1)}
+.invito[hidden]{display:none}
+.invito p{margin:0;line-height:1.45}
+.invito .row{gap:8px}
+.campanella{font-size:1.15rem}
 .es-card{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--line);border-radius:18px}
 .es-card h3{margin:0;font-size:1rem}
 .ese-lista{display:flex;flex-direction:column;gap:10px}
@@ -545,6 +564,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
 <main>
   <header class="top">
     <div class="topbar">
+      <button type="button" class="icon-btn campanella" id="campanella" hidden aria-label="Promemoria">🔕</button>
       <button type="button" class="icon-btn" id="menuBtn" aria-label="Apri il menu" aria-controls="menu" aria-expanded="false">
         <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
       </button>
@@ -659,19 +679,17 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <span class="chip" id="orarioChip" hidden></span>
     </div>
     <div class="orario-oggi" id="orarioOggi" hidden></div>
-    <p class="note" id="orarioNota">Inserisci le tue lezioni della settimana: all'ora della lezione ti arriva una notifica e la materia è già pronta per registrare.</p>
-    <div class="orario-lista" id="orarioLista"></div>
-    <details class="avanzate" id="orarioAgg">
-      <summary>+ Aggiungi una lezione all'orario</summary>
-      <div class="form orario-form">
-        <label class="field"><span>Giorno</span>
-          <select id="orGiorno"><option value="0">Lunedì</option><option value="1">Martedì</option><option value="2">Mercoledì</option><option value="3">Giovedì</option><option value="4">Venerdì</option><option value="5">Sabato</option><option value="6">Domenica</option></select>
-        </label>
-        <label class="field"><span>Ora</span><input type="time" id="orOra" value="09:00" step="300"></label>
+    <p class="note" id="orarioNota">Tocca un giorno per aggiungere le tue lezioni: all'ora della lezione ti arriva un avviso e la materia è già pronta per registrare.</p>
+    <div class="or-griglia" id="orGriglia" role="group" aria-label="Orario della settimana"></div>
+    <div class="or-giorno" id="orGiornoBox" hidden>
+      <div class="row between"><strong id="orGiornoT"></strong><button type="button" class="link" id="orGiornoChiudi">Chiudi</button></div>
+      <div class="or-giorno-lista" id="orGiornoLista"></div>
+      <div class="or-agg">
+        <input type="text" id="orMateria" list="materieList" autocomplete="off" placeholder="Materia, es. Diritto pubblico" aria-label="Materia">
+        <input type="time" id="orOra" value="09:00" step="300" aria-label="Ora della lezione">
+        <button type="button" class="primary" id="orAggiungi">Aggiungi</button>
       </div>
-      <label class="field"><span>Materia</span><input type="text" id="orMateria" list="materieList" autocomplete="off" placeholder="es. Diritto pubblico"></label>
-      <button type="button" class="primary" id="orAggiungi">Aggiungi all'orario</button>
-    </details>
+    </div>
     <div class="status" id="orarioStatus" role="status"></div>
   </section>
 
@@ -1090,7 +1108,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Se si interrompe, riapri l'app: riprende da dove era rimasta e la registrazione non si perde.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.8<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 3.9<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="contesto priv" id="contesto" data-tab="studia appunti">
     <span id="contestoTxt"></span>
     <span class="row" style="gap:14px"><button type="button" class="link" id="contestoBtn"></button><button type="button" class="link rimuovi" id="contestoVia" hidden>Rimuovi</button></span>
@@ -1156,6 +1174,14 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
   <button type="button" class="primary" id="segInvia">Invia</button>
   <div class="status" id="segStatus" role="status"></div>
 </aside>
+<div class="invito" id="invitoNotif" hidden role="dialog" aria-labelledby="invT">
+  <p id="invT"></p>
+  <div class="row" id="invTasti">
+    <button type="button" class="primary" id="invAttiva">Attiva</button>
+    <button type="button" id="invNonOra">Non ora</button>
+    <button type="button" class="link" id="invMai">Non chiedere più</button>
+  </div>
+</div>
 <div class="offline-bar" id="offlineBar" hidden role="status">📴 Sei offline: vedi le lezioni salvate su questo dispositivo. Le modifiche si salvano quando torna la rete.</div>
 <div class="lettore" id="lettore" hidden role="region" aria-label="Lettura ad alta voce">
   <div class="lt-info"><strong id="ltTitolo">Ascolta</strong><span id="ltStato"></span></div>
@@ -3276,6 +3302,7 @@ function notifSt(t, kind){ const s = $('notifStatus'); s.textContent = t; s.clas
 const suIos = /iPhone|iPad|iPod/.test(navigator.userAgent);
 const daHome = () => window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true;
 function b64aU8(b){ const s = atob(b.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((b.length + 3) % 4)); return Uint8Array.from(s, c => c.charCodeAt(0)); }
+let notifAttivi = false, notifSupporto = false;
 async function notifStato(){
   const reg = await swPronto;
   const supportate = !!(reg && 'PushManager' in window && 'Notification' in window);
@@ -3288,6 +3315,7 @@ async function notifStato(){
   let ora = null;
   try { const r = await privApi('push-chiave'); ora = r.stato?.ora; } catch (_) {}
   const attivi = !!sub && Notification.permission === 'granted';
+  notifAttivi = attivi; notifSupporto = true; aggiornaCampanella();
   $('notifChip').textContent = attivi ? `alle ${ora ?? $('notifOra').value}:00` : 'spenti'; $('notifChip').classList.toggle('ok', attivi);
   if (attivi && ora != null) $('notifOra').value = String(ora);
   $('notifAttiva').hidden = attivi; $('notifProva').hidden = !attivi; $('notifSpegni').hidden = !attivi;
@@ -3594,9 +3622,12 @@ function registraMateria(m){
   tabScelta = true; attivaTab('trascrivi'); window.scrollTo({ top: 0 });
   setStatus(`Lezione di ${m}: premi «Avvia registrazione» quando inizia. La materia è già impostata.`);
 }
+let orSel = null;
+const coloreMateria = m => { let h = 0; for (const c of m) h = (h * 31 + c.charCodeAt(0)) % 360; return `hsl(${h} 52% 38%)`; };
+const abbrevia = m => { const w = m.trim().split(/\s+/); return w.length > 1 ? (w[0].slice(0, 4) + ' ' + w[1].slice(0, 3)) : w[0].slice(0, 6); };
 function orarioRender(){
   $('orarioChip').hidden = !orario.length; $('orarioChip').textContent = `${orario.length} ${orario.length === 1 ? 'lezione' : 'lezioni'} a settimana`;
-  $('orarioNota').hidden = !!orario.length; $('orarioAgg').open = !orario.length && $('orarioAgg').open;
+  $('orarioNota').hidden = !!orario.length;
   const oggi = orario.filter(v => v.g === oggiIdx()), ob = $('orarioOggi'); ob.textContent = ''; ob.hidden = !oggi.length;
   if (oggi.length) {
     const h = document.createElement('strong'); h.textContent = 'Oggi a lezione'; ob.append(h);
@@ -3608,36 +3639,84 @@ function orarioRender(){
       r.append(t, b); ob.append(r);
     });
   }
-  const box = $('orarioLista'); box.textContent = '';
+  const gr = $('orGriglia'); gr.textContent = '';
   for (let g = 0; g < 7; g++) {
-    const voci = orario.filter(v => v.g === g); if (!voci.length) continue;
-    const gr = document.createElement('div'); gr.className = 'orario-g';
-    const t = document.createElement('b'); t.textContent = GIORNI_LUNGHI[g] + (g === oggiIdx() ? ' (oggi)' : ''); gr.append(t);
+    const col = document.createElement('button'); col.type = 'button';
+    col.className = 'or-col' + (g === oggiIdx() ? ' oggi' : '') + (g === orSel ? ' sel' : '');
+    const voci = orario.filter(v => v.g === g);
+    col.setAttribute('aria-label', GIORNI_LUNGHI[g] + ': ' + (voci.length ? voci.map(v => `${v.ora} ${v.materia}`).join(', ') : 'nessuna lezione'));
+    const t = document.createElement('b'); t.textContent = GIORNI_BREVI[g]; col.append(t);
     voci.forEach(v => {
-      const r = document.createElement('div'); r.className = 'orario-v';
-      const h = document.createElement('span'); h.className = 'h'; h.textContent = v.ora;
-      const m = document.createElement('span'); m.className = 'm'; m.textContent = v.materia;
-      const x = document.createElement('button'); x.type = 'button'; x.className = 'danger'; x.textContent = 'Togli'; x.setAttribute('aria-label', `Togli ${v.materia} di ${GIORNI_LUNGHI[g]}`);
-      x.addEventListener('click', () => {
-        if (orarioArm !== x) { orarioArm = x; x.textContent = 'Tocca di nuovo'; setTimeout(() => { if (orarioArm === x) { orarioArm = null; x.textContent = 'Togli'; } }, 3000); return; }
-        orarioArm = null; orario = orario.filter(o => o !== v); salvaOrario(`${v.materia} di ${GIORNI_LUNGHI[g].toLowerCase()} tolta dall'orario.`);
-      });
-      r.append(h, m, x); gr.append(r);
+      const c = document.createElement('span'); c.className = 'or-chip'; c.style.setProperty('--c', coloreMateria(v.materia)); c.title = `${v.ora} ${v.materia}`;
+      c.textContent = v.ora; const sm = document.createElement('small'); sm.textContent = abbrevia(v.materia); c.append(sm); col.append(c);
     });
-    box.append(gr);
+    if (!voci.length) { const piu = document.createElement('span'); piu.className = 'or-piu'; piu.textContent = '+'; col.append(piu); }
+    col.addEventListener('click', () => { orSel = orSel === g ? null : g; orarioRender(); if (orSel !== null) setTimeout(() => $('orMateria').focus({ preventScroll: true }), 50); });
+    gr.append(col);
   }
+  const box = $('orGiornoBox'); box.hidden = orSel === null;
+  if (orSel === null) return;
+  $('orGiornoT').textContent = GIORNI_LUNGHI[orSel] + (orSel === oggiIdx() ? ' (oggi)' : '');
+  const lista = $('orGiornoLista'); lista.textContent = '';
+  orario.filter(v => v.g === orSel).forEach(v => {
+    const r = document.createElement('div'); r.className = 'orario-v';
+    const h = document.createElement('span'); h.className = 'h'; h.textContent = v.ora;
+    const m = document.createElement('span'); m.className = 'm'; m.textContent = v.materia;
+    const x = document.createElement('button'); x.type = 'button'; x.className = 'danger'; x.textContent = 'Togli'; x.setAttribute('aria-label', `Togli ${v.materia}`);
+    x.addEventListener('click', () => {
+      if (orarioArm !== x) { orarioArm = x; x.textContent = 'Tocca di nuovo'; setTimeout(() => { if (orarioArm === x) { orarioArm = null; x.textContent = 'Togli'; } }, 3000); return; }
+      orarioArm = null; orario = orario.filter(o => o !== v); salvaOrario(`${v.materia} tolta dall'orario.`);
+    });
+    r.append(h, m, x); lista.append(r);
+  });
+  if (!lista.children.length) { const p = document.createElement('p'); p.className = 'note'; p.style.margin = '0'; p.textContent = 'Nessuna lezione: aggiungila qui sotto.'; lista.append(p); }
 }
+$('orGiornoChiudi').addEventListener('click', () => { orSel = null; orarioRender(); });
 $('orAggiungi').addEventListener('click', async () => {
-  const materia = $('orMateria').value.trim(), ora = $('orOra').value, g = Number($('orGiorno').value);
+  const materia = $('orMateria').value.trim(), ora = $('orOra').value, g = orSel;
+  if (g === null) return;
   if (!materia) { orSt('Scrivi la materia.', 'warn'); $('orMateria').focus(); return; }
   if (!/^\d\d:\d\d$/.test(ora)) { orSt('Scegli l’ora della lezione.', 'warn'); return; }
-  if (orario.some(v => v.g === g && v.ora === ora)) { orSt('A quell’ora hai già una lezione in orario.', 'warn'); return; }
+  if (orario.some(v => v.g === g && v.ora === ora)) { orSt('A quell’ora hai già una lezione.', 'warn'); return; }
   orario.push({ g, ora, materia });
-  const attive = ($('notifChip').textContent || '').includes('attiv');
-  await salvaOrario(`${materia} aggiunta: ${GIORNI_LUNGHI[g].toLowerCase()} alle ${ora}.` + (attive ? '' : ' Attiva i promemoria qui sotto per ricevere l’avviso.'));
+  await salvaOrario(`${materia} aggiunta: ${GIORNI_LUNGHI[g].toLowerCase()} alle ${ora}.` + (notifAttivi ? '' : ' Attiva i promemoria per ricevere l’avviso.'));
   $('orMateria').value = '';
-  $('orGiorno').value = String((g + 1) % 7);
 });
+$('orMateria').addEventListener('keydown', e => { if (e.key === 'Enter') $('orAggiungi').click(); });
+
+/* ---------- Invito ai promemoria e campanella ---------- */
+const NOTIF_MAI = 'ft:notif-mai';
+function aggiornaCampanella(){
+  const b = $('campanella');
+  b.hidden = lsGet(NOTIF_MAI) !== '1';
+  b.textContent = notifAttivi ? '🔔' : '🔕';
+  b.setAttribute('aria-label', notifAttivi ? 'Promemoria attivi' : 'Promemoria spenti: tocca per attivarli');
+}
+function invitoNotif(){
+  if (lsGet(NOTIF_MAI) === '1' || notifAttivi || giroAttivo || !$('benvenuto').hidden) return;
+  if ('Notification' in window && Notification.permission === 'denied') return;
+  const ios = suIos && !daHome();
+  if (!notifSupporto && !ios) return;
+  $('invT').innerHTML = ios
+    ? '<b>🔔 Vuoi un avviso?</b> Su iPhone i promemoria funzionano dall’app sulla schermata Home: tocca Condividi → «Aggiungi alla schermata Home» e aprila da lì.'
+    : '<b>🔔 Vuoi un avviso?</b> Ti ricordo quando ripassare questa lezione, l’inizio delle lezioni del tuo orario e quando la serie è a rischio.';
+  $('invAttiva').hidden = ios; $('invNonOra').textContent = ios ? 'Ho capito' : 'Non ora';
+  $('invTasti').hidden = false; $('invitoNotif').hidden = false;
+}
+$('invAttiva').addEventListener('click', async () => {
+  $('invAttiva').disabled = true;
+  try {
+    await notifIscrivi(); await notifStato();
+    if (notifAttivi) {
+      $('invT').innerHTML = `<b>✅ Fatto!</b> Ti avviso alle ${$('notifOra').value}:00 quando c’è da ripassare. L’ora la cambi in Oggi → Promemoria.`;
+      $('invTasti').hidden = true; setTimeout(() => { $('invitoNotif').hidden = true; }, 3500);
+    } else $('invitoNotif').hidden = true;
+  } catch (e) { $('invT').textContent = 'Non riesco ad attivarli: ' + e.message; }
+  finally { $('invAttiva').disabled = false; }
+});
+$('invNonOra').addEventListener('click', () => { $('invitoNotif').hidden = true; });
+$('invMai').addEventListener('click', () => { lsSet(NOTIF_MAI, '1'); $('invitoNotif').hidden = true; aggiornaCampanella(); });
+$('campanella').addEventListener('click', () => { tabScelta = true; attivaTab('oggi'); setTimeout(() => $('notifPanel').scrollIntoView({ behavior: 'smooth', block: 'center' }), 50); });
 
 /* ---------- Notifiche: apertura dalla notifica ---------- */
 let urlInAttesa = location.search ? location.href : null;
@@ -3664,7 +3743,7 @@ const GIRO = [
   { tab: 'oggi', el: '#serieBox', t: 'Oggi · La serie 🔥', x: 'Studia ogni giorno per far crescere la serie. Tocca un giorno per vedere cosa hai fatto, ❄️ è il salva-serie, e qui sotto ci sono i traguardi.' },
   { tab: 'oggi', el: '#oggiPanel', t: 'Oggi · Piano di ripasso', x: 'Aggiungi la <b>data dell’esame</b>: ogni giorno l’app ti dice quali lezioni ripassare per arrivare pronto.' },
   { tab: 'oggi', el: '#timerPanel', t: 'Oggi · Sessione di studio', x: 'Un timer da 30 minuti a 2 ore e mezza: il tempo studiato riempie il cerchio Studio e conta per la serie.' },
-  { tab: 'oggi', el: '#orarioPanel', t: 'Oggi · Orario delle lezioni', x: 'Inserisci il tuo orario: all’ora della lezione ti arriva l’avviso e la materia è già pronta per registrare.' },
+  { tab: 'oggi', el: '#orarioPanel', t: 'Oggi · Orario delle lezioni', x: 'La tua settimana: tocca un giorno per aggiungere le lezioni. All’ora della lezione ti arriva l’avviso e la materia è già pronta per registrare.' },
   { tab: 'oggi', el: '#notifPanel', t: 'Oggi · Promemoria', x: 'Attiva le notifiche per gli avvisi di lezione, ripasso e serie. Su iPhone funzionano dall’app aggiunta alla schermata Home.' },
   { tab: 'trascrivi', el: '#recBtn', t: 'Trascrivi · Registra', x: 'Premi <b>Avvia registrazione</b> a inizio lezione. Puoi mettere in pausa e, quando il prof dice «questo all’esame», toccare <b>⭐ Importante</b>.' },
   { tab: 'trascrivi', el: '#drop', t: 'Trascrivi · Carica un file', x: 'Hai già un audio o un video? Caricalo qui, anche di 2 ore.' },
@@ -4372,6 +4451,7 @@ async function salvaOra(){
     if (nuova) {
       privStatus(`Salvata nell'archivio in «${l.materia}» come «${l.titolo}». Puoi cambiare materia e titolo qui sotto.`);
       gloEstrai(l.id, true); salvaMatPending(l.id); mappaDa(l);
+      setTimeout(invitoNotif, 2500);
     } else if (Math.abs(($('appunti').value || '').length - appuntiPrima.length) > 300) gloEstrai(l.id, true);
     caricaOggi(); aggiornaContesto(); loadList();
   } catch (e) {
