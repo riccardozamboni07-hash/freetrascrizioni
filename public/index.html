@@ -552,6 +552,13 @@ body.avvio main,body.avvio .tabbar{visibility:hidden}
 .dopo[hidden]{display:none}
 .contesto{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--tenue);border:1px solid var(--line);border-radius:16px;padding:10px 14px;font-size:.88rem}
 .contesto b{font-weight:700}
+.contesto.via{display:none!important}
+.apribile{cursor:pointer;user-select:none}
+.apribile .freccia{display:inline-block;margin-left:6px;transition:transform .25s;color:var(--muted);font-size:.8rem}
+.panel.chiuso .apribile .freccia{transform:rotate(-90deg)}
+.panel.chiuso > .corpo{display:none}
+.corpo{display:flex;flex-direction:column;gap:12px}
+.field.su{flex:1 1 180px}
 .link.rimuovi{color:var(--err)}
 .link.rimuovi.armed{font-weight:700}
 .banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px;border-radius:18px;border:1px solid var(--warn)}
@@ -609,8 +616,19 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
 .subject > summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .subject-body{padding:4px 12px 12px;display:flex;flex-direction:column;gap:8px}
 .subject-tools{display:flex;justify-content:flex-end}
+.lez-via{flex:0 0 auto;min-height:40px;min-width:40px;padding:0;border-radius:12px;background:transparent;border-color:transparent;font-size:1rem;opacity:.7}
+.lez-via:hover{opacity:1;background:var(--tenue)}
+.modale{position:fixed;inset:0;z-index:95;background:rgba(8,16,12,.5);display:flex;align-items:center;justify-content:center;padding:20px}
+.modale[hidden]{display:none}
+.modale-card{width:min(400px,100%);background:var(--surface);color:var(--fg);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:10px;box-shadow:0 24px 60px rgba(0,0,0,.3);animation:pop .3s cubic-bezier(.3,1.4,.5,1)}
+.modale-card strong{font-size:1.1rem}
+.modale-card p{margin:0;color:var(--muted);line-height:1.45}
+.modale-tasti{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.modale-tasti button{width:100%;justify-content:center}
 .subject-tools button{min-height:36px;padding:.3rem .8rem;font-size:.85rem}
 .subject ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.subject li{display:flex;align-items:center;gap:4px}
+.subject li .lez{flex:1;min-width:0}
 .lez{width:100%;display:flex;align-items:center;gap:12px;padding:10px 12px;text-align:left;font-weight:500;border-radius:16px;background:var(--bg);border-color:transparent}
 .lez:hover:not(:disabled){border-color:var(--line)}
 .lez.current{border-color:var(--c);background:var(--c-soft)}
@@ -885,11 +903,8 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
 
   <section class="panel" aria-labelledby="l2">
     <span class="label" id="l2">2. Trascrizione</span>
-    <label class="field"><span>Materia o argomento <small class="facolt">facoltativo</small></span>
-      <input type="text" id="materia" list="materieList" autocomplete="off" placeholder="Se la sai: aiuta con i termini tecnici">
-    </label>
+    <input type="hidden" id="materia">
     <datalist id="materieList"></datalist>
-    <p class="note" id="materiaNote">Se lo lasci vuoto lo sceglie l'AI quando salva la registrazione.</p>
     <label class="check"><input type="checkbox" id="live"> Trascrivi mentre registri: quando finisci il testo è quasi pronto</label>
     <details class="avanzate" id="avanzate">
     <summary>Opzioni avanzate</summary>
@@ -970,7 +985,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <span class="label" id="l4">2. Appunti e correzione</span>
     <div class="aicard">
       <h3>Crea qui nell'app</h3>
-      <p class="note">L'intelligenza artificiale scrive gli <strong>appunti</strong> della registrazione o <strong>corregge la trascrizione</strong> direttamente qui. Si salvano da soli nella registrazione e puoi scaricarli come file Word. Una registrazione di 2 ore richiede 1-3 minuti.</p>
+      <p class="note">L'intelligenza artificiale scrive gli <strong>appunti</strong> della registrazione, in paragrafi con i titoli. Si salvano da soli nella registrazione e puoi scaricarli come file Word. Una registrazione di 2 ore richiede 1-3 minuti.</p>
       <details class="lav" id="supporto">
         <summary>+ Aggiungi materiale di supporto <small>(foto della lavagna, slide)</small></summary>
         <div class="row">
@@ -988,10 +1003,11 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       </details>
       <div class="row">
         <button type="button" class="primary" id="aiAppunti">Crea appunti</button>
-        <button type="button" id="aiAggiusta">Aggiusta la trascrizione</button>
+        <button type="button" id="aiAggiusta" hidden>Aggiusta la trascrizione</button>
         <button type="button" id="aiStop" hidden>Interrompi</button>
         <button type="button" class="danger" id="aiElimina" hidden>Elimina appunti</button>
       </div>
+      <button type="button" class="link" id="aiScrivi" style="align-self:flex-start">oppure scrivili tu</button>
       <div class="bar" id="aiBarBox" hidden><i id="aiBar"></i></div>
       <div class="status" id="aiStatus" role="status"></div>
       <div id="aiRis" hidden style="display:flex;flex-direction:column;gap:10px">
@@ -1014,7 +1030,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <div class="row between">
       <span class="label" id="lEsame">Preparati allo scritto</span>
     </div>
-    <label class="field"><span>Materia</span><select id="simMateria" aria-label="Materia dell'esame"></select></label>
+    <label class="field"><span>📚 Su tutta la materia</span><select id="simMateria" aria-label="Materia dell'esame"></select></label>
     <div class="es-card">
       <h3>📝 Simulazione dello scritto</h3>
       <p class="note">Domande da tutte le registrazioni della materia, con il tempo che scorre e il voto in trentesimi alla fine. Ti dice anche quali registrazioni ripassare.</p>
@@ -1105,7 +1121,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <div id="oraleStart" style="display:flex;flex-direction:column;gap:12px">
       <p class="note">L'AI ti interroga sulle registrazioni salvate di una materia. Rispondi a voce o per iscritto: ricevi un voto in trentesimi, cosa hai detto bene, cosa mancava e la risposta da 30.</p>
       <div class="row">
-        <select id="oraleMateria" aria-label="Materia dell'orale"></select>
+        <label class="field su"><span>📚 Su tutta la materia</span><select id="oraleMateria" aria-label="Materia dell'orale"></select></label>
         <select id="oraleN" aria-label="Numero di domande"><option value="3">3 domande</option><option value="5" selected>5 domande</option><option value="8">8 domande</option></select>
       </div>
       <button type="button" class="primary" id="oraleInizia">Inizia l'interrogazione</button>
@@ -1161,7 +1177,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <p class="note">Fai una domanda: l'AI cerca nelle registrazioni e negli appunti salvati e risponde indicando da quale registrazione viene ogni informazione.</p>
     <div class="ask-log" id="askLog" hidden></div>
     <div class="row">
-      <select id="askMateria" aria-label="Dove cercare"><option value="">Tutte le materie</option></select>
+      <label class="field su"><span>📚 Cerca in</span><select id="askMateria" aria-label="Dove cercare"><option value="">Tutte le materie</option></select></label>
     </div>
     <div class="ask-in">
       <textarea id="askIn" rows="2" placeholder="es. Cosa si è detto sulla riserva di legge?"></textarea>
@@ -1177,7 +1193,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     </div>
     <p class="note">Si crea da solo quando salvi una registrazione: i termini tecnici con la loro definizione, divisi per materia o argomento.</p>
     <div class="row">
-      <select id="gloMateria" aria-label="Materia del glossario"></select>
+      <label class="field su"><span>📚 Materia</span><select id="gloMateria" aria-label="Materia del glossario"></select></label>
       <input type="search" id="gloCerca" placeholder="Cerca un termine" aria-label="Cerca nel glossario" style="flex:1 1 180px;width:auto">
     </div>
     <div class="glo-lista" id="gloLista"></div>
@@ -1197,15 +1213,13 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <p class="note" id="salvaInfo">Si salva da sola nell'archivio. Argomento e titolo sono facoltativi: se li lasci vuoti li sceglie l'AI.</p>
     <span id="materiaEco" hidden></span>
     <p class="note" id="salvaVuoto">Non c'è ancora testo da salvare: registra in <button type="button" class="link" id="vaiTrascrivi">Trascrivi</button>, carica un file in <button type="button" class="link" id="vaiFonte">Appunti</button> o apri una registrazione dall'<button type="button" class="link" id="vaiArchivio">Archivio</button>.</p>
-    <label class="field"><span>Materia o argomento</span><input type="text" id="materia2" list="materieList" autocomplete="off" placeholder="Facoltativa"></label>
+    <label class="field"><span>Materia o argomento</span><input type="text" id="materia2" list="materieList" autocomplete="off" placeholder="Facoltativo: se la sai, aiuta con i termini tecnici"></label>
     <div class="form">
       <label class="field"><span>Titolo</span><input type="text" id="titolo" placeholder="Facoltativo"></label>
       <label class="field"><span>Data</span><input type="date" id="dataLez"></label>
     </div>
-    <label class="field"><span>Appunti della registrazione</span>
-      <textarea id="appunti" spellcheck="true" placeholder="Appunti, riassunto, domande d'esame…"></textarea>
-    </label>
-    <button type="button" id="lezAscolta" hidden style="align-self:flex-start">🔊 Ascolta gli appunti</button>
+    <textarea id="appunti" hidden aria-hidden="true"></textarea>
+    <p class="note" id="lezAppNota" hidden>📝 Questa registrazione ha gli appunti: li trovi nella scheda <button type="button" class="link" id="vaiApp">Appunti</button>.</p>
     <div class="row">
       <button type="button" class="primary" id="saveLesson" hidden>Salva registrazione</button>
       <button type="button" id="newLesson">Ricomincia da zero</button>
@@ -1238,7 +1252,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Se si interrompe, riapri l'app: riprende da dove era rimasta e la registrazione non si perde.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Astra Note · versione 4.2.3<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Astra Note · versione 4.3<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="contesto priv" id="contesto" data-tab="studia appunti">
     <span id="contestoTxt"></span>
     <span class="row" style="gap:14px"><button type="button" class="link" id="contestoBtn"></button><button type="button" class="link rimuovi" id="contestoVia" hidden>Rimuovi</button></span>
@@ -1311,6 +1325,9 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <button type="button" id="invNonOra">Non ora</button>
     <button type="button" class="link" id="invMai">Non chiedere più</button>
   </div>
+</div>
+<div class="modale" id="modale" hidden role="dialog" aria-modal="true" aria-labelledby="modT">
+  <div class="modale-card"><strong id="modT"></strong><p id="modTesto"></p><div class="modale-tasti" id="modTasti"></div></div>
 </div>
 <div class="offline-bar" id="offlineBar" hidden role="status">📴 Sei offline: vedi le registrazioni salvate su questo dispositivo. Le modifiche si salvano quando torna la rete.</div>
 <div class="lettore" id="lettore" hidden role="region" aria-label="Lettura ad alta voce">
@@ -2423,7 +2440,7 @@ async function aiRun(tipo){
     $('aiTitolo').textContent = tipo === 'aggiusta' ? 'Trascrizione corretta' : 'Appunti della registrazione';
     $('aiUsa').textContent = 'Usa come trascrizione';
     $('aiUsa').hidden = tipo !== 'aggiusta';
-    if (tipo !== 'aggiusta') { $('appunti').value = finale; autoSalva(); }
+    if (tipo !== 'aggiusta') { $('appunti').value = finale; autoSalva(); $('aiAppunti').textContent = 'Ricrea appunti'; $('aiScrivi').hidden = true; }
     $('aiRis').hidden = false; $('aiRis').style.display = 'flex';
     const parz = aiStop || fatti.length < parti.length;
     aiSt(parz ? `Interrotto: pronte ${fatti.length} parti su ${parti.length}.` : (tipo === 'aggiusta' ? 'Trascrizione corretta pronta: controllala e tocca «Usa come trascrizione».' : 'Appunti pronti e salvati nella registrazione: puoi modificarli o scaricarli.'), parz ? 'warn' : '');
@@ -2442,6 +2459,26 @@ async function aiRun(tipo){
 }
 $('aiAppunti').addEventListener('click', () => aiRun('appunti'));
 $('aiAggiusta').addEventListener('click', () => aiRun('aggiusta'));
+// Gli appunti stanno in un posto solo: il riquadro dell'AI (si vedono formattati, «Modifica» per cambiarli)
+function mostraAppunti(){
+  if (aiBusy) return;
+  const a = $('appunti').value.trim();
+  if (!a) {
+    if (aiTipo !== 'aggiusta' || $('aiRis').hidden) { $('aiRis').hidden = true; $('aiRis').style.display = 'none'; $('aiOut').value = ''; }
+    $('aiAppunti').textContent = 'Crea appunti'; $('aiScrivi').hidden = false; return;
+  }
+  aiTipo = 'appunti'; $('aiOut').value = a; aiRender(); aiModifica(false);
+  $('aiTitolo').textContent = 'Appunti della registrazione'; $('aiUsa').hidden = true;
+  $('aiRis').hidden = false; $('aiRis').style.display = 'flex';
+  $('aiAppunti').textContent = 'Ricrea appunti'; $('aiScrivi').hidden = true;
+}
+$('aiScrivi').addEventListener('click', () => {
+  aiTipo = 'appunti'; $('aiOut').value = $('appunti').value; aiRender();
+  $('aiTitolo').textContent = 'I tuoi appunti'; $('aiUsa').hidden = true;
+  $('aiRis').hidden = false; $('aiRis').style.display = 'flex'; $('aiScrivi').hidden = true; aiModifica(true);
+  setTimeout(() => $('aiOut').focus(), 50);
+});
+$('vaiApp').addEventListener('click', () => { tabScelta = true; attivaTab('appunti'); setTimeout(() => $('aiRis').scrollIntoView({ behavior: 'smooth', block: 'start' }), 80); });
 $('aiStop').addEventListener('click', () => { aiStop = true; aiSt('Mi fermo dopo la parte in corso…', 'warn'); });
 // Elimina appunti: toglie gli appunti dalla registrazione (la trascrizione resta). Doppio tocco per confermare.
 let aiEliminaArm = null;
@@ -2452,7 +2489,7 @@ $('aiElimina').addEventListener('click', () => {
   disarmaAiElimina();
   $('appunti').value = '';
   if (aiTipo !== 'aggiusta') { $('aiOut').value = ''; $('aiRis').hidden = true; $('aiRis').style.display = 'none'; }
-  $('aiElimina').hidden = true;
+  $('aiElimina').hidden = true; mostraAppunti();
   aiSt('Appunti eliminati. La trascrizione resta: puoi crearli di nuovo quando vuoi.');
   if (currentId) autoSalva();
 });
@@ -2677,6 +2714,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('overla
 document.querySelectorAll('[data-vai]').forEach(b => b.addEventListener('click', () => {
   chiudi();
   const sez = $(b.dataset.vai)?.closest('section');
+  sez?.apri?.();
   if (sez) setTimeout(() => sez.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
 }));
 function iniziali(p){ return ((p.nome || '')[0] || '') + ((p.cognome || '')[0] || '') ; }
@@ -2789,6 +2827,7 @@ function attivaTab(tab, sub){
   const h = document.querySelector('header.top h1');
   if (h && document.body.classList.contains('privato') && !document.body.classList.contains('locked') && h.textContent !== TITOLI_TAB[tab]) { h.textContent = ''; const ev = document.createElement('span'); ev.className = 'ev'; ev.textContent = TITOLI_TAB[tab]; h.append(ev); }
   try { sessionStorage.setItem('ft:tab', tab); sessionStorage.setItem('ft:subs', JSON.stringify(subAttive)); } catch (_) {}
+  try { aggiornaContesto(); } catch (_) {}
   return cambia;
 }
 document.querySelectorAll('[data-tab-btn]').forEach(b => b.addEventListener('click', () => { tabScelta = true; attivaTab(b.dataset.tabBtn); window.scrollTo({ top: 0 }); if (b.dataset.tabBtn === 'oggi' && !document.body.classList.contains('locked')) { aggiornaUso(); caricaOggi(); caricaSerie(); } if (b.dataset.tabBtn === 'appunti') fonteInfo(); }));
@@ -2815,7 +2854,7 @@ function disegnaAnelli(){
     anelliDati.tr && { id: 'tr', colore: 'var(--anello-1)', pct: anelliDati.tr.usate / Math.max(1, anelliDati.tr.limite),
       valore: fmtOre(anelliDati.tr.usate), sotto: 'di ' + fmtOre(anelliDati.tr.limite), nome: 'Trascrizione', quando: anelliDati.tr.settimana ? 'questa settimana' : 'oggi' },
     anelliDati.ai && { id: 'ai', colore: 'var(--anello-2)', pct: anelliDati.ai.usati / Math.max(1, anelliDati.ai.limite),
-      valore: Math.min(100, Math.round(anelliDati.ai.usati / Math.max(1, anelliDati.ai.limite) * 100)) + '%', sotto: 'usata', nome: 'AI', quando: 'oggi' },
+      valore: String(Math.max(0, Math.floor((anelliDati.ai.limite - anelliDati.ai.usati) / 30000))), sotto: 'appunti', nome: 'AI', quando: 'rimasti oggi' },
     { id: 'rip', colore: 'var(--anello-3)', pct: anelliDati.rip && anelliDati.rip.quota ? anelliDati.rip.fatte / anelliDati.rip.quota : 0,
       valore: anelliDati.rip && anelliDati.rip.quota ? `${anelliDati.rip.fatte}/${anelliDati.rip.quota}` : '–', sotto: anelliDati.rip && anelliDati.rip.quota ? 'lezioni' : 'nessun esame', nome: 'Ripasso', quando: 'oggi', obiettivo: true },
     anelliDati.studio && { id: 'studio', colore: 'var(--anello-1)', pct: anelliDati.studio.minuti / anelliDati.studio.obiettivo,
@@ -3429,6 +3468,7 @@ async function timerCompleta(minuti, materia, intera){
 function fmtMin(m){ m = Math.round(m); return m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ' ' + (m % 60) + ' min' : ''}` : `${m} minuti`; }
 function timerTick(){ clearInterval(timerInt); timerInt = setInterval(timerRender, 1000); timerRender(); }
 $('timerAvvia').addEventListener('click', () => {
+  $('timerPanel').apri?.();
   const t = timerLeggi();
   if (t && t.pausa != null) { t.fine = Date.now() + t.pausa; t.pausa = null; timerScrivi(t); }
   else { const d = Number($('timerDurata').value) || 60; timerScrivi({ inizio: Date.now(), fine: Date.now() + d * 60000, durata: d, materia: $('timerMateria').value.trim(), pausa: null }); }
@@ -3517,7 +3557,7 @@ function aggiornaContesto(){
   const t = $('contestoTxt'), b = $('contestoBtn');
   t.textContent = '';
   if (testo.length > 50) {
-    const x = document.createElement('span'); x.textContent = 'Registrazione: ';
+    const x = document.createElement('span'); x.textContent = '📄 Su: ';
     const y = document.createElement('b'); y.textContent = titolo || (currentId ? 'senza titolo' : 'non ancora salvata');
     t.append(x, y); if (materia) t.append(' · ' + materia);
     b.textContent = 'Cambia'; b.dataset.dove = 'lArch';
@@ -3527,7 +3567,9 @@ function aggiornaContesto(){
     $('contestoVia').hidden = true; disarmVia();
   }
   $('dopoTesto').hidden = testo.length < 200;
-  $('lezAscolta').hidden = !PARLA || $('appunti').value.trim().length < 40;
+  $('lezAppNota').hidden = !$('appunti').value.trim() || tabAttiva === 'appunti';
+  const perMateria = tabAttiva === 'studia' && ['orale', 'esame', 'glossario', 'chiedi'].includes(subAttive.studia);
+  $('contesto').classList.toggle('via', perMateria);
   if (!aiBusy) $('aiElimina').hidden = !($('appunti').value.trim() || (!$('aiRis').hidden && aiTipo !== 'aggiusta'));
   $('salvaVuoto').hidden = testo.length > 0;
 }
@@ -3865,7 +3907,7 @@ $('invAttiva').addEventListener('click', async () => {
 });
 $('invNonOra').addEventListener('click', () => { $('invitoNotif').hidden = true; });
 $('invMai').addEventListener('click', () => { lsSet(NOTIF_MAI, '1'); $('invitoNotif').hidden = true; aggiornaCampanella(); });
-$('campanella').addEventListener('click', () => { tabScelta = true; attivaTab('oggi'); setTimeout(() => $('notifPanel').scrollIntoView({ behavior: 'smooth', block: 'center' }), 50); });
+$('campanella').addEventListener('click', () => { tabScelta = true; attivaTab('oggi'); $('notifPanel').apri?.(); setTimeout(() => $('notifPanel').scrollIntoView({ behavior: 'smooth', block: 'center' }), 50); });
 
 /* ---------- Notifiche: apertura dalla notifica ---------- */
 let urlInAttesa = location.search ? location.href : null;
@@ -3896,7 +3938,7 @@ const GIRO = [
   { tab: 'oggi', el: '#notifPanel', t: 'Oggi · Promemoria', x: 'Attiva le notifiche per gli avvisi dell’orario, del ripasso e della serie. Su iPhone funzionano dall’app aggiunta alla schermata Home.' },
   { tab: 'trascrivi', el: '#recBtn', t: 'Trascrivi · Registra', x: 'Premi <b>Avvia registrazione</b> quando inizia la lezione o la riunione. Puoi mettere in pausa e, quando senti qualcosa di importante («questo all’esame», una decisione), toccare <b>⭐ Importante</b>.' },
   { tab: 'trascrivi', el: '#drop', t: 'Trascrivi · Carica un file', x: 'Hai già un audio o un video? Caricalo qui, anche di 2 ore.' },
-  { tab: 'trascrivi', el: 'section:has(#l2)', t: 'Trascrivi · Trascrizione', x: 'Premi <b>Trascrivi</b>. L’argomento è facoltativo: se lo lasci vuoto lo sceglie l’AI.' },
+  { tab: 'trascrivi', el: 'section:has(#l2)', t: 'Trascrivi · Trascrizione', x: 'Premi <b>Trascrivi</b>: il testo compare man mano. Argomento e titolo li sceglie l’AI, e li cambi nel riquadro «La registrazione».' },
   { tab: 'trascrivi', el: 'section:has(#lSave)', t: 'La registrazione si salva da sola', x: 'Finita la trascrizione la registrazione va nell’archivio da sola, con argomento e titolo. Qui puoi cambiarli quando vuoi.' },
   { tab: 'appunti', el: '#fontePanel', t: 'Appunti · Da cosa partiamo', x: 'Parti dalla trascrizione, oppure <b>carica un file</b> (PDF, Word, slide, foto degli appunti) o <b>incolla un testo</b>.' },
   { tab: 'appunti', el: '.aicard', t: 'Appunti · Crea gli appunti', x: 'L’AI scrive appunti ordinati, in paragrafi con i titoli (per le riunioni anche decisioni e cose da fare). Puoi aggiungere foto della lavagna e slide, ascoltarli 🔊 e scaricarli in Word.' },
@@ -4068,6 +4110,24 @@ function admFbRender(lista){
 }
 
 
+/* ---------- Oggi: riquadri compatti che si aprono con un tocco ---------- */
+function rendiApribile(id){
+  const sez = $(id); if (!sez || sez.querySelector(':scope > .corpo')) return;
+  const testa = sez.querySelector(':scope > .row.between'); if (!testa) return;
+  const corpo = document.createElement('div'); corpo.className = 'corpo';
+  [...sez.children].forEach(c => { if (c !== testa && c.id !== 'orarioOggi') corpo.append(c); });
+  sez.append(corpo);
+  const lab = testa.querySelector('.label'); const fr = document.createElement('span'); fr.className = 'freccia'; fr.textContent = '▾'; fr.setAttribute('aria-hidden', 'true'); lab?.append(fr);
+  testa.classList.add('apribile'); testa.setAttribute('role', 'button'); testa.tabIndex = 0;
+  const imposta = aperto => { sez.classList.toggle('chiuso', !aperto); testa.setAttribute('aria-expanded', String(aperto)); lsSet('ft:aperto:' + id, aperto ? '1' : '0'); };
+  imposta(lsGet('ft:aperto:' + id) === '1');
+  testa.addEventListener('click', e => { if (e.target.closest('button, select, input, a')) return; imposta(sez.classList.contains('chiuso')); });
+  testa.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); imposta(sez.classList.contains('chiuso')); } });
+  sez.apri = () => imposta(true);
+}
+['timerPanel', 'orarioPanel', 'notifPanel'].forEach(rendiApribile);
+if (timerLeggi()) $('timerPanel').apri?.();
+
 /* ---------- Offline: copia dell'archivio sul dispositivo ---------- */
 let offlineOra = false, offlinePronto = false;
 function segnaOffline(si){
@@ -4149,7 +4209,6 @@ $('ltChiudi').addEventListener('click', () => { ltFerma(); $('lettore').hidden =
 if (PARLA) { try { speechSynthesis.getVoices(); speechSynthesis.addEventListener?.('voiceschanged', () => {}); } catch (_) {} }
 else { $('aiAscolta').hidden = true; }
 $('aiAscolta').addEventListener('click', () => ascolta($('aiTitolo').textContent || 'Appunti', $('aiOut').value));
-$('lezAscolta').addEventListener('click', () => ascolta($('titolo').value.trim() || 'Appunti della registrazione', $('appunti').value));
 $('schAscolta').addEventListener('click', () => ascolta('Scheda di ' + $('simMateria').value, schedaTesto));
 
 /* ---------- Pannello amministratore: errori ---------- */
@@ -4500,12 +4559,13 @@ function renderList(items){
     });
     const body = el('div', 'subject-body');
     const tools = el('div', 'subject-tools');
-    const dl = el('button', null, 'Appunti .txt'); dl.type = 'button';
-    dl.title = `Scarica in un unico file tutti gli appunti di ${materia}, in ordine di data`;
-    dl.addEventListener('click', () => scaricaAppunti(materia, dl));
-    const dw = el('button', null, 'Dispensa Word'); dw.type = 'button'; dw.addEventListener('click', () => dispensa(materia, 'word', dw));
-    const dp = el('button', null, 'Dispensa PDF'); dp.type = 'button'; dp.addEventListener('click', () => dispensa(materia, 'pdf', dp));
-    tools.append(dw, dp, dl);
+    const sc = el('button', null, '⬇️ Scarica dispensa'); sc.type = 'button';
+    sc.addEventListener('click', () => modale({ titolo: `Dispensa di ${materia}`, testo: 'Tutti gli appunti della materia in un unico file, in ordine di data, con il glossario.', tasti: [
+      { t: '📄 Word', fn: () => dispensa(materia, 'word', sc) },
+      { t: '🖨️ PDF', fn: () => dispensa(materia, 'pdf', sc) },
+      { t: '📝 Testo (.txt)', fn: () => scaricaAppunti(materia, sc) },
+      { t: 'Annulla' }] }));
+    tools.append(sc);
     const ul = el('ul');
     for (const it of list) {
       const li = el('li'); const b = el('button', 'lez'); b.type = 'button';
@@ -4519,10 +4579,38 @@ function renderList(items){
       if (it.conFlashcard) meta.append(el('span', 'tag', 'flashcard'));
       info.append(el('span', 'titolo', it.titolo), meta);
       b.append(day, info); b.addEventListener('click', () => openLesson(it.id));
-      li.append(b); ul.append(li);
+      const via = el('button', 'lez-via', '🗑️'); via.type = 'button'; via.setAttribute('aria-label', `Elimina ${it.titolo}`);
+      via.addEventListener('click', () => modale({ titolo: `Eliminare «${it.titolo}»?`, testo: 'Verranno cancellati per sempre la trascrizione, gli appunti e le flashcard di questa registrazione. Non si può annullare.', tasti: [
+        { t: 'Annulla' },
+        { t: 'Elimina', cls: 'danger', fn: () => eliminaDallArchivio(it) }] }));
+      li.append(b, via); ul.append(li);
     }
     body.append(tools, ul); g.append(s, body); box.append(g);
   }
+}
+async function eliminaDallArchivio(it){
+  const st = $('archStatus');
+  try {
+    await privApi('lezioni?id=' + encodeURIComponent(it.id), { method: 'DELETE' });
+    if (it.id === currentId) { privNewRun(); chunks = new Map(); $('out').value = ''; doneSec = 0; try { localStorage.removeItem(LS); } catch (_) {} aggiornaContesto(); }
+    st.className = 'status'; st.textContent = `«${it.titolo}» eliminata.`;
+    loadList(); caricaOggi();
+  } catch (e) { st.className = 'status err'; st.textContent = 'Non riesco a eliminare: ' + e.message; }
+}
+// Finestra di conferma dell'app (al posto dei popup del browser)
+function modale({ titolo, testo, tasti }){
+  const m = $('modale'); $('modT').textContent = titolo; $('modTesto').textContent = testo || ''; $('modTesto').hidden = !testo;
+  const box = $('modTasti'); box.textContent = '';
+  const chiudiM = () => { m.hidden = true; document.removeEventListener('keydown', esc); };
+  const esc = e => { if (e.key === 'Escape') chiudiM(); };
+  for (const k of tasti) {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = k.t; if (k.cls) b.className = k.cls;
+    b.addEventListener('click', () => { chiudiM(); k.fn?.(); });
+    box.append(b);
+  }
+  m.hidden = false; document.addEventListener('keydown', esc);
+  m.onclick = e => { if (e.target === m) chiudiM(); };
+  setTimeout(() => box.querySelector('button')?.focus(), 30);
 }
 async function scaricaAppunti(materia, btn){
   btn.disabled = true;
@@ -4560,7 +4648,7 @@ async function openLesson(id){
   try {
     const l = await privApi('lezioni?id=' + encodeURIComponent(id));
     chunks = new Map();
-    $('out').value = l.testo; $('appunti').value = l.appunti || '';
+    $('out').value = l.testo; $('appunti').value = l.appunti || ''; aiTipo = null; mostraAppunti();
     $('materia').value = l.materia; $('titolo').value = l.titolo; $('dataLez').value = l.data;
     setCurrent(l); doneSec = l.durata || 0; onMateria();
     let fc = []; try { fc = l.flashcard ? JSON.parse(l.flashcard) : []; } catch (_) {}
@@ -4636,7 +4724,7 @@ $('out').addEventListener('input', () => { if (!running && !segRec) programmaSal
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && autoTimer) autoSalva(); });
 function privNewRun(){
   setCurrent(null); if (Date.now() - materiaUtente > 30 * 60000) materiaUtente = 0; ultimoSalvato = ''; clearTimeout(autoTimer); chipSalva('Non ancora salvata', '');
-  $('appunti').value = ''; $('titolo').value = ''; $('dataLez').value = todayISO();
+  $('appunti').value = ''; aiTipo = null; mostraAppunti(); $('titolo').value = ''; $('dataLez').value = todayISO();
   privStatus(''); fcSet([], false); fcSt(''); lavFoto = []; lavRender(); matLezione = ''; matPending = []; matRender(); mappaDa(null);
 }
 $('newLesson').addEventListener('click', () => {
