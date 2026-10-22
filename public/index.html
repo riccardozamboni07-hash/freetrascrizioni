@@ -485,6 +485,51 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 .lt-bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
 .lt-tasti{display:flex;gap:8px;justify-content:center}
 .lt-tasti button{min-height:40px;min-width:46px;padding:.3rem .6rem}
+.landing{flex-direction:column;gap:14px}
+.hero{padding:6px 2px 4px;gap:16px}
+.hero .badge{align-self:flex-start;font-size:.8rem;font-weight:700;color:var(--accent-text);background:var(--accent-soft);border-radius:999px;padding:.3rem .75rem}
+.hero h2{margin:0;font-size:clamp(1.65rem,7vw,2.3rem);line-height:1.12;letter-spacing:-.025em}
+.hero h2 .evid{color:var(--accent-text);background:linear-gradient(transparent 62%,var(--accent-soft) 62%)}
+.hero-sub{margin:0;color:var(--muted);font-size:1.02rem;line-height:1.5}
+.hero-cta{display:flex;flex-direction:column;align-items:stretch;gap:10px}
+.hero-cta .link{align-self:center;font-size:.95rem}
+button.grande{min-height:54px;font-size:1.05rem;border-radius:18px}
+.hero-punti{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:.84rem;color:var(--muted)}
+.hero-punti li::before{content:'✓ ';color:var(--accent-text);font-weight:700}
+.demo-app{display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:24px;background:linear-gradient(160deg,var(--accent-soft),var(--surface));border:1px solid var(--line)}
+.demo-rec{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px 12px;font-size:.88rem}
+.demo-dot{width:10px;height:10px;border-radius:50%;background:var(--rec);animation:pulse 1.2s infinite}
+.demo-t{font-variant-numeric:tabular-nums;font-weight:700}
+.demo-onda{grid-column:1/-1;display:flex;align-items:center;gap:3px;height:28px}
+.demo-onda i{flex:1;border-radius:3px;background:var(--accent);opacity:.8;height:30%;animation:onda 1.1s ease-in-out infinite}
+.demo-onda i:nth-child(3n){animation-delay:-.3s}.demo-onda i:nth-child(3n+1){animation-delay:-.6s}.demo-onda i:nth-child(4n){animation-delay:-.85s}
+@keyframes onda{0%,100%{height:25%}50%{height:95%}}
+.demo-stella{grid-column:1/-1;justify-self:start;font-size:.76rem;font-weight:700;color:#8a6500;background:#fff3c4;border-radius:999px;padding:.15rem .55rem}
+.demo-freccia{text-align:center;font-size:.8rem;font-weight:600;color:var(--accent-text)}
+.demo-note{display:flex;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px;font-size:.86rem}
+.demo-note p{margin:0;line-height:1.45}
+.demo-riga{display:block;height:8px;border-radius:5px;background:var(--tenue);width:92%}
+.demo-riga.corta{width:64%}
+.demo-chip{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.demo-chip span{font-size:.74rem;font-weight:700;border-radius:999px;padding:.2rem .55rem;background:var(--accent-soft);color:var(--accent-text)}
+.info h3{margin:10px 0 0;font-size:1.2rem;letter-spacing:-.01em}
+.feat{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.feat div{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:4px}
+.feat span{font-size:1.4rem}
+.feat b{font-size:.92rem}
+.feat p{margin:0;font-size:.8rem;color:var(--muted);line-height:1.4}
+.passi3{list-style:none;counter-reset:p;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.passi3 li{counter-increment:p;display:grid;grid-template-columns:34px 1fr;gap:2px 10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px 12px}
+.passi3 li::before{content:counter(p);grid-row:1/3;width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-fg);display:flex;align-items:center;justify-content:center;font-weight:700}
+.passi3 span{font-size:.84rem;color:var(--muted)}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.faq summary{cursor:pointer;font-weight:600}
+.faq p{margin:.5rem 0 0;font-size:.9rem;color:var(--muted)}
+.cta-fine{display:flex;flex-direction:column;gap:10px;align-items:stretch;text-align:center;padding:18px;border-radius:22px;background:var(--accent-soft)}
+.cta-fine b{font-size:1.15rem}
+@media (min-width:760px){.feat{grid-template-columns:repeat(3,1fr)}.hero-cta{flex-direction:row;align-items:center}.hero-cta .link{align-self:center}}
+@media (prefers-reduced-motion:reduce){.demo-onda i,.demo-dot{animation:none}}
 .fonti{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .fonti button{flex-direction:column;gap:4px;min-height:72px;padding:10px 4px;border-radius:16px;font-size:1.3rem;border:1.5px solid var(--line);background:var(--surface)}
 .fonti button span{font-size:.8rem;font-weight:600}
@@ -516,7 +561,10 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 .priv{display:none}
 body.privato .priv{display:flex}
 body.privato .pub{display:none}
-body.locked main > :not(header):not(#lock):not(#setup){display:none}
+body.locked main > :not(header):not(#lock):not(#setup):not(.landing){display:none}
+.landing{display:none!important}
+body.locked.multi .landing{display:flex!important}
+body.locked.multi header.top > p{display:none}
 body.privato:not(.locked) #lock{display:none}
 #lock{max-width:420px}
 .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
@@ -582,6 +630,35 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
     <button type="button" class="primary" id="setupRetry">Ho fatto, ricontrolla</button>
   </section>
 
+  <section class="landing hero" id="landingHero" aria-labelledby="heroT">
+    <span class="badge">✨ Beta gratuita · su invito</span>
+    <h2 id="heroT">Lezioni e riunioni, <span class="evid">trasformate in appunti</span> in pochi minuti.</h2>
+    <p class="hero-sub">Registri dal telefono, l'AI trascrive e scrive appunti ordinati. Poi ripassi con flashcard, interrogazione orale e simulazione dello scritto.</p>
+    <div class="hero-cta">
+      <button type="button" class="primary grande" id="ctaReg">Crea il tuo account gratis</button>
+      <button type="button" class="link" id="ctaAcc">Ho già un account · Accedi</button>
+    </div>
+    <div class="demo-app" aria-hidden="true">
+      <div class="demo-rec">
+        <span class="demo-dot"></span><b>Registrazione</b><span class="demo-t">01:24:10</span>
+        <div class="demo-onda"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <span class="demo-stella">⭐ Importante</span>
+      </div>
+      <div class="demo-freccia">↓ l'AI scrive gli appunti</div>
+      <div class="demo-note">
+        <b>## Le fonti del diritto</b>
+        <p>La <strong>Costituzione</strong> è al vertice della gerarchia delle fonti…</p>
+        <i class="demo-riga"></i><i class="demo-riga corta"></i>
+        <div class="demo-chip"><span>🃏 Flashcard</span><span>🎓 Orale</span><span>📝 Scritto</span></div>
+      </div>
+    </div>
+    <ul class="hero-punti">
+      <li>Fino a 2 ore per registrazione</li>
+      <li>iPhone, Android e computer</li>
+      <li>I tuoi dati restano tuoi</li>
+    </ul>
+  </section>
+
   <section class="panel priv" id="lock" aria-labelledby="lockT" style="flex-direction:column">
     <span class="label" id="lockT">Area personale</span>
     <div id="authBox" class="auth" hidden>
@@ -610,6 +687,36 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <button class="primary" type="submit">Entra</button>
     </form>
     <div class="status" id="lockStatus" role="status"></div>
+  </section>
+
+  <section class="landing info" id="landingInfo" aria-labelledby="infoT">
+    <h3 id="infoT">Tutto quello che ti serve, in un'app</h3>
+    <div class="feat">
+      <div><span>🎙️</span><b>Registra o carica</b><p>Pausa, ripresa e ⭐ per i momenti importanti. Oppure carichi audio, video, PDF, Word o foto.</p></div>
+      <div><span>✍️</span><b>Appunti con l'AI</b><p>In paragrafi con i titoli, si salvano da soli. Li ascolti 🔊 o li scarichi in Word e PDF.</p></div>
+      <div><span>🎓</span><b>Studia meglio</b><p>Flashcard, interrogazione orale, simulazione dello scritto con voto, esercizi e scheda di ripasso.</p></div>
+      <div><span>📅</span><b>Arrivi pronto</b><p>Piano di ripasso verso l'esame, orario con avvisi, serie 🔥 e traguardi per non mollare.</p></div>
+      <div><span>💼</span><b>Anche al lavoro</b><p>Corsi, webinar e riunioni: per le riunioni l'AI scrive anche decisioni e cose da fare.</p></div>
+      <div><span>📴</span><b>Anche offline</b><p>Le registrazioni salvate si aprono anche senza rete, in aula o in metro.</p></div>
+    </div>
+    <h3>Come funziona</h3>
+    <ol class="passi3">
+      <li><b>Registra</b><span>Avvia la registrazione all'inizio della lezione o della riunione.</span></li>
+      <li><b>Trascrivi</b><span>Il testo arriva in pochi minuti e si salva da solo, con argomento e titolo.</span></li>
+      <li><b>Studia</b><span>Appunti, flashcard e ripasso sono pronti in un tocco.</span></li>
+    </ol>
+    <h3>Domande frequenti</h3>
+    <div class="faq">
+      <details><summary>Quanto costa?</summary><p>Durante la beta è gratis, con un limite di ore di trascrizione a settimana indicato nell'app.</p></details>
+      <details><summary>Chi vede le mie registrazioni?</summary><p>Solo tu. Puoi scaricare tutti i tuoi dati o eliminare l'account in qualsiasi momento dal profilo.</p></details>
+      <details><summary>Funziona su iPhone?</summary><p>Sì: aprila in Safari e tocca Condividi → «Aggiungi alla schermata Home». Da lì funzionano anche le notifiche.</p></details>
+      <details><summary>Posso registrare chiunque?</summary><p>Registra solo quando puoi farlo: chiedi il permesso a chi parla e rispetta le regole della tua scuola, università o azienda.</p></details>
+    </div>
+    <div class="cta-fine">
+      <b>Pronto a provarla?</b>
+      <button type="button" class="primary grande" id="ctaReg2">Crea il tuo account gratis</button>
+    </div>
+    <p class="note" style="text-align:center"><a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni d'uso</a></p>
   </section>
 
   <ol class="steps pub" aria-label="Come funziona">
@@ -1109,7 +1216,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Se si interrompe, riapri l'app: riprende da dove era rimasta e la registrazione non si perde.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 4.0.1<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Freetrascrizioni · versione 4.1<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="contesto priv" id="contesto" data-tab="studia appunti">
     <span id="contestoTxt"></span>
     <span class="row" style="gap:14px"><button type="button" class="link" id="contestoBtn"></button><button type="button" class="link rimuovi" id="contestoVia" hidden>Rimuovi</button></span>
@@ -2378,7 +2485,7 @@ function authModo(reg){
   authSt('');
 }
 function preparaMulti(st){
-  MULTI = true; statoApp = st;
+  MULTI = true; statoApp = st; document.body.classList.add('multi');
   $('authBox').hidden = false; $('lockForm').style.display = 'none'; $('lockNota').hidden = true;
   $('linkLegali').hidden = false;
   document.querySelector('header p').textContent = 'Registra lezioni, corsi e riunioni: trascrizione in pochi minuti, appunti con l’AI, flashcard e strumenti per studiare e ripassare.';
@@ -2389,6 +2496,10 @@ function preparaMulti(st){
   if (err) { if (/invito/i.test(err)) authModo(true); authSt(err, 'err'); history.replaceState(null, '', location.pathname); }
 }
 $('tabAccedi').addEventListener('click', () => authModo(false));
+const versoForm = reg => { authModo(reg); $('lock').scrollIntoView({ behavior: 'smooth', block: 'start' }); setTimeout(() => (reg ? (statoApp.invito ? $('aInvito') : $('aNome')) : $('aEmail')).focus({ preventScroll: true }), 450); };
+$('ctaReg').addEventListener('click', () => versoForm(true));
+$('ctaReg2').addEventListener('click', () => versoForm(true));
+$('ctaAcc').addEventListener('click', () => versoForm(false));
 $('tabReg').addEventListener('click', () => authModo(true));
 $('googleBtn').addEventListener('click', () => {
   const inv = $('aInvito').value.trim();
