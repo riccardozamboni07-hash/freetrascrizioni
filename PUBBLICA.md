@@ -1,4 +1,4 @@
-# Freetrascrizioni – app pubblica
+# Astra Note – app pubblica
 
 La stessa app, ma con **registrazione e accesso** (email e password oppure Google): ogni utente ha il suo archivio separato e un limite di ore a settimana. La chiave Groq è una sola, la tua.
 

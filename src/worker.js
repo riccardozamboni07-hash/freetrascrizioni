@@ -1,4 +1,4 @@
-// Freetrascrizioni — Cloudflare Worker
+// Astra Note — Cloudflare Worker
 // - serve l'app (cartella public/)
 // - /api/stato: dice se chiave Groq e password sono impostate (per la schermata di primo avvio)
 // - /api/trascrivi: trascrizione online con Groq, solo con la password giusta

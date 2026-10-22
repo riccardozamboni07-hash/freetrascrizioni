@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Freetrascrizioni">
+<meta name="apple-mobile-web-app-title" content="Astra Note">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0e1512" media="(prefers-color-scheme: dark)">
-<title>Freetrascrizioni</title>
+<title>Astra Note</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="/icona-192.png">
@@ -487,6 +487,8 @@ input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
 .lt-tasti button{min-height:40px;min-width:46px;padding:.3rem .6rem}
 .landing{flex-direction:column;gap:14px}
 .hero{padding:6px 2px 4px;gap:16px}
+.acronimo{margin:0;font-size:.82rem;letter-spacing:.02em;color:var(--muted)}
+.acronimo b{color:var(--accent-text);font-size:1rem}
 .hero .badge{align-self:flex-start;font-size:.8rem;font-weight:700;color:var(--accent-text);background:var(--accent-soft);border-radius:999px;padding:.3rem .75rem}
 .hero h2{margin:0;font-size:clamp(1.65rem,7vw,2.3rem);line-height:1.12;letter-spacing:-.025em}
 .hero h2 .evid{color:var(--accent-text);background:linear-gradient(transparent 62%,var(--accent-soft) 62%)}
@@ -628,7 +630,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       </button>
       <button type="button" class="avatar" id="profBtn" aria-label="Il tuo profilo" aria-controls="profilo" aria-expanded="false"><span id="avatarTxt">👤</span></button>
     </div>
-    <h1>Freetrascrizioni</h1>
+    <h1>Astra Note</h1>
     <p>Registra o carica un audio, anche di 2 ore (lezioni, corsi, riunioni), e ottieni il testo e gli appunti in pochi minuti.</p>
   </header>
 
@@ -641,6 +643,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
 
   <section class="landing hero" id="landingHero" aria-labelledby="heroT">
     <span class="badge">✨ Beta gratuita · su invito</span>
+    <p class="acronimo" aria-label="ASTRA: Appunta, Studia, Trascrivi, Ripassa, Archivia"><b>A</b>ppunta · <b>S</b>tudia · <b>T</b>rascrivi · <b>R</b>ipassa · <b>A</b>rchivia</p>
     <h2 id="heroT">Lezioni e riunioni, <span class="evid">trasformate in appunti</span> in pochi minuti.</h2>
     <p class="hero-sub">Registri dal telefono, l'AI trascrive e scrive appunti ordinati. Poi ripassi con flashcard, interrogazione orale e simulazione dello scritto.</p>
     <div class="hero-cta">
@@ -1225,7 +1228,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Se si interrompe, riapri l'app: riprende da dove era rimasta e la registrazione non si perde.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Freetrascrizioni · versione 4.1.1<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Astra Note · versione 4.2<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="contesto priv" id="contesto" data-tab="studia appunti">
     <span id="contestoTxt"></span>
     <span class="row" style="gap:14px"><button type="button" class="link" id="contestoBtn"></button><button type="button" class="link rimuovi" id="contestoVia" hidden>Rimuovi</button></span>
@@ -1315,7 +1318,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
   <div class="ben-card">
     <div class="ben-slide">
       <div class="ben-ic">👋</div>
-      <h2 id="benT">Benvenuto in Freetrascrizioni</h2>
+      <h2 id="benT">Benvenuto in Astra Note</h2>
       <p>Ti faccio vedere in un minuto <b>dove si trova ogni cosa</b>, scheda per scheda: registrare lezioni, corsi o riunioni, creare appunti, studiare e ripassare.</p>
       <p class="note">Puoi rivederlo quando vuoi da ☰ → Come funziona.</p>
     </div>
@@ -1418,7 +1421,7 @@ const FFCORE = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm/ffmpe
 const ua = navigator.userAgent;
 const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const isMobile = isIOS || /Android|Mobile/.test(ua);
-const PRIVATE = true;   // Freetrascrizioni: l'app è sempre personale e protetta da password
+const PRIVATE = true;   // Astra Note: l'app è sempre personale e protetta da password
 const FILE_SEG_S = isMobile ? 300 : 600;   // i file si elaborano a pezzi: 5 min su telefono (meno memoria), 10 su computer
 
 let device = 'wasm';
@@ -2498,7 +2501,7 @@ function preparaMulti(st){
   $('authBox').hidden = false; $('lockForm').style.display = 'none'; $('lockNota').hidden = true;
   $('linkLegali').hidden = false;
   document.querySelector('header p').textContent = 'Registra lezioni, corsi e riunioni: trascrizione in pochi minuti, appunti con l’AI, flashcard e strumenti per studiare e ripassare.';
-  document.title = 'Freetrascrizioni';
+  document.title = 'Astra Note';
   $('googleBtn').hidden = !st.google; $('oppure').hidden = !st.google;
   authModo(false);
   const err = new URLSearchParams(location.search).get('errore');
@@ -3015,11 +3018,11 @@ $('esIcs').addEventListener('click', () => {
     const d = e.data.replace(/-/g, ''), fine = new Date(e.data + 'T12:00:00Z'); fine.setUTCDate(fine.getUTCDate() + 1);
     return ['BEGIN:VEVENT', 'UID:' + e.id + '@freetrascrizioni', 'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z',
       'DTSTART;VALUE=DATE:' + d, 'DTEND;VALUE=DATE:' + fine.toISOString().slice(0, 10).replace(/-/g, ''),
-      'SUMMARY:' + z('Esame: ' + e.materia + (e.nome ? ' (' + e.nome + ')' : '')), 'DESCRIPTION:' + z('Ripassa ogni giorno con Freetrascrizioni'),
+      'SUMMARY:' + z('Esame: ' + e.materia + (e.nome ? ' (' + e.nome + ')' : '')), 'DESCRIPTION:' + z('Ripassa ogni giorno con Astra Note'),
       'BEGIN:VALARM', 'TRIGGER:-P7D', 'ACTION:DISPLAY', 'DESCRIPTION:' + z('Tra una settimana: esame di ' + e.materia), 'END:VALARM',
       'BEGIN:VALARM', 'TRIGGER:-P1D', 'ACTION:DISPLAY', 'DESCRIPTION:' + z('Domani: esame di ' + e.materia), 'END:VALARM', 'END:VEVENT'].join('\r\n');
   });
-  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Freetrascrizioni//Esami//IT', 'CALSCALE:GREGORIAN', ...ev, 'END:VCALENDAR'].join('\r\n');
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Astra Note//Esami//IT', 'CALSCALE:GREGORIAN', ...ev, 'END:VCALENDAR'].join('\r\n');
   saveFile(new Blob([ics], { type: 'text/calendar' }), 'esami.ics');
 });
 

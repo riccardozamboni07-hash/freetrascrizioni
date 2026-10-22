@@ -1,4 +1,4 @@
-// Service worker di Freetrascrizioni:
+// Service worker di Astra Note:
 // - promemoria (notifiche) e timer di studio;
 // - app e archivio usabili anche offline: prima prova la rete, se non c'è usa l'ultima copia salvata.
 const APP = 'ft-app-v1', DATI = 'ft-dati-v1';

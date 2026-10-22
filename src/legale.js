@@ -6,7 +6,7 @@ const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 
 function pagina(titolo, corpo) {
   return `<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${titolo} · Freetrascrizioni</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap">
+<title>${titolo} · Astra Note</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap">
 <style>
 :root{--bg:#ffffff;--surface:#fff;--fg:#10201a;--muted:#5b6b63;--line:#e8ecea;--accent:#14573d}
 @media (prefers-color-scheme:dark){:root{--bg:#0e1512;--surface:#16201b;--fg:#eaf3ee;--muted:#9db3a7;--line:#24332b;--accent:#6fd3a0}}
@@ -23,7 +23,7 @@ const aggiornata = '22 ottobre 2026';
 export function privacy(env) {
   const c = contatto(env);
   return pagina('Privacy', `<h1>Informativa sulla privacy</h1><p class="muted">Ultimo aggiornamento: ${aggiornata}</p>
-<p>Questa pagina spiega quali dati tratta Freetrascrizioni, perché e quali sono i tuoi diritti, secondo il Regolamento europeo 2016/679 (GDPR).</p>
+<p>Questa pagina spiega quali dati tratta Astra Note, perché e quali sono i tuoi diritti, secondo il Regolamento europeo 2016/679 (GDPR).</p>
 <h2>Chi è il titolare</h2>
 <p>Il titolare del trattamento è Riccardo Zamboni, che gestisce l'app. Per qualsiasi richiesta: <strong>${c}</strong>.</p>
 <h2>Quali dati trattiamo</h2>
@@ -61,7 +61,7 @@ export function condizioni(env) {
   const c = contatto(env);
   return pagina('Condizioni d’uso', `<h1>Condizioni d'uso</h1><p class="muted">Ultimo aggiornamento: ${aggiornata}</p>
 <h2>Il servizio</h2>
-<p>Freetrascrizioni trascrive lezioni, corsi e riunioni e aiuta a studiarli e riutilizzarli con l'intelligenza artificiale (appunti, flashcard, domande). In questa fase è una <strong>versione di prova (beta)</strong> gratuita, su invito.</p>
+<p>Astra Note trascrive lezioni, corsi e riunioni e aiuta a studiarli e riutilizzarli con l'intelligenza artificiale (appunti, flashcard, domande). In questa fase è una <strong>versione di prova (beta)</strong> gratuita, su invito.</p>
 <h2>Limiti</h2>
 <p>Ogni account ha un limite di ore di trascrizione a settimana e un limite giornaliero di intelligenza artificiale, indicati nell'app. Possono cambiare durante la beta.</p>
 <h2>Cosa puoi registrare</h2>
@@ -96,7 +96,7 @@ export function paginaCondivisa(l, origineApp) {
   if (!l) return pagina('Link non valido', '<h1>Link non valido</h1><p>Questi appunti non sono più condivisi, oppure il link è sbagliato.</p>');
   const data = (() => { try { return new Date(l.data + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }); } catch (_) { return l.data; } })();
   const corpo = l.appunti && l.appunti.trim() ? mdHtml(l.appunti) : '<p class="muted">Trascrizione:</p>' + String(l.testo || '').split(/\n{2,}/).map(p => '<p>' + esc(p) + '</p>').join('');
-  const invito = origineApp ? `<p><a href="${esc(origineApp)}">Prova Freetrascrizioni</a>: registra lezioni, corsi e riunioni e ottieni appunti, flashcard e ripasso.</p>` : '';
+  const invito = origineApp ? `<p><a href="${esc(origineApp)}">Prova Astra Note</a>: registra lezioni, corsi e riunioni e ottieni appunti, flashcard e ripasso.</p>` : '';
   return pagina(esc(l.titolo), `<h1>${esc(l.titolo)}</h1><p class="muted">${esc(l.materia)} · ${esc(data)}</p>${corpo}
-<hr style="border:none;border-top:1px solid var(--line);margin:24px 0 12px"><p class="muted">Appunti creati con Freetrascrizioni.</p>${invito}`).replace('<p class="muted"><a href="/">← Torna all\'app</a></p>', '');
+<hr style="border:none;border-top:1px solid var(--line);margin:24px 0 12px"><p class="muted">Appunti creati con Astra Note.</p>${invito}`).replace('<p class="muted"><a href="/">← Torna all\'app</a></p>', '');
 }

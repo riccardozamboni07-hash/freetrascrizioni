@@ -1,4 +1,6 @@
-# Freetrascrizioni
+# Astra Note
+
+**ASTRA** = **A**ppunta · **S**tudia · **T**rascrivi · **R**ipassa · **A**rchivia
 
 L'app per **registrare e trascrivere lezioni, corsi e riunioni**, anche di 2 ore, in pochi minuti, e trasformarle in appunti e materiale di studio — da iPhone, Android o computer.
 
@@ -59,4 +61,4 @@ Usa i piani gratuiti di Cloudflare e Groq: con Groq gratis trascrivi circa **8 o
 - **Ho dimenticato la password.** Su Cloudflare: [Workers & Pages](https://dash.cloudflare.com/?to=/:account/workers-and-pages) → freetrascrizioni → Settings → Variables and Secrets → modifica `PASSWORD`.
 
 ---
-Freetrascrizioni è un progetto di Riccardo Zamboni. Vedi [LICENSE](LICENSE) e [NOTICE](NOTICE).
+Astra Note è un progetto di Riccardo Zamboni. Vedi [LICENSE](LICENSE) e [NOTICE](NOTICE).
