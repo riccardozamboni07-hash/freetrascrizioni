@@ -6,9 +6,9 @@
 const GROQ_CHAT = 'https://api.groq.com/openai/v1/chat/completions';
 // [modello, caratteri massimi di lezione da inviare]
 const MODELLI = [
-  ['meta-llama/llama-4-scout-17b-16e-instruct', 60000],
-  ['llama-3.3-70b-versatile', 24000],
-  ['openai/gpt-oss-120b', 14000],
+  ['openai/gpt-oss-120b', 24000],
+  ['qwen/qwen3.8-27b', 24000],
+  ['llama-3.3-70b-versatile', 20000],
 ];
 
 // Se la lezione è troppo lunga, prende pezzi distribuiti su tutta la lezione (inizio, metà, fine…)
@@ -80,13 +80,14 @@ export async function generaFlashcard(env, { testo, materia, quante, argomenti }
       response_format: { type: 'json_object' },
     };
     if (modello.startsWith('openai/')) body.reasoning_effort = 'low';
+    if (modello.startsWith('qwen/')) body.reasoning_effort = 'none';
     let res;
     try {
       res = await fetch(GROQ_CHAT, { method: 'POST', headers: { authorization: `Bearer ${env.GROQ_API_KEY}`, 'content-type': 'application/json' }, body: JSON.stringify(body) });
     } catch (_) { ultimoErrore = 'rete'; continue; }
     if (res.ok) {
       const data = await res.json().catch(() => ({}));
-      const carte = pulisci(leggiJson(data?.choices?.[0]?.message?.content));
+      const carte = pulisci(leggiJson(String(data?.choices?.[0]?.message?.content || '').replace(/<think>[\s\S]*?<\/think>/g, '')));
       if (carte.length >= 3) return { status: 200, body: { carte, modello }, token: Number(data?.usage?.total_tokens) || 0 };
       ultimoErrore = 'risposta non valida'; continue;
     }

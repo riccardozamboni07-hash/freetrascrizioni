@@ -1237,7 +1237,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Se si interrompe, riapri l'app: riprende da dove era rimasta e la registrazione non si perde.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Astra Note · versione 4.2.1<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Astra Note · versione 4.2.2<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="contesto priv" id="contesto" data-tab="studia appunti">
     <span id="contestoTxt"></span>
     <span class="row" style="gap:14px"><button type="button" class="link" id="contestoBtn"></button><button type="button" class="link rimuovi" id="contestoVia" hidden>Rimuovi</button></span>
@@ -2391,10 +2391,10 @@ async function aiRun(tipo){
   try {
     if (tipo === 'appunti' && lavFoto.length) {
       const pezzi = [];
-      for (let k = 0; k < lavFoto.length && !aiStop; k += 5) {
-        aiSt(`Leggo le foto della lavagna (${Math.min(k + 5, lavFoto.length)} di ${lavFoto.length})…`);
+      for (let k = 0; k < lavFoto.length && !aiStop; k += 3) {
+        aiSt(`Leggo le foto della lavagna (${Math.min(k + 3, lavFoto.length)} di ${lavFoto.length})…`);
         try {
-          const r = await aiChiama('lavagna', { immagini: lavFoto.slice(k, k + 5), materia }, 'foto della lavagna');
+          const r = await aiChiama('lavagna', { immagini: lavFoto.slice(k, k + 3), materia }, 'foto della lavagna');
           if (r) pezzi.push(r.testo.replace(/Foto (\d+)/g, (_, n) => 'Foto ' + (Number(n) + k)));
         } catch (e) { if (e.code) throw e; aiSt('Non riesco a leggere le foto della lavagna: continuo senza.', 'warn'); await sleep(1500); break; }
       }
@@ -3592,9 +3592,9 @@ async function fonteDaFile(files){
     if (foto.length) {
       const imm = [];
       for (const f of foto.slice(0, 15)) imm.push(await comprimiFoto(f));
-      for (let k = 0; k < imm.length; k += 5) {
-        fonteSt(`Leggo le foto con l’AI (${Math.min(k + 5, imm.length)} di ${imm.length})…`);
-        const r = await privApi('lavagna', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ immagini: imm.slice(k, k + 5), materia: materiaCorrente() }) });
+      for (let k = 0; k < imm.length; k += 3) {
+        fonteSt(`Leggo le foto con l’AI (${Math.min(k + 3, imm.length)} di ${imm.length})…`);
+        const r = await privApi('lavagna', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ immagini: imm.slice(k, k + 3), materia: materiaCorrente() }) });
         if (r?.testo) pezzi.push(r.testo);
       }
       if (foto.length > 15) fonteSt('Ho letto le prime 15 foto.', 'warn');

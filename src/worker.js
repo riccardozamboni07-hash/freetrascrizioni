@@ -903,7 +903,7 @@ const app = {
       }
       if (azione === 'lavagna' && request.method === 'POST') {
         const b = await request.json().catch(() => null);
-        const imm = Array.isArray(b?.immagini) ? b.immagini.filter(x => typeof x === 'string' && x.startsWith('data:image/')).slice(0, 5) : [];
+        const imm = Array.isArray(b?.immagini) ? b.immagini.filter(x => typeof x === 'string' && x.startsWith('data:image/')).slice(0, 3) : [];
         if (!imm.length) return json(400, { error: 'Nessuna foto.' });
         const r = await leggiLavagna(env, { immagini: imm, materia: String(b.materia || '').slice(0, 80) });
         if (r.token) await store().usaToken(r.token);

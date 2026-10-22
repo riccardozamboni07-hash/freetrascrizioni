@@ -3,7 +3,8 @@
 // Le istruzioni degli appunti riprendono quelle di "Appunti universitari" (vedi NOTICE).
 
 const GROQ_CHAT = 'https://api.groq.com/openai/v1/chat/completions';
-const MODELLI = ['meta-llama/llama-4-scout-17b-16e-instruct', 'llama-3.3-70b-versatile', 'openai/gpt-oss-120b'];
+// Modelli di Groq (ottobre 2026): Llama 4 Scout e Maverick sono stati ritirati. Prima il più capace, poi le riserve.
+const MODELLI = ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'llama-3.3-70b-versatile'];
 export const SEP_VERIFICA = '@@DA_VERIFICARE@@';
 
 function istruzioniAppunti(materia, data, parte, totale) {
@@ -51,13 +52,14 @@ async function chat(env, modelli, messages, { temperature = 0.3, maxOut = 8000, 
     const body = { model: modello, messages, temperature, max_completion_tokens: maxOut };
     if (json) body.response_format = { type: 'json_object' };
     if (modello.startsWith('openai/')) body.reasoning_effort = 'low';
+    if (modello.startsWith('qwen/')) body.reasoning_effort = 'none';
     let res;
     try {
       res = await fetch(GROQ_CHAT, { method: 'POST', headers: { authorization: `Bearer ${env.GROQ_API_KEY}`, 'content-type': 'application/json' }, body: JSON.stringify(body) });
     } catch (_) { ultimoErrore = 'rete'; continue; }
     if (res.ok) {
       const d = await res.json().catch(() => ({}));
-      const out = String(d?.choices?.[0]?.message?.content || '').trim();
+      const out = String(d?.choices?.[0]?.message?.content || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim();
       if (out) return { status: 200, body: { testo: out, modello, troncato: d?.choices?.[0]?.finish_reason === 'length' }, token: Number(d?.usage?.total_tokens) || 0 };
       ultimoErrore = 'risposta vuota'; continue;
     }
@@ -72,7 +74,9 @@ async function chat(env, modelli, messages, { temperature = 0.3, maxOut = 8000, 
   return { status: 502, body: { error: 'Il servizio non risponde (' + ultimoErrore + ').' } };
 }
 const modelliTesto = env => (env.GROQ_MODELLO_TESTO ? [env.GROQ_MODELLO_TESTO, ...MODELLI] : MODELLI);
-const MODELLI_VISTA = ['meta-llama/llama-4-scout-17b-16e-instruct', 'meta-llama/llama-4-maverick-17b-128e-instruct'];
+// Modelli che leggono le immagini (massimo 3 foto per richiesta)
+const MODELLI_VISTA = ['qwen/qwen3.8-27b'];
+export const FOTO_PER_RICHIESTA = 3;
 
 export async function generaTesto(env, { tipo, testo, materia, data, parte, totale, lavagna, materiale }) {
   let system = tipo === 'aggiusta' ? istruzioniAggiusta(materia) : istruzioniAppunti(materia, data, parte, totale);
@@ -213,7 +217,7 @@ export async function indovinaLezione(env, { testo, materie }) {
 2. "titolo": l'argomento principale in 2-6 parole (es. "Le fonti del diritto", "Piano lancio prodotto"), senza le parole "lezione" o "riunione".
 Rispondi SOLO con JSON: {"materia":"...","titolo":"..."}` },
     { role: 'user', content: riduci(testo, 6000) },
-  ], { temperature: 0.1, maxOut: 120, json: true });
+  ], { temperature: 0.1, maxOut: 700, json: true });
   if (r.status !== 200) return r;
   const d = leggiJsonAI(r.body.testo) || {};
   let materia = String(d.materia || '').replace(/[«»"]/g, '').trim().slice(0, 60);
@@ -246,7 +250,7 @@ Regole:
 // Esercizi e casi pratici con soluzione passo per passo, da una lezione
 export async function creaEsercizi(env, { materia, titolo, testo, n }) {
   const quanti = Math.max(3, Math.min(8, Number(n) || 5));
-  const modelli = ['openai/gpt-oss-120b', ...MODELLI.filter(m => m !== 'openai/gpt-oss-120b')];
+  const modelli = MODELLI;
   const r = await chat(env, modelli, [
     { role: 'system', content: `Sei un docente di ${materia || 'una materia'}. Dalla registrazione crea ${quanti} ESERCIZI da esame con la soluzione.
 - Se la materia è quantitativa (matematica, statistica, economia, ragioneria, finanza) fai esercizi numerici con dati inventati ma realistici e soluzione passo per passo con tutti i calcoli.
