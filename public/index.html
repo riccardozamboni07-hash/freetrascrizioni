@@ -990,6 +990,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
         <button type="button" class="primary" id="aiAppunti">Crea appunti</button>
         <button type="button" id="aiAggiusta">Aggiusta la trascrizione</button>
         <button type="button" id="aiStop" hidden>Interrompi</button>
+        <button type="button" class="danger" id="aiElimina" hidden>Elimina appunti</button>
       </div>
       <div class="bar" id="aiBarBox" hidden><i id="aiBar"></i></div>
       <div class="status" id="aiStatus" role="status"></div>
@@ -1237,7 +1238,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Se si interrompe, riapri l'app: riprende da dove era rimasta e la registrazione non si perde.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Astra Note · versione 4.2.2<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Astra Note · versione 4.2.3<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="contesto priv" id="contesto" data-tab="studia appunti">
     <span id="contestoTxt"></span>
     <span class="row" style="gap:14px"><button type="button" class="link" id="contestoBtn"></button><button type="button" class="link rimuovi" id="contestoVia" hidden>Rimuovi</button></span>
@@ -2436,11 +2437,25 @@ async function aiRun(tipo){
     if (fatti.length) { $('aiOut').value = fatti.join('\n\n'); aiRender(); aiModifica(false); $('aiRis').hidden = false; $('aiRis').style.display = 'flex'; }
   } finally {
     aiBusy = false; $('aiAppunti').disabled = $('aiAggiusta').disabled = false; $('aiStop').hidden = true; $('aiBarBox').hidden = true;
+    aggiornaContesto();
   }
 }
 $('aiAppunti').addEventListener('click', () => aiRun('appunti'));
 $('aiAggiusta').addEventListener('click', () => aiRun('aggiusta'));
 $('aiStop').addEventListener('click', () => { aiStop = true; aiSt('Mi fermo dopo la parte in corso…', 'warn'); });
+// Elimina appunti: toglie gli appunti dalla registrazione (la trascrizione resta). Doppio tocco per confermare.
+let aiEliminaArm = null;
+function disarmaAiElimina(){ clearTimeout(aiEliminaArm); aiEliminaArm = null; $('aiElimina').textContent = 'Elimina appunti'; $('aiElimina').classList.remove('armed'); }
+$('aiElimina').addEventListener('click', () => {
+  if (aiBusy) return;
+  if (!aiEliminaArm) { $('aiElimina').textContent = 'Tocca di nuovo per eliminare'; $('aiElimina').classList.add('armed'); aiEliminaArm = setTimeout(disarmaAiElimina, 3000); return; }
+  disarmaAiElimina();
+  $('appunti').value = '';
+  if (aiTipo !== 'aggiusta') { $('aiOut').value = ''; $('aiRis').hidden = true; $('aiRis').style.display = 'none'; }
+  $('aiElimina').hidden = true;
+  aiSt('Appunti eliminati. La trascrizione resta: puoi crearli di nuovo quando vuoi.');
+  if (currentId) autoSalva();
+});
 $('aiUsa').addEventListener('click', async () => {
   const t = $('aiOut').value.trim(); if (!t) return;
   if (aiTipo === 'aggiusta') { $('out').value = t; aggiornaContesto(); }
@@ -3513,6 +3528,7 @@ function aggiornaContesto(){
   }
   $('dopoTesto').hidden = testo.length < 200;
   $('lezAscolta').hidden = !PARLA || $('appunti').value.trim().length < 40;
+  if (!aiBusy) $('aiElimina').hidden = !($('appunti').value.trim() || (!$('aiRis').hidden && aiTipo !== 'aggiusta'));
   $('salvaVuoto').hidden = testo.length > 0;
 }
 $('contestoBtn').addEventListener('click', e => $(e.currentTarget.dataset.dove)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
