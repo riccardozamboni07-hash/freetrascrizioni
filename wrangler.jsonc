@@ -17,7 +17,8 @@
   "env": {
     "pubblica": {
       "name": "freetrascrizioni-app",
-      "vars": { "MULTIUTENTE": "si", "ORE_SETTIMANA_UTENTE": "10", "TOKEN_GIORNO_UTENTE": "150000" },
+      // ORE_GIORNO_UTENTE: ore di trascrizione al giorno per utente; ORE_GIORNO_TOTALE: tetto per tutta l'app (Groq gratis = 8 h)
+      "vars": { "MULTIUTENTE": "si", "ORE_SETTIMANA_UTENTE": "10", "ORE_GIORNO_UTENTE": "1.5", "ORE_GIORNO_TOTALE": "7.5", "TOKEN_GIORNO_UTENTE": "150000" },
       "durable_objects": { "bindings": [{ "name": "STORE", "class_name": "Store" }] },
       "triggers": { "crons": ["0 * * * *"] }
     }

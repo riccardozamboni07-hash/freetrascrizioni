@@ -1252,7 +1252,7 @@ input[type=text],input[type=password],input[type=date],input[type=search],input[
       <li>Se si interrompe, riapri l'app: riprende da dove era rimasta e la registrazione non si perde.</li>
     </ul>
   </section>
-  <p class="note" style="text-align:center">Astra Note · versione 4.3<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
+  <p class="note" style="text-align:center">Astra Note · versione 4.4<span id="linkLegali" hidden> · <a href="/privacy">Privacy</a> · <a href="/condizioni">Condizioni</a></span></p>
   <div class="contesto priv" id="contesto" data-tab="studia appunti">
     <span id="contestoTxt"></span>
     <span class="row" style="gap:14px"><button type="button" class="link" id="contestoBtn"></button><button type="button" class="link rimuovi" id="contestoVia" hidden>Rimuovi</button></span>
@@ -1959,6 +1959,7 @@ function rmsOf(a){ let s = 0, m = 0; for (let j = 0; j < a.length; j += 8) { s +
 
 async function sendPiece(pcm, lang){
   const body = (await toMp3(pcm)) || wavBlob(pcm);
+  let attesaTot = 0;
   for (let k = 0; k < 6; k++) {
     if (cancelled) return '';
     let res;
@@ -1970,13 +1971,21 @@ async function sendPiece(pcm, lang){
     if (res.ok) return (data.text || '').trim();
     if (res.status === 429 && data.code === 'quota-pubblica') throw new Error('La modalità veloce ha raggiunto il limite di oggi. Puoi usare «Sul dispositivo» oppure riprovare domani.');
     if (data.code === 'limite-utente') throw new Error((data.error || 'Hai finito le ore di questa settimana.') + ' Torneranno disponibili nei prossimi giorni.');
+    if (data.code === 'limite-giorno') throw new Error((data.error || 'Hai finito la trascrizione di oggi.') + ' Il testo fatto finora è salvato: domani potrai trascrivere di nuovo.');
+    if (data.code === 'limite-app') throw new Error('Oggi Astra Note ha finito le ore di trascrizione per tutti (siamo in prova gratuita). Il testo fatto finora è salvato: riprova domani.');
     if (res.status === 401 && MULTI) throw new Error('Sessione scaduta: ricarica la pagina e accedi di nuovo.');
     if (res.status === 503 && data.code === 'fondi-esauriti') throw new Error('Hai raggiunto il tetto di spesa che hai impostato su Groq. Per ora usa «Sul dispositivo», oppure alza il tetto su console.groq.com.');
     if (res.status === 429) {
-      const wait = Math.min(Number(data.retryAfter) || 20, 600);
-      if (wait > 120) throw new Error('Il servizio online ha raggiunto il limite di oggi. Riprova più tardi oppure scegli la modalità «Sul dispositivo».');
-      setStatus(`Il servizio online è molto usato: riprendo tra ${wait} secondi…`, 'warn');
-      await sleep(wait * 1000); continue;
+      // limite all'ora (dell'app o di Groq): aspetta e riprende da solo, senza contare come tentativo fallito
+      const wait = Math.max(5, Number(data.retryAfter) || 20);
+      attesaTot += wait;
+      if (wait > 3900 || attesaTot > 7200) throw new Error('Il servizio di trascrizione è al limite per oggi. Il testo fatto finora è salvato: riprova più tardi.');
+      const alle = new Date(Date.now() + wait * 1000).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+      setStatus(wait > 90
+        ? `Molte trascrizioni in quest’ora: riprendo da solo alle ${alle}. Tieni aperta l’app.`
+        : `Il servizio è molto usato: riprendo tra ${wait} secondi…`, 'warn');
+      for (let s = 0; s < wait && !cancelled; s++) await sleep(1000);
+      k--; continue;
     }
     if (data.code === 'chiave-groq') throw new Error('La chiave Groq non è valida. Su Cloudflare apri freetrascrizioni → Settings → Variables and Secrets, modifica GROQ_API_KEY e incolla di nuovo la chiave (inizia con gsk_).');
     if (res.status === 401) throw new Error('Password errata: esci e rientra nell’app con la password giusta.');
@@ -2615,7 +2624,9 @@ function mostraAccount(v){
   if (v.settimana) {
     const h = x => (x / 3600).toFixed(1).replace('.', ',');
     $('limInfo').hidden = false;
-    $('limInfo').textContent = `Il tuo piano: ${h(v.settimana.limite)} ore di trascrizione a settimana (usate ${h(v.settimana.usate)}).`;
+    $('limInfo').textContent = v.giorno
+      ? `Il tuo piano: ${h(v.giorno.limite)} ore di trascrizione al giorno (usate oggi ${h(v.giorno.usate)}), massimo ${h(v.settimana.limite)} a settimana.`
+      : `Il tuo piano: ${h(v.settimana.limite)} ore di trascrizione a settimana (usate ${h(v.settimana.usate)}).`;
   }
 }
 
@@ -2881,7 +2892,8 @@ function disegnaAnelli(){
 function anelliDaUso(v){
   if (!v || !v.uso) return;
   const lim = v.limiteGroq || {};
-  anelliDati.tr = v.settimana ? { usate: v.settimana.usate || 0, limite: v.settimana.limite || 36000, settimana: true }
+  anelliDati.tr = v.giorno ? { usate: v.giorno.usate || 0, limite: v.giorno.limite || 5400, settimana: false }
+    : v.settimana ? { usate: v.settimana.usate || 0, limite: v.settimana.limite || 36000, settimana: true }
     : { usate: (v.uso.privato || 0) + (v.uso.pubblico || 0), limite: (lim.orePerGiorno || 8) * 3600, settimana: false };
   anelliDati.ai = { usati: v.uso.flashcardToken || 0, limite: lim.tokenFlashcardGiorno || 500000 };
   disegnaAnelli();
@@ -3213,7 +3225,7 @@ $('oraleRec').addEventListener('click', async () => {
       const d = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d.error || 'errore ' + res.status);
       $('oraleRisposta').value = (($('oraleRisposta').value.trim() + ' ') + (d.text || '')).trim(); oraleSt('Controlla la trascrizione e poi consegna la risposta.');
-    } catch (e) { oraleSt('Non riesco a trascrivere la risposta: ' + e.message + '. Puoi scriverla.', 'err'); }
+    } catch (e) { oraleSt('Non riesco a trascrivere la risposta: ' + e.message.replace(/\.$/, '') + '. Puoi scriverla.', 'err'); }
     finally { $('oraleRec').disabled = false; }
   };
   mr.start(1000); mrInizio = Date.now();
@@ -4463,7 +4475,9 @@ function showUsage(v){
   const tot = (v.uso.privato || 0) + (v.uso.pubblico || 0);
   const restaGiorno = Math.max(0, lim.orePerGiorno * 3600 - tot);
   const restaOra = Math.min(restaGiorno, Math.max(0, lim.orePerOra * 3600 - (v.uso.oraCorrente || 0)));
-  $('usage').textContent = v.settimana
+  $('usage').textContent = v.giorno
+    ? `Oggi ti restano circa ${h(Math.max(0, v.giorno.limite - v.giorno.usate))} di trascrizione`
+    : v.settimana
     ? `Questa settimana ti restano circa ${h(Math.max(0, v.settimana.limite - v.settimana.usate))} di trascrizione`
     : `Restano circa ${h(restaGiorno)} oggi (${h(restaOra)} in quest’ora) · usate oggi ${h(tot)}`;
   $('usage').title = 'Stima: il limite gratuito di Groq è di circa 8 ore al giorno e 2 ore all’ora, per tutti insieme. Il conteggio giornaliero si azzera alle 2 di notte (ora italiana).';

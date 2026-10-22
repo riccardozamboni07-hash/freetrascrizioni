@@ -429,9 +429,16 @@ export class Store extends DurableObject {
   elimina(id) { this.sql.exec('DELETE FROM lezioni WHERE id = ?', id); return { ok: true }; }
 }
 
-const json = (status, body) => new Response(JSON.stringify(body), {
-  status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
+const json = (status, body, extra = {}) => new Response(JSON.stringify(body), {
+  status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...extra },
 });
+// 1.5 -> "1 ora e 30 minuti", 2 -> "le 2 ore"
+function testoOre(ore) {
+  const h = Math.floor(ore), m = Math.round((ore - h) * 60);
+  const sh = h === 1 ? '1 ora' : h + ' ore';
+  if (!m) return h === 1 ? 'l’ora' : 'le ' + sh;
+  return (h ? sh + ' e ' : '') + m + ' minuti';
+}
 function stessaPassword(a, b) {
   if (!a || !b) return false;
   const x = new TextEncoder().encode(a), y = new TextEncoder().encode(b);
@@ -554,6 +561,10 @@ const app = {
     const admins = String(env.ADMIN_EMAIL || '').toLowerCase().split(/[,\s]+/).filter(Boolean);
     const admin = !!(utente && admins.includes(utente.email));
     const tokenGiorno = Number(env.TOKEN_GIORNO_UTENTE) || 150000;
+    // limiti di trascrizione al giorno: per ogni utente e per tutta l'app (Groq gratis: 8 h al giorno e 2 h all'ora per tutti)
+    const oreGiorno = Number(env.ORE_GIORNO_UTENTE) || 0;            // 0 = nessun limite giornaliero per utente
+    const oreTotali = Number(env.ORE_GIORNO_TOTALE) || 7.5;
+    const SEC_ORA_MAX = 2 * 3600 - 300;                              // un po' di margine sotto le 2 h all'ora di Groq
     const limiteAi = async () => multi && (await store().usoOggi()).flashcardToken >= tokenGiorno
       ? json(429, { error: 'Hai usato tutta l’intelligenza artificiale di oggi: riprova domani.', code: 'limite-ai' }) : null;
 
@@ -585,6 +596,18 @@ const app = {
       if (request.method === 'POST') {
         if (!entrato) return json(401, { error: multi ? 'Accedi per trascrivere.' : 'Password mancante o errata.' });
         if (multi && await store().usoSettimana() >= oreSett * 3600) return json(429, { error: `Hai usato le ${oreSett} ore di questa settimana.`, code: 'limite-utente' });
+        if (multi && env.GROQ_API_KEY) {
+          const sec = secondiAudio(request);
+          if (oreGiorno && (await store().usoOggi()).privato >= oreGiorno * 3600)
+            return json(429, { error: `Hai usato ${testoOre(oreGiorno)} di trascrizione di oggi.`, code: 'limite-giorno' });
+          const tutti = await auth().usoOggi();
+          if (tutti.privato + sec > oreTotali * 3600)
+            return json(429, { error: 'Oggi Astra Note ha finito le ore di trascrizione per tutti.', code: 'limite-app' });
+          if (tutti.oraCorrente + sec > SEC_ORA_MAX) {
+            const attesa = Math.max(30, Math.ceil((3600000 - Date.now() % 3600000) / 1000) + 15);
+            return json(429, { error: 'Molte trascrizioni in quest’ora.', code: 'limite-ora', retryAfter: attesa }, { 'retry-after': String(attesa) });
+          }
+        }
         if (env.GROQ_API_KEY) { const sec = secondiAudio(request); await store().usa(sec); if (multi) await auth().usa(sec); }
       }
       return trascrivi({ request, env });
@@ -610,6 +633,7 @@ const app = {
         limiteGroq: { orePerGiorno: 8, orePerOra: 2, tokenFlashcardGiorno: multi ? tokenGiorno : 500000, tokenFlashcardMinuto: 30000 },
         utente: utente ? { email: utente.email, nome: utente.nome, conGoogle: !!utente.conGoogle, conPassword: !!utente.conPassword, admin } : null,
         settimana: multi ? { usate: await store().usoSettimana(), limite: oreSett * 3600, tokenOggi: (await store().usoOggi()).flashcardToken } : null,
+        giorno: multi && oreGiorno ? { usate: (await store().usoOggi()).privato, limite: oreGiorno * 3600 } : null,
       });
       // tutti gli appunti salvati di una materia, in ordine di data (per Claude e per "Scarica appunti")
       if (azione === 'appunti' && request.method === 'GET') {

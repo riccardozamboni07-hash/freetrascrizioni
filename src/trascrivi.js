@@ -83,7 +83,7 @@ export async function onRequest({ request, env }) {
   }
   if (res.status === 429) {
     const wait = Number(res.headers.get('retry-after')) || 20;
-    return json(429, { error: 'Troppe richieste: riprovo tra poco.', retryAfter: wait }, { 'retry-after': String(wait) });
+    return json(429, { error: 'Il servizio di trascrizione è molto usato in questo momento.', code: 'groq-limite', retryAfter: wait }, { 'retry-after': String(wait) });
   }
   if (!res.ok) {
     const detail = (await res.text().catch(() => '')).slice(0, 300);
